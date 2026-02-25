@@ -21,7 +21,7 @@ function normalizeQuery(query: CallbackQuery) {
 }
 
 export function getHostedBaseUrl() {
-  return process.env.TIC_HOSTED_BASE_URL ?? "";
+  return process.env.TIC_HOSTED_BASE_URL || process.env.TIC_HOSTED_URL || "";
 }
 
 export function buildHostedModeUrlServer(input: {
