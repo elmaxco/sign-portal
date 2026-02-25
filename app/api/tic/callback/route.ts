@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { markAgreementSignedByToken } from "@/lib/agreements";
-import { parseIdTicCallback } from "@/lib/idtic";
+import { parseIdTicCallback, verifySignedState } from "@/lib/idtic";
 
 function toQueryObject(searchParams: URLSearchParams) {
   const output: Record<string, string> = {};
@@ -36,10 +36,17 @@ function safeNextUrl(request: NextRequest, token: string) {
 export async function GET(request: NextRequest) {
   const query = toQueryObject(request.nextUrl.searchParams);
   const parsed = parseIdTicCallback(query);
-  const token = parsed.data.state || parsed.data.session_id;
+  const verifiedToken = verifySignedState(parsed.data.state ?? "");
+  const token = verifiedToken || parsed.data.session_id;
 
   if (!token) {
     return NextResponse.redirect(new URL("/", request.nextUrl.origin));
+  }
+
+  if (!verifiedToken) {
+    const redirectTarget = safeNextUrl(request, token);
+    redirectTarget.searchParams.set("bankid", "invalid_state");
+    return NextResponse.redirect(redirectTarget);
   }
 
   const redirectTarget = safeNextUrl(request, token);

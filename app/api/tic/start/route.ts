@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { buildHostedModeUrlServer, getHostedBaseUrl } from "@/lib/idtic";
+import {
+  buildHostedModeUrlServer,
+  createSignedState,
+  getAppBaseUrl,
+  getHostedBaseUrl,
+} from "@/lib/idtic";
 
 type StartBody = {
   token?: string;
@@ -30,7 +35,18 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const callbackUrl = new URL("/api/tic/callback", request.nextUrl.origin);
+  const state = createSignedState(token);
+
+  if (!state) {
+    return NextResponse.json(
+      { error: "Missing TIC_STATE_SECRET or TIC_WEBHOOK_SECRET env variable." },
+      { status: 500 },
+    );
+  }
+
+  const appBaseUrl = getAppBaseUrl(request.nextUrl.origin);
+
+  const callbackUrl = new URL("/api/tic/callback", appBaseUrl);
 
   if (body.redirectUrl) {
     callbackUrl.searchParams.set("next", body.redirectUrl);
@@ -38,7 +54,8 @@ export async function POST(request: NextRequest) {
 
   const hostedUrl = buildHostedModeUrlServer({
     hostedBaseUrl,
-    token,
+    state,
+    sessionId: token,
     callbackUrl: callbackUrl.toString(),
   });
 
