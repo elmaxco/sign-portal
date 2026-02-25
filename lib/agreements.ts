@@ -153,3 +153,36 @@ export async function markAgreementSigningByToken(input: {
 
   return true;
 }
+
+export async function markAgreementSignedByTicState(input: {
+  ticState: string;
+  signProvider?: string;
+  sessionId?: string;
+  result?: string;
+}) {
+  const agreementQuery = query(
+    collection(db, "agreements"),
+    where("ticState", "==", input.ticState),
+    limit(1),
+  );
+
+  const snapshot = await getDocs(agreementQuery);
+
+  if (snapshot.empty) {
+    return false;
+  }
+
+  const minimalReceipt = {
+    sessionId: input.sessionId ?? "",
+    result: input.result ?? "",
+  };
+
+  await updateDoc(snapshot.docs[0].ref, {
+    status: "signed",
+    signedAt: serverTimestamp(),
+    signProvider: input.signProvider ?? "id.tic.io",
+    signProof: JSON.stringify(minimalReceipt),
+  });
+
+  return true;
+}

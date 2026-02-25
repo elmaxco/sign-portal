@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { markAgreementSignedByToken } from "@/lib/agreements";
+import { markAgreementSignedByTicState } from "@/lib/agreements";
 import { parseIdTicCallback, verifySignedState } from "@/lib/idtic";
 
 function toQueryObject(searchParams: URLSearchParams) {
@@ -34,10 +34,37 @@ function safeNextUrl(request: NextRequest, token: string) {
 }
 
 export async function GET(request: NextRequest) {
-  const query = toQueryObject(request.nextUrl.searchParams);
+  return handleCallback(request, toQueryObject(request.nextUrl.searchParams));
+}
+
+export async function POST(request: NextRequest) {
+  let body: Record<string, string> = {};
+
+  try {
+    const json = (await request.json()) as Record<string, unknown>;
+
+    body = Object.fromEntries(
+      Object.entries(json).map(([key, value]) => [key, String(value ?? "")]),
+    );
+  } catch {
+    body = {};
+  }
+
+  const query = {
+    ...toQueryObject(request.nextUrl.searchParams),
+    ...body,
+  };
+
+  return handleCallback(request, query);
+}
+
+async function handleCallback(request: NextRequest, query: Record<string, string>) {
   const parsed = parseIdTicCallback(query);
-  const verifiedToken = verifySignedState(parsed.data.state ?? "");
+  const state = parsed.data.state ?? "";
+  const verifiedToken = verifySignedState(state);
   const token = verifiedToken || parsed.data.session_id;
+  const sessionId = parsed.data.session_id || parsed.data.sessionId || "";
+  const result = parsed.data.result || parsed.data.status || "";
 
   if (!token) {
     return NextResponse.redirect(new URL("/", request.nextUrl.origin));
@@ -52,11 +79,17 @@ export async function GET(request: NextRequest) {
   const redirectTarget = safeNextUrl(request, token);
 
   if (parsed.isSuccess) {
-    await markAgreementSignedByToken({
-      token,
+    const updated = await markAgreementSignedByTicState({
+      ticState: state,
       signProvider: parsed.provider,
-      signProof: parsed.proof,
+      sessionId,
+      result,
     });
+
+    if (!updated) {
+      redirectTarget.searchParams.set("bankid", "agreement_not_found");
+      return NextResponse.redirect(redirectTarget);
+    }
 
     redirectTarget.searchParams.set("bankid", "success");
     return NextResponse.redirect(redirectTarget);
