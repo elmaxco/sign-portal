@@ -5,6 +5,7 @@ import {
   limit,
   orderBy,
   query,
+  updateDoc,
   serverTimestamp,
   where,
   type QueryDocumentSnapshot,
@@ -99,4 +100,31 @@ export async function listLatestAgreements(maxItems = 20) {
 
   const snapshot = await getDocs(agreementsQuery);
   return snapshot.docs.map(mapAgreement);
+}
+
+export async function markAgreementSignedByToken(input: {
+  token: string;
+  signProvider?: string;
+  signProof?: string;
+}) {
+  const agreementQuery = query(
+    collection(db, "agreements"),
+    where("token", "==", input.token),
+    limit(1),
+  );
+
+  const snapshot = await getDocs(agreementQuery);
+
+  if (snapshot.empty) {
+    return false;
+  }
+
+  await updateDoc(snapshot.docs[0].ref, {
+    status: "signed",
+    signedAt: serverTimestamp(),
+    signProvider: input.signProvider ?? "id.tic.io",
+    signProof: input.signProof ?? "",
+  });
+
+  return true;
 }
