@@ -12,7 +12,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
-export type AgreementStatus = "draft" | "signed";
+export type AgreementStatus = "draft" | "signing" | "signed";
 
 export type Agreement = {
   id: string;
@@ -124,6 +124,31 @@ export async function markAgreementSignedByToken(input: {
     signedAt: serverTimestamp(),
     signProvider: input.signProvider ?? "id.tic.io",
     signProof: input.signProof ?? "",
+  });
+
+  return true;
+}
+
+export async function markAgreementSigningByToken(input: {
+  token: string;
+  ticState: string;
+}) {
+  const agreementQuery = query(
+    collection(db, "agreements"),
+    where("token", "==", input.token),
+    limit(1),
+  );
+
+  const snapshot = await getDocs(agreementQuery);
+
+  if (snapshot.empty) {
+    return false;
+  }
+
+  await updateDoc(snapshot.docs[0].ref, {
+    status: "signing",
+    ticState: input.ticState,
+    ticStartedAt: serverTimestamp(),
   });
 
   return true;

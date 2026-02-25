@@ -5,6 +5,7 @@ import {
   getAppBaseUrl,
   getHostedBaseUrl,
 } from "@/lib/idtic";
+import { markAgreementSigningByToken } from "@/lib/agreements";
 
 type StartBody = {
   token?: string;
@@ -42,6 +43,15 @@ export async function POST(request: NextRequest) {
       { error: "Missing TIC_STATE_SECRET or TIC_WEBHOOK_SECRET env variable." },
       { status: 500 },
     );
+  }
+
+  const marked = await markAgreementSigningByToken({
+    token,
+    ticState: state,
+  });
+
+  if (!marked) {
+    return NextResponse.json({ error: "Agreement not found for token." }, { status: 404 });
   }
 
   const appBaseUrl = getAppBaseUrl(request.nextUrl.origin);
