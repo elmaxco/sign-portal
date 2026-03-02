@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { markAgreementSignedByTicState } from "@/lib/agreements";
 import { parseIdTicCallback, verifySignedState } from "@/lib/idtic";
+import { collectTicSession } from "@/lib/tic-collect";
 
 function toQueryObject(searchParams: URLSearchParams) {
   const output: Record<string, string> = {};
@@ -64,7 +65,7 @@ async function handleCallback(request: NextRequest, query: Record<string, string
   const verifiedToken = verifySignedState(state);
   const token = verifiedToken || parsed.data.session_id;
   const sessionId = parsed.data.session_id || parsed.data.sessionId || "";
-  const result = parsed.data.result || parsed.data.status || "";
+  const callbackResult = parsed.data.result || parsed.data.status || "";
 
   if (!token) {
     return NextResponse.redirect(new URL("/", request.nextUrl.origin));
@@ -78,12 +79,24 @@ async function handleCallback(request: NextRequest, query: Record<string, string
 
   const redirectTarget = safeNextUrl(request, token);
 
-  if (parsed.isSuccess) {
+  if (!sessionId) {
+    if (parsed.isFailure) {
+      redirectTarget.searchParams.set("bankid", "failed");
+      return NextResponse.redirect(redirectTarget);
+    }
+
+    redirectTarget.searchParams.set("bankid", "pending");
+    return NextResponse.redirect(redirectTarget);
+  }
+
+  const collect = await collectTicSession({ sessionId });
+
+  if (collect.ok && collect.outcome === "success") {
     const updated = await markAgreementSignedByTicState({
       ticState: state,
       signProvider: parsed.provider,
       sessionId,
-      result,
+      result: collect.statusValue || callbackResult || "complete",
     });
 
     if (!updated) {
@@ -95,11 +108,11 @@ async function handleCallback(request: NextRequest, query: Record<string, string
     return NextResponse.redirect(redirectTarget);
   }
 
-  if (parsed.isFailure) {
+  if (collect.outcome === "failed" || parsed.isFailure) {
     redirectTarget.searchParams.set("bankid", "failed");
     return NextResponse.redirect(redirectTarget);
   }
 
-  redirectTarget.searchParams.set("bankid", "unknown");
+  redirectTarget.searchParams.set("bankid", "pending");
   return NextResponse.redirect(redirectTarget);
 }

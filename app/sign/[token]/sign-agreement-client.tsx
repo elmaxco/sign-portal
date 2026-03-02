@@ -68,6 +68,16 @@ export default function SignAgreementClient({ token }: SignAgreementClientProps)
       return;
     }
 
+    if (bankid === "pending") {
+      setStatus("Signering pågår fortfarande. Vänta och prova att uppdatera sidan.");
+      return;
+    }
+
+    if (bankid === "invalid_state") {
+      setStatus("Ogiltig callback-state. Starta signeringen igen.");
+      return;
+    }
+
     if (bankid === "unknown") {
       setStatus("Callback mottagen men status kunde inte tolkas.");
     }
