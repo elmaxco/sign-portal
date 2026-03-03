@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAgreementByToken } from "@/lib/agreements";
+import { getAgreementStatusByTokenServer } from "@/lib/agreements-server";
 
 export async function GET(request: NextRequest) {
   const token = request.nextUrl.searchParams.get("token")?.trim();
@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Missing token." }, { status: 400 });
   }
 
-  const agreement = await getAgreementByToken(token);
+  const agreement = await getAgreementStatusByTokenServer(token);
 
   if (!agreement) {
     return NextResponse.json({ error: "Agreement not found." }, { status: 404 });

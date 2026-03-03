@@ -96,6 +96,16 @@ export default function SignAgreementClient({ token }: SignAgreementClientProps)
     let inFlight = false;
     let active = true;
     const maxAttempts = 90;
+    let intervalId: number | null = null;
+
+    function stopPolling() {
+      active = false;
+
+      if (intervalId !== null) {
+        window.clearInterval(intervalId);
+        intervalId = null;
+      }
+    }
 
     async function pollStatus() {
       if (!active || inFlight) {
@@ -155,14 +165,14 @@ export default function SignAgreementClient({ token }: SignAgreementClientProps)
             window.history.replaceState({}, "", url.toString());
           }
 
-          active = false;
+          stopPolling();
           return;
         }
 
         if (data.status === "draft") {
-          setStatus("Signering misslyckades eller avbröts.");
+          setStatus("Signering avbröts eller återställdes.");
           setPendingFromCallback(false);
-          active = false;
+          stopPolling();
           return;
         }
 
@@ -180,11 +190,10 @@ export default function SignAgreementClient({ token }: SignAgreementClientProps)
     }
 
     pollStatus();
-    const intervalId = window.setInterval(pollStatus, 2000);
+    intervalId = window.setInterval(pollStatus, 2000);
 
     return () => {
-      active = false;
-      window.clearInterval(intervalId);
+      stopPolling();
     };
   }, [agreement?.status, pendingFromCallback, token]);
 
