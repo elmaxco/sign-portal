@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { markAgreementSignedByTicState } from "@/lib/agreements";
 import { parseIdTicCallback, verifySignedState } from "@/lib/idtic";
-import { collectTicSession } from "@/lib/tic-collect";
+import { collectTicAuthSession } from "@/lib/tic-collect";
 
 function toQueryObject(searchParams: URLSearchParams) {
   const output: Record<string, string> = {};
@@ -89,7 +89,7 @@ async function handleCallback(request: NextRequest, query: Record<string, string
     return NextResponse.redirect(redirectTarget);
   }
 
-  const collect = await collectTicSession({ sessionId });
+  const collect = await collectTicAuthSession({ sessionId });
 
   console.log("TIC collect:", {
     ok: collect.ok,

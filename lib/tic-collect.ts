@@ -93,62 +93,13 @@ export function getTicApiBaseUrl() {
   return process.env.TIC_API_BASE_URL || "https://id.tic.io/api/v1";
 }
 
-export function getTicInstanceId() {
-  const explicit = process.env.TIC_INSTANCE_ID || process.env.TIC_INSTANS_ID;
-
-  if (explicit) {
-    return explicit;
-  }
-
-  const hostedUrl = process.env.TIC_HOSTED_URL || process.env.TIC_HOSTED_BASE_URL;
-
-  if (!hostedUrl) {
-    return "";
-  }
-
-  try {
-    const parsed = new URL(hostedUrl);
-    const [firstSegment] = parsed.pathname.split("/").filter(Boolean);
-    return firstSegment ?? "";
-  } catch {
-    return "";
-  }
-}
-
-export async function collectTicSession(input: { sessionId: string }) {
-  const apiKey = process.env.TIC_API_KEY;
-  const instanceId = getTicInstanceId();
-  const baseUrl = getTicApiBaseUrl();
-
-  if (!apiKey) {
-    return {
-      ok: false,
-      outcome: "unknown" as CollectOutcome,
-      error: "Missing TIC_API_KEY env variable.",
-      raw: null as unknown,
-      statusValue: "",
-    };
-  }
-
-  if (!instanceId) {
-    return {
-      ok: false,
-      outcome: "unknown" as CollectOutcome,
-      error: "Missing TIC_INSTANCE_ID env variable (or derivable hosted slug).",
-      raw: null as unknown,
-      statusValue: "",
-    };
-  }
-
-  const endpoint = `${baseUrl.replace(/\/$/, "")}/${instanceId}/sessions/${encodeURIComponent(
-    input.sessionId,
-  )}/collect`;
-
-  const response = await fetch(endpoint, {
-    method: "GET",
+async function requestJson(input: { endpoint: string; apiKey: string; method: "GET" | "POST" }) {
+  const response = await fetch(input.endpoint, {
+    method: input.method,
     headers: {
-      Authorization: `Bearer ${apiKey}`,
+      Authorization: `Bearer ${input.apiKey}`,
       Accept: "application/json",
+      "Content-Type": "application/json",
     },
     cache: "no-store",
   });
@@ -161,15 +112,74 @@ export async function collectTicSession(input: { sessionId: string }) {
     payload = null;
   }
 
-  const candidates: string[] = [];
-  collectStringCandidates(payload, candidates);
-  const outcome = classifyOutcome(candidates);
-
   return {
     ok: response.ok,
-    outcome,
-    error: response.ok ? "" : `TIC collect request failed (${response.status}).`,
-    raw: payload,
-    statusValue: candidates[0] ?? "",
+    statusCode: response.status,
+    payload,
+  };
+}
+
+export async function collectTicAuthSession(input: { sessionId: string }) {
+  const apiKey = process.env.TIC_API_KEY;
+  const baseUrl = getTicApiBaseUrl();
+
+  if (!apiKey) {
+    return {
+      ok: false,
+      outcome: "unknown" as CollectOutcome,
+      error: "Missing TIC_API_KEY env variable.",
+      raw: null as unknown,
+      statusValue: "",
+    };
+  }
+
+  const normalizedBaseUrl = baseUrl.replace(/\/$/, "");
+  const encodedSessionId = encodeURIComponent(input.sessionId);
+
+  const pollEndpoint = `${normalizedBaseUrl}/auth/${encodedSessionId}/poll`;
+  const poll = await requestJson({ endpoint: pollEndpoint, apiKey, method: "POST" });
+
+  const pollCandidates: string[] = [];
+  collectStringCandidates(poll.payload, pollCandidates);
+  const pollOutcome = classifyOutcome(pollCandidates);
+
+  if (poll.ok && pollOutcome !== "unknown") {
+    return {
+      ok: true,
+      outcome: pollOutcome,
+      error: "",
+      raw: poll.payload,
+      statusValue: pollCandidates[0] ?? "",
+    };
+  }
+
+  const collectEndpoint = `${normalizedBaseUrl}/auth/${encodedSessionId}/collect`;
+  const collect = await requestJson({ endpoint: collectEndpoint, apiKey, method: "GET" });
+
+  const collectCandidates: string[] = [];
+  collectStringCandidates(collect.payload, collectCandidates);
+  const collectOutcome = classifyOutcome(collectCandidates);
+
+  if (collect.ok && collectOutcome !== "unknown") {
+    return {
+      ok: true,
+      outcome: collectOutcome,
+      error: "",
+      raw: collect.payload,
+      statusValue: collectCandidates[0] ?? "",
+    };
+  }
+
+  const fallbackOutcome = pollOutcome !== "unknown" ? pollOutcome : collectOutcome;
+
+  return {
+    ok: poll.ok || collect.ok,
+    outcome: fallbackOutcome,
+    error:
+      poll.ok || collect.ok
+        ? ""
+        : `TIC auth poll/collect request failed (${poll.statusCode}/${collect.statusCode}).`,
+    raw: collect.payload ?? poll.payload,
+    statusValue: collectCandidates[0] ?? pollCandidates[0] ?? "",
   };
 }
