@@ -11,6 +11,7 @@ export default function SignAgreementClient({ token }: SignAgreementClientProps)
   const [agreement, setAgreement] = useState<Agreement | null>(null);
   const [status, setStatus] = useState("Laddar avtal...");
   const [startSigningError, setStartSigningError] = useState("");
+  const [pendingFromCallback, setPendingFromCallback] = useState(false);  
 
   useEffect(() => {
     let active = true;
@@ -70,6 +71,7 @@ export default function SignAgreementClient({ token }: SignAgreementClientProps)
 
     if (bankid === "pending") {
       setStatus("Signering pågår fortfarande. Vänta och prova att uppdatera sidan.");
+      setPendingFromCallback(true);
       return;
     }
 
@@ -82,6 +84,109 @@ export default function SignAgreementClient({ token }: SignAgreementClientProps)
       setStatus("Callback mottagen men status kunde inte tolkas.");
     }
   }, []);
+
+  useEffect(() => {
+    const needsPolling = pendingFromCallback || agreement?.status === "signing";
+
+    if (!needsPolling || agreement?.status === "signed") {
+      return;
+    }
+
+    let attempts = 0;
+    let inFlight = false;
+    let active = true;
+    const maxAttempts = 90;
+
+    async function pollStatus() {
+      if (!active || inFlight) {
+        return;
+      }
+
+      inFlight = true;
+
+      try {
+        const response = await fetch(`/api/agreements/status?token=${encodeURIComponent(token)}`, {
+          method: "GET",
+          cache: "no-store",
+        });
+
+        if (!response.ok) {
+          attempts += 1;
+
+          if (attempts >= maxAttempts && active) {
+            setStatus("Kunde inte verifiera signering i tid. Uppdatera sidan och försök igen.");
+            setPendingFromCallback(false);
+          }
+
+          return;
+        }
+
+        const data = (await response.json()) as {
+          status: "draft" | "signing" | "signed";
+          signedAt?: string | null;
+          signProvider?: string | null;
+        };
+
+        if (!active) {
+          return;
+        }
+
+        setAgreement((previous) => {
+          if (!previous) {
+            return previous;
+          }
+
+          return {
+            ...previous,
+            status: data.status,
+            signedAt: data.signedAt ?? previous.signedAt,
+            signProvider: data.signProvider ?? previous.signProvider,
+          };
+        });
+
+        if (data.status === "signed") {
+          setStatus("Signering registrerad.");
+          setPendingFromCallback(false);
+
+          const url = new URL(window.location.href);
+
+          if (url.searchParams.has("bankid")) {
+            url.searchParams.delete("bankid");
+            window.history.replaceState({}, "", url.toString());
+          }
+
+          active = false;
+          return;
+        }
+
+        if (data.status === "draft") {
+          setStatus("Signering misslyckades eller avbröts.");
+          setPendingFromCallback(false);
+          active = false;
+          return;
+        }
+
+        setStatus("Signering pågår. Status uppdateras automatiskt...");
+      } catch {
+        attempts += 1;
+
+        if (attempts >= maxAttempts && active) {
+          setStatus("Kunde inte verifiera signering i tid. Uppdatera sidan och försök igen.");
+          setPendingFromCallback(false);
+        }
+      } finally {
+        inFlight = false;
+      }
+    }
+
+    pollStatus();
+    const intervalId = window.setInterval(pollStatus, 2000);
+
+    return () => {
+      active = false;
+      window.clearInterval(intervalId);
+    };
+  }, [agreement?.status, pendingFromCallback, token]);
 
   async function handleStartSigning() {
     setStartSigningError("");
@@ -123,7 +228,12 @@ export default function SignAgreementClient({ token }: SignAgreementClientProps)
           <h2 className="text-xl font-semibold">{agreement.title}</h2>
           <p className="mt-3 whitespace-pre-wrap">{agreement.content}</p>
           <p className="mt-4 text-sm">
-            Status: {agreement.status === "signed" ? "Signerad" : "Ej signerad"}
+            Status:{" "}
+            {agreement.status === "signed"
+              ? "Signerad"
+              : agreement.status === "signing"
+                ? "Signering pågår"
+                : "Ej signerad"}
           </p>
           {agreement.status !== "signed" ? (
             <div className="mt-4">
