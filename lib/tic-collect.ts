@@ -96,12 +96,11 @@ export function getTicApiBaseUrl() {
 async function requestJson(input: { endpoint: string; apiKey: string; method: "GET" | "POST" }) {
   const response = await fetch(input.endpoint, {
     method: input.method,
-    headers: {
-      "X-Api-Key": input.apiKey,
-      Authorization: `Bearer ${input.apiKey}`,
-      Accept: "application/json",
-      "Content-Type": "application/json",
-    },
+   headers: {
+  "X-Api-Key": input.apiKey,
+  Accept: "application/json",
+  "Content-Type": "application/json",
+},
     cache: "no-store",
   });
 
