@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { markAgreementSignedByTicState } from "@/lib/agreements";
+import { markAgreementFailedByTicState, markAgreementSignedByTicState } from "@/lib/agreements";
 import { parseIdTicCallback, verifySignedState } from "@/lib/idtic";
 import { collectTicAuthSession } from "@/lib/tic-collect";
 
@@ -117,6 +117,12 @@ async function handleCallback(request: NextRequest, query: Record<string, string
   }
 
   if (collect.outcome === "failed" || parsed.isFailure) {
+    await markAgreementFailedByTicState({
+      ticState: state,
+      errorCode: collect.statusValue || "FAILED",
+      errorMessage: collect.error || "Signering misslyckades eller avbröts.",
+    });
+
     redirectTarget.searchParams.set("bankid", "failed");
     return NextResponse.redirect(redirectTarget);
   }

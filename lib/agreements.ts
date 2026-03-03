@@ -33,6 +33,11 @@ type FirestoreAgreement = {
   status?: AgreementStatus;
   createdAt?: { toDate?: () => Date };
   signedAt?: { toDate?: () => Date };
+  ticState?: string;
+  ticStartedAt?: { toDate?: () => Date };
+  signFailedAt?: { toDate?: () => Date };
+  signErrorCode?: string;
+  signErrorMessage?: string;
   signProvider?: string;
   signProof?: string;
 };
@@ -154,6 +159,29 @@ export async function markAgreementSigningByToken(input: {
   return true;
 }
 
+export async function getAgreementLifecycleByToken(token: string) {
+  const agreementQuery = query(
+    collection(db, "agreements"),
+    where("token", "==", token),
+    limit(1),
+  );
+
+  const snapshot = await getDocs(agreementQuery);
+
+  if (snapshot.empty) {
+    return null;
+  }
+
+  const data = snapshot.docs[0].data() as FirestoreAgreement;
+  const ticStartedAt = data.ticStartedAt?.toDate?.();
+
+  return {
+    status: data.status ?? "draft",
+    ticState: data.ticState ?? "",
+    ticStartedAtMs: ticStartedAt ? ticStartedAt.getTime() : null,
+  };
+}
+
 export async function markAgreementSignedByTicState(input: {
   ticState: string;
   signProvider?: string;
@@ -182,6 +210,33 @@ export async function markAgreementSignedByTicState(input: {
     signedAt: serverTimestamp(),
     signProvider: input.signProvider ?? "id.tic.io",
     signProof: JSON.stringify(minimalReceipt),
+  });
+
+  return true;
+}
+
+export async function markAgreementFailedByTicState(input: {
+  ticState: string;
+  errorCode?: string;
+  errorMessage?: string;
+}) {
+  const agreementQuery = query(
+    collection(db, "agreements"),
+    where("ticState", "==", input.ticState),
+    limit(1),
+  );
+
+  const snapshot = await getDocs(agreementQuery);
+
+  if (snapshot.empty) {
+    return false;
+  }
+
+  await updateDoc(snapshot.docs[0].ref, {
+    status: "draft",
+    signFailedAt: serverTimestamp(),
+    signErrorCode: input.errorCode ?? "FAILED",
+    signErrorMessage: input.errorMessage ?? "Signering misslyckades eller avbröts.",
   });
 
   return true;

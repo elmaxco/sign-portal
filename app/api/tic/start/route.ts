@@ -5,12 +5,14 @@ import {
   getAppBaseUrl,
   getHostedBaseUrl,
 } from "@/lib/idtic";
-import { markAgreementSigningByToken } from "@/lib/agreements";
+import { getAgreementLifecycleByToken, markAgreementSigningByToken } from "@/lib/agreements";
 
 type StartBody = {
   token?: string;
   redirectUrl?: string;
 };
+
+const SIGNING_TIMEOUT_MS = 5 * 60 * 1000;
 
 export async function POST(request: NextRequest) {
   let body: StartBody;
@@ -36,22 +38,44 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const state = createSignedState(token);
+  const lifecycle = await getAgreementLifecycleByToken(token);
 
-  if (!state) {
-    return NextResponse.json(
-      { error: "Missing TIC_STATE_SECRET or TIC_WEBHOOK_SECRET env variable." },
-      { status: 500 },
-    );
+  if (!lifecycle) {
+    return NextResponse.json({ error: "Agreement not found for token." }, { status: 404 });
   }
 
-  const marked = await markAgreementSigningByToken({
-    token,
-    ticState: state,
-  });
+  if (lifecycle.status === "signed") {
+    return NextResponse.json({ error: "Agreement is already signed." }, { status: 409 });
+  }
 
-  if (!marked) {
-    return NextResponse.json({ error: "Agreement not found for token." }, { status: 404 });
+  const now = Date.now();
+  const isActiveSigning =
+    lifecycle.status === "signing" &&
+    typeof lifecycle.ticStartedAtMs === "number" &&
+    now - lifecycle.ticStartedAtMs < SIGNING_TIMEOUT_MS;
+
+  let state = lifecycle.ticState;
+
+  if (!isActiveSigning || !state) {
+    const newState = createSignedState(token);
+
+    if (!newState) {
+      return NextResponse.json(
+        { error: "Missing TIC_STATE_SECRET or TIC_WEBHOOK_SECRET env variable." },
+        { status: 500 },
+      );
+    }
+
+    const marked = await markAgreementSigningByToken({
+      token,
+      ticState: newState,
+    });
+
+    if (!marked) {
+      return NextResponse.json({ error: "Agreement not found for token." }, { status: 404 });
+    }
+
+    state = newState;
   }
 
   const appBaseUrl = getAppBaseUrl(request.nextUrl.origin);

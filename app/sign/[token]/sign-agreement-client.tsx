@@ -11,7 +11,8 @@ export default function SignAgreementClient({ token }: SignAgreementClientProps)
   const [agreement, setAgreement] = useState<Agreement | null>(null);
   const [status, setStatus] = useState("Laddar avtal...");
   const [startSigningError, setStartSigningError] = useState("");
-  const [pendingFromCallback, setPendingFromCallback] = useState(false);  
+  const [pendingFromCallback, setPendingFromCallback] = useState(false);
+  const [isPollingActive, setIsPollingActive] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -89,6 +90,7 @@ export default function SignAgreementClient({ token }: SignAgreementClientProps)
     const needsPolling = pendingFromCallback || agreement?.status === "signing";
 
     if (!needsPolling || agreement?.status === "signed") {
+      setIsPollingActive(false);
       return;
     }
 
@@ -100,6 +102,7 @@ export default function SignAgreementClient({ token }: SignAgreementClientProps)
 
     function stopPolling() {
       active = false;
+      setIsPollingActive(false);
 
       if (intervalId !== null) {
         window.clearInterval(intervalId);
@@ -190,12 +193,29 @@ export default function SignAgreementClient({ token }: SignAgreementClientProps)
     }
 
     pollStatus();
+    setIsPollingActive(true);
     intervalId = window.setInterval(pollStatus, 2000);
 
     return () => {
       stopPolling();
     };
   }, [agreement?.status, pendingFromCallback, token]);
+
+  function handleCancelOrRetry() {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const url = new URL(window.location.href);
+
+    if (url.searchParams.has("bankid")) {
+      url.searchParams.delete("bankid");
+      window.history.replaceState({}, "", url.toString());
+    }
+
+    setPendingFromCallback(false);
+    setStatus("Signering avbröts. Du kan försöka igen.");
+  }
 
   async function handleStartSigning() {
     setStartSigningError("");
@@ -253,6 +273,24 @@ export default function SignAgreementClient({ token }: SignAgreementClientProps)
               >
                 Signera med BankID
               </button>
+
+              {isPollingActive ? (
+                <div className="mt-3 flex items-center gap-2 text-sm">
+                  <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-foreground" />
+                  <span>Väntar på BankID...</span>
+                </div>
+              ) : null}
+
+              {isPollingActive ? (
+                <button
+                  type="button"
+                  onClick={handleCancelOrRetry}
+                  className="mt-2 inline-flex rounded-md border px-3 py-1 text-sm"
+                >
+                  Avbryt / Försök igen
+                </button>
+              ) : null}
+
               {startSigningError ? <p className="mt-2 text-sm">{startSigningError}</p> : null}
             </div>
           ) : null}
