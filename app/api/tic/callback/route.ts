@@ -91,6 +91,14 @@ async function handleCallback(request: NextRequest, query: Record<string, string
 
   const collect = await collectTicSession({ sessionId });
 
+  console.log("TIC collect:", {
+    ok: collect.ok,
+    outcome: collect.outcome,
+    error: collect.error,
+    statusValue: collect.statusValue,
+    raw: collect.raw,
+  });
+
   if (collect.ok && collect.outcome === "success") {
     const updated = await markAgreementSignedByTicState({
       ticState: state,
