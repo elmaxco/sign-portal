@@ -226,3 +226,52 @@ export async function resetAgreementByTokenServer(input: {
 
   return true;
 }
+
+export async function resetTimedOutSigningsServer(input: {
+  timeoutMs: number;
+  nowMs?: number;
+}) {
+  const db = getAdminDb();
+  const snapshot = await db
+    .collection("agreements")
+    .where("status", "==", "signing")
+    .get();
+
+  const nowMs = input.nowMs ?? Date.now();
+  let resetCount = 0;
+
+  const batch = db.batch();
+
+  for (const doc of snapshot.docs) {
+    const data = doc.data() as FirestoreAgreementDoc;
+    const startedAtMs = data.ticStartedAt?.toDate?.()?.getTime();
+
+    if (typeof startedAtMs !== "number") {
+      continue;
+    }
+
+    if (nowMs - startedAtMs <= input.timeoutMs) {
+      continue;
+    }
+
+    batch.update(doc.ref, {
+      status: "draft",
+      ticState: "",
+      ticStartedAt: FieldValue.delete(),
+      signFailedAt: FieldValue.serverTimestamp(),
+      signErrorCode: "TIMEOUT",
+      signErrorMessage: "Tiden gick ut. Försök igen.",
+    });
+
+    resetCount += 1;
+  }
+
+  if (resetCount > 0) {
+    await batch.commit();
+  }
+
+  return {
+    checked: snapshot.size,
+    reset: resetCount,
+  };
+}
