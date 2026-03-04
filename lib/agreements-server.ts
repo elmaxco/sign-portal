@@ -178,3 +178,31 @@ export async function markAgreementFailedByTicStateServer(input: {
 
   return true;
 }
+
+export async function resetAgreementByTokenServer(input: {
+  token: string;
+  errorCode?: string;
+  errorMessage?: string;
+}) {
+  const db = getAdminDb();
+  const snapshot = await db
+    .collection("agreements")
+    .where("token", "==", input.token)
+    .limit(1)
+    .get();
+
+  if (snapshot.empty) {
+    return false;
+  }
+
+  await snapshot.docs[0].ref.update({
+    status: "draft",
+    ticState: "",
+    ticStartedAt: FieldValue.delete(),
+    signFailedAt: FieldValue.serverTimestamp(),
+    signErrorCode: input.errorCode ?? "TIMEOUT",
+    signErrorMessage: input.errorMessage ?? "Tiden gick ut. Försök igen.",
+  });
+
+  return true;
+}
