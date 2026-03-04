@@ -98,8 +98,7 @@ async function handleCallback(request: NextRequest, query: Record<string, string
     ok: collect.ok,
     outcome: collect.outcome,
     error: collect.error,
-    statusValue: collect.statusValue,
-    raw: collect.raw,
+    statusValue: collect.statusValue,    
   });
 
   if (collect.ok && collect.outcome === "success") {
