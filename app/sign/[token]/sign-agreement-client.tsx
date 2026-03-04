@@ -7,6 +7,8 @@ type SignAgreementClientProps = {
   token: string;
 };
 
+const SIGNING_TIMEOUT_MS = 5 * 60 * 1000;
+
 export default function SignAgreementClient({ token }: SignAgreementClientProps) {
   const [agreement, setAgreement] = useState<Agreement | null>(null);
   const [status, setStatus] = useState("Laddar avtal...");
@@ -118,7 +120,7 @@ export default function SignAgreementClient({ token }: SignAgreementClientProps)
       inFlight = true;
 
       try {
-        const response = await fetch(`/api/agreements/status?token=${encodeURIComponent(token)}`, {
+        const response = await fetch(`/api/agreements/lifecycle?token=${encodeURIComponent(token)}`, {
           method: "GET",
           cache: "no-store",
         });
@@ -136,6 +138,8 @@ export default function SignAgreementClient({ token }: SignAgreementClientProps)
 
         const data = (await response.json()) as {
           status: "draft" | "signing" | "signed";
+          ticStartedAtMs?: number | null;
+          ticState?: string | null;
           signedAt?: string | null;
           signProvider?: string | null;
         };
@@ -168,6 +172,33 @@ export default function SignAgreementClient({ token }: SignAgreementClientProps)
             window.history.replaceState({}, "", url.toString());
           }
 
+          stopPolling();
+          return;
+        }
+
+        if (
+          data.status === "signing" &&
+          typeof data.ticStartedAtMs === "number" &&
+          Date.now() - data.ticStartedAtMs > SIGNING_TIMEOUT_MS
+        ) {
+          await fetch(`/api/agreements/reset?token=${encodeURIComponent(token)}`, {
+            method: "POST",
+            cache: "no-store",
+          });
+
+          setAgreement((previous) => {
+            if (!previous) {
+              return previous;
+            }
+
+            return {
+              ...previous,
+              status: "draft",
+            };
+          });
+
+          setStatus("Tiden gick ut. Försök igen.");
+          setPendingFromCallback(false);
           stopPolling();
           return;
         }
