@@ -1,6 +1,7 @@
 import { getAgreementByToken } from "@/lib/agreements";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
+import { randomBytes } from "node:crypto";
 
 type AgreementStatusPayload = {
   status: "draft" | "signing" | "signed";
@@ -15,6 +16,25 @@ type FirestoreAgreementDoc = {
   ticState?: string;
   ticStartedAt?: { toDate?: () => Date };
 };
+
+function generateAgreementTokenServer() {
+  return randomBytes(16).toString("hex");
+}
+
+export async function createAgreementServer(input: { title: string; content: string }) {
+  const db = getAdminDb();
+  const token = generateAgreementTokenServer();
+
+  const docRef = await db.collection("agreements").add({
+    title: input.title,
+    content: input.content,
+    token,
+    status: "draft",
+    createdAt: FieldValue.serverTimestamp(),
+  });
+
+  return { id: docRef.id, token };
+}
 
 function normalizeSignedAt(value: unknown) {
   if (!value || typeof value !== "object") {

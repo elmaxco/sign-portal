@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { createAgreement } from "@/lib/agreements";
 
 export default function AdminNewAgreementPage() {
   const [title, setTitle] = useState("");
@@ -30,10 +29,23 @@ export default function AdminNewAgreementPage() {
     setStatus("");
 
     try {
-      const result = await createAgreement({
-        title: title.trim(),
-        content: content.trim(),
+      const response = await fetch("/api/admin/agreements/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          title: title.trim(),
+          content: content.trim(),
+        }),
       });
+
+      const result = (await response.json()) as { token?: string; error?: string };
+
+      if (!response.ok || !result.token) {
+        setStatus(result.error ?? "Kunde inte skapa avtal.");
+        return;
+      }
 
       setToken(result.token);
       setStatus("Avtalet skapades.");
