@@ -1,6 +1,6 @@
 import { getAgreementByToken } from "@/lib/agreements";
 import { getAdminDb } from "@/lib/firebase-admin";
-import { serverTimestamp } from "firebase-admin/firestore";
+import { FieldValue } from "firebase-admin/firestore";
 
 type AgreementStatusPayload = {
   status: "draft" | "signing" | "signed";
@@ -115,7 +115,7 @@ export async function markAgreementSigningByTokenServer(input: {
   await snapshot.docs[0].ref.update({
     status: "signing",
     ticState: input.ticState,
-    ticStartedAt: serverTimestamp(),
+    ticStartedAt: FieldValue.serverTimestamp(),
   });
 
   return true;
@@ -145,7 +145,7 @@ export async function markAgreementSignedByTicStateServer(input: {
 
   await snapshot.docs[0].ref.update({
     status: "signed",
-    signedAt: serverTimestamp(),
+    signedAt: FieldValue.serverTimestamp(),
     signProvider: input.signProvider ?? "id.tic.io",
     signProof: JSON.stringify(minimalReceipt),
   });
@@ -171,7 +171,7 @@ export async function markAgreementFailedByTicStateServer(input: {
 
   await snapshot.docs[0].ref.update({
     status: "draft",
-    signFailedAt: serverTimestamp(),
+    signFailedAt: FieldValue.serverTimestamp(),
     signErrorCode: input.errorCode ?? "FAILED",
     signErrorMessage: input.errorMessage ?? "Signering misslyckades eller avbröts.",
   });
