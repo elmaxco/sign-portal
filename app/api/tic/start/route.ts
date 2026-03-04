@@ -5,7 +5,10 @@ import {
   getAppBaseUrl,
   getHostedBaseUrl,
 } from "@/lib/idtic";
-import { getAgreementLifecycleByToken, markAgreementSigningByToken } from "@/lib/agreements";
+import {
+  getAgreementLifecycleByTokenServer,
+  markAgreementSigningByTokenServer,
+} from "@/lib/agreements-server";
 
 type StartBody = {
   token?: string;
@@ -38,7 +41,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const lifecycle = await getAgreementLifecycleByToken(token);
+  const lifecycle = await getAgreementLifecycleByTokenServer(token);
 
   if (!lifecycle) {
     return NextResponse.json({ error: "Agreement not found for token." }, { status: 404 });
@@ -66,7 +69,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const marked = await markAgreementSigningByToken({
+    const marked = await markAgreementSigningByTokenServer({
       token,
       ticState: newState,
     });

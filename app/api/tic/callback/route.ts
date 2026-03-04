@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { markAgreementFailedByTicState, markAgreementSignedByTicState } from "@/lib/agreements";
+import {
+  markAgreementFailedByTicStateServer,
+  markAgreementSignedByTicStateServer,
+} from "@/lib/agreements-server";
 import { parseIdTicCallback, verifySignedState } from "@/lib/idtic";
 import { collectTicAuthSession } from "@/lib/tic-collect";
 
@@ -100,7 +103,7 @@ async function handleCallback(request: NextRequest, query: Record<string, string
   });
 
   if (collect.ok && collect.outcome === "success") {
-    const updated = await markAgreementSignedByTicState({
+    const updated = await markAgreementSignedByTicStateServer({
       ticState: state,
       signProvider: parsed.provider,
       sessionId,
@@ -117,7 +120,7 @@ async function handleCallback(request: NextRequest, query: Record<string, string
   }
 
   if (collect.outcome === "failed" || parsed.isFailure) {
-    await markAgreementFailedByTicState({
+    await markAgreementFailedByTicStateServer({
       ticState: state,
       errorCode: collect.statusValue || "FAILED",
       errorMessage: collect.error || "Signering misslyckades eller avbröts.",

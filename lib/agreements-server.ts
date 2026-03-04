@@ -1,6 +1,6 @@
 import { getAgreementByToken } from "@/lib/agreements";
-import { applicationDefault, cert, getApps, initializeApp } from "firebase-admin/app";
-import { getFirestore } from "firebase-admin/firestore";
+import { getAdminDb } from "@/lib/firebase-admin";
+import { serverTimestamp } from "firebase-admin/firestore";
 
 type AgreementStatusPayload = {
   status: "draft" | "signing" | "signed";
@@ -8,30 +8,13 @@ type AgreementStatusPayload = {
   signProvider: string | null;
 };
 
-function getAdminApp() {
-  if (getApps().length) {
-    return getApps()[0];
-  }
-
-  const projectId = process.env.FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
-  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-  const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n");
-
-  if (projectId && clientEmail && privateKey) {
-    return initializeApp({
-      credential: cert({
-        projectId,
-        clientEmail,
-        privateKey,
-      }),
-    });
-  }
-
-  return initializeApp({
-    credential: applicationDefault(),
-    projectId: projectId || undefined,
-  });
-}
+type FirestoreAgreementDoc = {
+  status?: "draft" | "signing" | "signed";
+  signedAt?: unknown;
+  signProvider?: string;
+  ticState?: string;
+  ticStartedAt?: { toDate?: () => Date };
+};
 
 function normalizeSignedAt(value: unknown) {
   if (!value || typeof value !== "object") {
@@ -50,8 +33,7 @@ function normalizeSignedAt(value: unknown) {
 }
 
 async function getAgreementStatusByTokenAdmin(token: string): Promise<AgreementStatusPayload | null> {
-  const app = getAdminApp();
-  const db = getFirestore(app);
+  const db = getAdminDb();
   const snapshot = await db
     .collection("agreements")
     .where("token", "==", token)
@@ -62,11 +44,7 @@ async function getAgreementStatusByTokenAdmin(token: string): Promise<AgreementS
     return null;
   }
 
-  const data = snapshot.docs[0].data() as {
-    status?: "draft" | "signing" | "signed";
-    signedAt?: unknown;
-    signProvider?: string;
-  };
+  const data = snapshot.docs[0].data() as FirestoreAgreementDoc;
 
   return {
     status: data.status ?? "draft",
@@ -95,4 +73,108 @@ export async function getAgreementStatusByTokenServer(token: string) {
   } catch {
     return getAgreementStatusByTokenFallback(token);
   }
+}
+
+export async function getAgreementLifecycleByTokenServer(token: string) {
+  const db = getAdminDb();
+  const snapshot = await db
+    .collection("agreements")
+    .where("token", "==", token)
+    .limit(1)
+    .get();
+
+  if (snapshot.empty) {
+    return null;
+  }
+
+  const data = snapshot.docs[0].data() as FirestoreAgreementDoc;
+  const ticStartedAt = data.ticStartedAt?.toDate?.();
+
+  return {
+    status: data.status ?? "draft",
+    ticState: data.ticState ?? "",
+    ticStartedAtMs: ticStartedAt ? ticStartedAt.getTime() : null,
+  };
+}
+
+export async function markAgreementSigningByTokenServer(input: {
+  token: string;
+  ticState: string;
+}) {
+  const db = getAdminDb();
+  const snapshot = await db
+    .collection("agreements")
+    .where("token", "==", input.token)
+    .limit(1)
+    .get();
+
+  if (snapshot.empty) {
+    return false;
+  }
+
+  await snapshot.docs[0].ref.update({
+    status: "signing",
+    ticState: input.ticState,
+    ticStartedAt: serverTimestamp(),
+  });
+
+  return true;
+}
+
+export async function markAgreementSignedByTicStateServer(input: {
+  ticState: string;
+  signProvider?: string;
+  sessionId?: string;
+  result?: string;
+}) {
+  const db = getAdminDb();
+  const snapshot = await db
+    .collection("agreements")
+    .where("ticState", "==", input.ticState)
+    .limit(1)
+    .get();
+
+  if (snapshot.empty) {
+    return false;
+  }
+
+  const minimalReceipt = {
+    sessionId: input.sessionId ?? "",
+    result: input.result ?? "",
+  };
+
+  await snapshot.docs[0].ref.update({
+    status: "signed",
+    signedAt: serverTimestamp(),
+    signProvider: input.signProvider ?? "id.tic.io",
+    signProof: JSON.stringify(minimalReceipt),
+  });
+
+  return true;
+}
+
+export async function markAgreementFailedByTicStateServer(input: {
+  ticState: string;
+  errorCode?: string;
+  errorMessage?: string;
+}) {
+  const db = getAdminDb();
+  const snapshot = await db
+    .collection("agreements")
+    .where("ticState", "==", input.ticState)
+    .limit(1)
+    .get();
+
+  if (snapshot.empty) {
+    return false;
+  }
+
+  await snapshot.docs[0].ref.update({
+    status: "draft",
+    signFailedAt: serverTimestamp(),
+    signErrorCode: input.errorCode ?? "FAILED",
+    signErrorMessage: input.errorMessage ?? "Signering misslyckades eller avbröts.",
+  });
+
+  return true;
 }
