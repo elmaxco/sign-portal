@@ -7,12 +7,15 @@ type AdminAgreement = {
   id: string;
   title: string;
   token: string;
+  recipientEmail: string | null;
   status: "draft" | "signing" | "signed";
+  sentAt: string | null;
 };
 
 export default function AdminAgreementsPage() {
   const [agreements, setAgreements] = useState<AdminAgreement[]>([]);
   const [status, setStatus] = useState("Laddar avtal...");
+  const [sendingToken, setSendingToken] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -69,6 +72,41 @@ export default function AdminAgreementsPage() {
     }
   }
 
+  async function sendAgreementLink(token: string) {
+    setSendingToken(token);
+
+    try {
+      const response = await fetch("/api/admin/agreements/send", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ token }),
+      });
+
+      const payload = (await response.json()) as { ok?: boolean; error?: string };
+
+      if (!response.ok || !payload.ok) {
+        setStatus(payload.error ?? "Kunde inte skicka signlänken.");
+        return;
+      }
+
+      const nowIso = new Date().toISOString();
+
+      setAgreements((previous) =>
+        previous.map((agreement) =>
+          agreement.token === token ? { ...agreement, sentAt: nowIso } : agreement,
+        ),
+      );
+      setStatus("Signlänk skickad.");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      setStatus(`Kunde inte skicka signlänk: ${message}`);
+    } finally {
+      setSendingToken(null);
+    }
+  }
+
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-4xl flex-col gap-6 px-6 py-12">
       <header className="flex flex-wrap items-center justify-between gap-3">
@@ -88,6 +126,10 @@ export default function AdminAgreementsPage() {
             <li key={agreement.id} className="rounded-md border p-4">
               <p className="font-medium">{agreement.title || "(utan titel)"}</p>
               <p className="text-sm">Status: {agreement.status}</p>
+              <p className="text-sm">Mottagare: {agreement.recipientEmail || "saknas"}</p>
+              <p className="text-sm">
+                Senast skickat: {agreement.sentAt ? new Date(agreement.sentAt).toLocaleString() : "aldrig"}
+              </p>
               <div className="mt-3 flex flex-wrap gap-3">
                 <Link href={signPath} className="text-sm underline">
                   Öppna avtal
@@ -98,6 +140,18 @@ export default function AdminAgreementsPage() {
                   onClick={() => copyLink(agreement.token)}
                 >
                   Kopiera länk
+                </button>
+                <button
+                  type="button"
+                  className="text-sm underline disabled:opacity-50"
+                  disabled={sendingToken === agreement.token || !agreement.recipientEmail}
+                  onClick={() => sendAgreementLink(agreement.token)}
+                >
+                  {sendingToken === agreement.token
+                    ? "Skickar..."
+                    : agreement.sentAt
+                      ? "Skicka igen"
+                      : "Skicka signlänk"}
                 </button>
               </div>
             </li>
