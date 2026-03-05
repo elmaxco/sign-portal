@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 const MAINTENANCE_MODE = process.env.MAINTENANCE_MODE === "true";
-const ADMIN_BASIC_USERNAME = process.env.ADMIN_BASIC_USERNAME;
-const ADMIN_BASIC_PASSWORD = process.env.ADMIN_BASIC_PASSWORD;
+const ADMIN_BASIC_USERNAME = process.env.ADMIN_BASIC_USERNAME || process.env.BASIC_AUTH_USER;
+const ADMIN_BASIC_PASSWORD = process.env.ADMIN_BASIC_PASSWORD || process.env.BASIC_AUTH_PASS;
 
 function isMaintenanceExempt(pathname: string) {
   return (
@@ -29,9 +29,19 @@ function unauthorizedResponse() {
   });
 }
 
+function missingAdminAuthConfigResponse() {
+  return new NextResponse("Admin auth is not configured.", {
+    status: 503,
+  });
+}
+
+function isAdminAuthConfigured() {
+  return Boolean(ADMIN_BASIC_USERNAME && ADMIN_BASIC_PASSWORD);
+}
+
 function hasValidAdminBasicAuth(request: NextRequest) {
-  if (!ADMIN_BASIC_USERNAME || !ADMIN_BASIC_PASSWORD) {
-    return true;
+  if (!isAdminAuthConfigured()) {
+    return false;
   }
 
   const header = request.headers.get("authorization");
@@ -67,8 +77,14 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(maintenanceUrl);
   }
 
-  if (isAdminPath(pathname) && !hasValidAdminBasicAuth(request)) {
-    return unauthorizedResponse();
+  if (isAdminPath(pathname)) {
+    if (!isAdminAuthConfigured()) {
+      return missingAdminAuthConfigResponse();
+    }
+
+    if (!hasValidAdminBasicAuth(request)) {
+      return unauthorizedResponse();
+    }
   }
 
   return NextResponse.next();
