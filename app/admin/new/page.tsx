@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 export default function AdminNewAgreementPage() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
+  const [recipientEmail, setRecipientEmail] = useState("");
   const [token, setToken] = useState("");
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
@@ -20,8 +21,8 @@ export default function AdminNewAgreementPage() {
   async function handleCreateAgreement(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (!title.trim() || !content.trim()) {
-      setStatus("Title och content måste fyllas i.");
+    if (!title.trim() || !content.trim() || !recipientEmail.trim()) {
+      setStatus("Title, content och mottagarens e-post måste fyllas i.");
       return;
     }
 
@@ -37,6 +38,7 @@ export default function AdminNewAgreementPage() {
         body: JSON.stringify({
           title: title.trim(),
           content: content.trim(),
+          recipientEmail: recipientEmail.trim(),
         }),
       });
 
@@ -79,6 +81,17 @@ export default function AdminNewAgreementPage() {
             onChange={(event) => setContent(event.target.value)}
             className="min-h-40 rounded-md border px-3 py-2"
             placeholder="Avtalstext"
+          />
+        </label>
+
+        <label className="flex flex-col gap-2">
+          <span className="text-sm font-medium">Mottagarens e-post</span>
+          <input
+            type="email"
+            value={recipientEmail}
+            onChange={(event) => setRecipientEmail(event.target.value)}
+            className="rounded-md border px-3 py-2"
+            placeholder="namn@domän.se"
           />
         </label>
 

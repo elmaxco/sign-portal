@@ -13,9 +13,11 @@ type FirestoreAgreementDoc = {
   title?: string;
   content?: string;
   token?: string;
+  recipientEmail?: string;
   status?: "draft" | "signing" | "signed";
   createdAt?: { toDate?: () => Date };
   signedAt?: unknown;
+  sentAt?: unknown;
   signProvider?: string;
   ticState?: string;
   ticStartedAt?: { toDate?: () => Date };
@@ -25,8 +27,10 @@ export type AgreementListItemServer = {
   id: string;
   title: string;
   token: string;
+  recipientEmail: string | null;
   status: "draft" | "signing" | "signed";
   createdAt: string;
+  sentAt: string | null;
 };
 
 export type AgreementByTokenServer = {
@@ -34,9 +38,11 @@ export type AgreementByTokenServer = {
   title: string;
   content: string;
   token: string;
+  recipientEmail: string | null;
   status: "draft" | "signing" | "signed";
   createdAt: string;
   signedAt: string | null;
+  sentAt: string | null;
   signProvider: string | null;
 };
 
@@ -44,7 +50,11 @@ function generateAgreementTokenServer() {
   return randomBytes(16).toString("hex");
 }
 
-export async function createAgreementServer(input: { title: string; content: string }) {
+export async function createAgreementServer(input: {
+  title: string;
+  content: string;
+  recipientEmail: string;
+}) {
   const db = getAdminDb();
   const token = generateAgreementTokenServer();
 
@@ -52,6 +62,7 @@ export async function createAgreementServer(input: { title: string; content: str
     title: input.title,
     content: input.content,
     token,
+    recipientEmail: input.recipientEmail,
     status: "draft",
     createdAt: FieldValue.serverTimestamp(),
   });
@@ -75,8 +86,10 @@ export async function listLatestAgreementsServer(maxItems = 20): Promise<Agreeme
       id: doc.id,
       title: data.title ?? "",
       token: data.token ?? "",
+      recipientEmail: data.recipientEmail ?? null,
       status: data.status ?? "draft",
       createdAt: createdAt ? createdAt.toISOString() : "",
+      sentAt: normalizeTimestamp(data.sentAt),
     };
   });
 }
@@ -102,14 +115,16 @@ export async function getAgreementByTokenServer(token: string): Promise<Agreemen
     title: data.title ?? "",
     content: data.content ?? "",
     token: data.token ?? "",
+    recipientEmail: data.recipientEmail ?? null,
     status: data.status ?? "draft",
     createdAt: createdAt ? createdAt.toISOString() : "",
-    signedAt: normalizeSignedAt(data.signedAt),
+    signedAt: normalizeTimestamp(data.signedAt),
+    sentAt: normalizeTimestamp(data.sentAt),
     signProvider: data.signProvider ?? null,
   };
 }
 
-function normalizeSignedAt(value: unknown) {
+function normalizeTimestamp(value: unknown) {
   if (!value || typeof value !== "object") {
     return null;
   }
@@ -141,9 +156,28 @@ async function getAgreementStatusByTokenAdmin(token: string): Promise<AgreementS
 
   return {
     status: data.status ?? "draft",
-    signedAt: normalizeSignedAt(data.signedAt),
+    signedAt: normalizeTimestamp(data.signedAt),
     signProvider: data.signProvider ?? null,
   };
+}
+
+export async function markAgreementEmailSentByTokenServer(input: { token: string }) {
+  const db = getAdminDb();
+  const snapshot = await db
+    .collection("agreements")
+    .where("token", "==", input.token)
+    .limit(1)
+    .get();
+
+  if (snapshot.empty) {
+    return false;
+  }
+
+  await snapshot.docs[0].ref.update({
+    sentAt: FieldValue.serverTimestamp(),
+  });
+
+  return true;
 }
 
 async function getAgreementStatusByTokenFallback(token: string): Promise<AgreementStatusPayload | null> {
