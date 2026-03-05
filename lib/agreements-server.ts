@@ -10,11 +10,23 @@ type AgreementStatusPayload = {
 };
 
 type FirestoreAgreementDoc = {
+  title?: string;
+  content?: string;
+  token?: string;
   status?: "draft" | "signing" | "signed";
+  createdAt?: { toDate?: () => Date };
   signedAt?: unknown;
   signProvider?: string;
   ticState?: string;
   ticStartedAt?: { toDate?: () => Date };
+};
+
+export type AgreementListItemServer = {
+  id: string;
+  title: string;
+  token: string;
+  status: "draft" | "signing" | "signed";
+  createdAt: string;
 };
 
 function generateAgreementTokenServer() {
@@ -34,6 +46,28 @@ export async function createAgreementServer(input: { title: string; content: str
   });
 
   return { id: docRef.id, token };
+}
+
+export async function listLatestAgreementsServer(maxItems = 20): Promise<AgreementListItemServer[]> {
+  const db = getAdminDb();
+  const snapshot = await db
+    .collection("agreements")
+    .orderBy("createdAt", "desc")
+    .limit(maxItems)
+    .get();
+
+  return snapshot.docs.map((doc) => {
+    const data = doc.data() as FirestoreAgreementDoc;
+    const createdAt = data.createdAt?.toDate?.();
+
+    return {
+      id: doc.id,
+      title: data.title ?? "",
+      token: data.token ?? "",
+      status: data.status ?? "draft",
+      createdAt: createdAt ? createdAt.toISOString() : "",
+    };
+  });
 }
 
 function normalizeSignedAt(value: unknown) {

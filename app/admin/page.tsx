@@ -2,10 +2,16 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { listLatestAgreements, type Agreement } from "@/lib/agreements";
+
+type AdminAgreement = {
+  id: string;
+  title: string;
+  token: string;
+  status: "draft" | "signing" | "signed";
+};
 
 export default function AdminAgreementsPage() {
-  const [agreements, setAgreements] = useState<Agreement[]>([]);
+  const [agreements, setAgreements] = useState<AdminAgreement[]>([]);
   const [status, setStatus] = useState("Laddar avtal...");
 
   useEffect(() => {
@@ -13,7 +19,21 @@ export default function AdminAgreementsPage() {
 
     async function loadAgreements() {
       try {
-        const result = await listLatestAgreements();
+        const response = await fetch("/api/admin/agreements/list", {
+          method: "GET",
+          cache: "no-store",
+        });
+
+        const payload = (await response.json()) as {
+          agreements?: AdminAgreement[];
+          error?: string;
+        };
+
+        if (!response.ok) {
+          throw new Error(payload.error ?? "Kunde inte läsa avtal.");
+        }
+
+        const result = payload.agreements ?? [];
 
         if (!active) {
           return;
