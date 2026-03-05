@@ -1,7 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getAgreementByToken, type Agreement } from "@/lib/agreements";
+
+type Agreement = {
+  id: string;
+  title: string;
+  content: string;
+  token: string;
+  status: "draft" | "signing" | "signed";
+  createdAt: string;
+  signedAt?: string;
+  signProvider?: string;
+};
 
 type SignAgreementClientProps = {
   token: string;
@@ -21,7 +31,27 @@ export default function SignAgreementClient({ token }: SignAgreementClientProps)
 
     async function loadAgreement() {
       try {
-        const result = await getAgreementByToken(token);
+        const response = await fetch(`/api/agreements/get?token=${encodeURIComponent(token)}`, {
+          method: "GET",
+          cache: "no-store",
+        });
+
+        const payload = (await response.json()) as {
+          agreement?: Agreement;
+          error?: string;
+        };
+
+        if (!response.ok) {
+          if (!active) {
+            return;
+          }
+
+          setAgreement(null);
+          setStatus(payload.error ?? "Avtal hittades inte.");
+          return;
+        }
+
+        const result = payload.agreement ?? null;
 
         if (!active) {
           return;

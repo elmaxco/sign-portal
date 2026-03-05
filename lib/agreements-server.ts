@@ -29,6 +29,17 @@ export type AgreementListItemServer = {
   createdAt: string;
 };
 
+export type AgreementByTokenServer = {
+  id: string;
+  title: string;
+  content: string;
+  token: string;
+  status: "draft" | "signing" | "signed";
+  createdAt: string;
+  signedAt: string | null;
+  signProvider: string | null;
+};
+
 function generateAgreementTokenServer() {
   return randomBytes(16).toString("hex");
 }
@@ -68,6 +79,34 @@ export async function listLatestAgreementsServer(maxItems = 20): Promise<Agreeme
       createdAt: createdAt ? createdAt.toISOString() : "",
     };
   });
+}
+
+export async function getAgreementByTokenServer(token: string): Promise<AgreementByTokenServer | null> {
+  const db = getAdminDb();
+  const snapshot = await db
+    .collection("agreements")
+    .where("token", "==", token)
+    .limit(1)
+    .get();
+
+  if (snapshot.empty) {
+    return null;
+  }
+
+  const doc = snapshot.docs[0];
+  const data = doc.data() as FirestoreAgreementDoc;
+  const createdAt = data.createdAt?.toDate?.();
+
+  return {
+    id: doc.id,
+    title: data.title ?? "",
+    content: data.content ?? "",
+    token: data.token ?? "",
+    status: data.status ?? "draft",
+    createdAt: createdAt ? createdAt.toISOString() : "",
+    signedAt: normalizeSignedAt(data.signedAt),
+    signProvider: data.signProvider ?? null,
+  };
 }
 
 function normalizeSignedAt(value: unknown) {
