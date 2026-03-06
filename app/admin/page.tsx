@@ -9,8 +9,37 @@ type AdminAgreement = {
   token: string;
   recipientEmail: string | null;
   status: "draft" | "signing" | "signed";
+  createdAt: string;
+  signedAt: string | null;
   sentAt: string | null;
+  reminderSentAt: string | null;
 };
+
+function formatDateTime(value?: string | null) {
+  if (!value) {
+    return "-";
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "-";
+  }
+
+  return date.toLocaleString();
+}
+
+function statusBadgeClass(status: AdminAgreement["status"]) {
+  if (status === "signed") {
+    return "bg-green-100 text-green-800 border-green-300";
+  }
+
+  if (status === "signing") {
+    return "bg-amber-100 text-amber-900 border-amber-300";
+  }
+
+  return "bg-slate-100 text-slate-700 border-slate-300";
+}
 
 export default function AdminAgreementsPage() {
   const [agreements, setAgreements] = useState<AdminAgreement[]>([]);
@@ -84,7 +113,11 @@ export default function AdminAgreementsPage() {
         body: JSON.stringify({ token }),
       });
 
-      const payload = (await response.json()) as { ok?: boolean; error?: string };
+      const payload = (await response.json()) as {
+        ok?: boolean;
+        wasReminder?: boolean;
+        error?: string;
+      };
 
       if (!response.ok || !payload.ok) {
         setStatus(payload.error ?? "Kunde inte skicka signlänken.");
@@ -95,10 +128,14 @@ export default function AdminAgreementsPage() {
 
       setAgreements((previous) =>
         previous.map((agreement) =>
-          agreement.token === token ? { ...agreement, sentAt: nowIso } : agreement,
+          agreement.token === token
+            ? payload.wasReminder
+              ? { ...agreement, reminderSentAt: nowIso }
+              : { ...agreement, sentAt: nowIso }
+            : agreement,
         ),
       );
-      setStatus("Signlänk skickad.");
+      setStatus(payload.wasReminder ? "Påminnelse skickad." : "Signlänk skickad.");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
       setStatus(`Kunde inte skicka signlänk: ${message}`);
@@ -124,11 +161,37 @@ export default function AdminAgreementsPage() {
 
           return (
             <li key={agreement.id} className="rounded-md border p-4">
-              <p className="font-medium">{agreement.title || "(utan titel)"}</p>
-              <p className="text-sm">Status: {agreement.status}</p>
-              <p className="text-sm">Mottagare: {agreement.recipientEmail || "saknas"}</p>
-              <p className="text-sm">
-                Senast skickat: {agreement.sentAt ? new Date(agreement.sentAt).toLocaleString() : "aldrig"}
+              <div className="grid gap-2 text-sm md:grid-cols-2">
+                <p>
+                  <span className="font-medium">Titel:</span> {agreement.title || "(utan titel)"}
+                </p>
+                <p>
+                  <span className="font-medium">Skapat:</span> {formatDateTime(agreement.createdAt)}
+                </p>
+                <p>
+                  <span className="font-medium">Signerat:</span> {formatDateTime(agreement.signedAt)}
+                </p>
+                <p>
+                  <span className="font-medium">Mottagare:</span> {agreement.recipientEmail || "saknas"}
+                </p>
+                <p>
+                  <span className="font-medium">Senast skickat:</span> {formatDateTime(agreement.sentAt)}
+                </p>
+                <p>
+                  <span className="font-medium">Senast påminnelse:</span>{" "}
+                  {formatDateTime(agreement.reminderSentAt)}
+                </p>
+                <p>
+                  <span className="font-medium">Status:</span>{" "}
+                  <span
+                    className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-medium ${statusBadgeClass(agreement.status)}`}
+                  >
+                    {agreement.status}
+                  </span>
+                </p>
+              </div>
+              <p className="mt-2 text-xs text-muted-foreground">
+                Signeringslänk är dold, använd &quot;Kopiera länk&quot;.
               </p>
               <div className="mt-3 flex flex-wrap gap-3">
                 <Link href={signPath} className="text-sm underline">
