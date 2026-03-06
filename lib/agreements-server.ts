@@ -30,6 +30,7 @@ export type AgreementListItemServer = {
   recipientEmail: string | null;
   status: "draft" | "signing" | "signed";
   createdAt: string;
+  signedAt: string | null;
   sentAt: string | null;
 };
 
@@ -89,6 +90,7 @@ export async function listLatestAgreementsServer(maxItems = 20): Promise<Agreeme
       recipientEmail: data.recipientEmail ?? null,
       status: data.status ?? "draft",
       createdAt: createdAt ? createdAt.toISOString() : "",
+      signedAt: normalizeTimestamp(data.signedAt),
       sentAt: normalizeTimestamp(data.sentAt),
     };
   });
