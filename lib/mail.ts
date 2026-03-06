@@ -4,12 +4,22 @@ type SendAgreementEmailInput = {
   agreementTitle: string;
 };
 
+const DEFAULT_MAIL_FROM = "noreply@signportal.starring.se";
+const DEFAULT_VERIFIED_DOMAIN = "signportal.starring.se";
+
 export async function sendAgreementLinkEmail(input: SendAgreementEmailInput) {
   const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.MAIL_FROM;
+  const from = (process.env.MAIL_FROM || DEFAULT_MAIL_FROM).trim();
+  const verifiedDomain = (process.env.MAIL_VERIFIED_DOMAIN || DEFAULT_VERIFIED_DOMAIN)
+    .trim()
+    .toLowerCase();
 
   if (!apiKey || !from) {
     throw new Error("Missing RESEND_API_KEY or MAIL_FROM env variable.");
+  }
+
+  if (!from.toLowerCase().endsWith(`@${verifiedDomain}`)) {
+    throw new Error(`MAIL_FROM must use verified domain @${verifiedDomain}.`);
   }
 
   const subject = `Signera avtal: ${input.agreementTitle || "Avtal"}`;
