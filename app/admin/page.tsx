@@ -12,6 +12,7 @@ type AdminAgreement = {
   createdAt: string;
   signedAt: string | null;
   sentAt: string | null;
+  reminderSentAt: string | null;
 };
 
 function formatDateTime(value?: string | null) {
@@ -112,7 +113,11 @@ export default function AdminAgreementsPage() {
         body: JSON.stringify({ token }),
       });
 
-      const payload = (await response.json()) as { ok?: boolean; error?: string };
+      const payload = (await response.json()) as {
+        ok?: boolean;
+        wasReminder?: boolean;
+        error?: string;
+      };
 
       if (!response.ok || !payload.ok) {
         setStatus(payload.error ?? "Kunde inte skicka signlänken.");
@@ -123,10 +128,14 @@ export default function AdminAgreementsPage() {
 
       setAgreements((previous) =>
         previous.map((agreement) =>
-          agreement.token === token ? { ...agreement, sentAt: nowIso } : agreement,
+          agreement.token === token
+            ? payload.wasReminder
+              ? { ...agreement, reminderSentAt: nowIso }
+              : { ...agreement, sentAt: nowIso }
+            : agreement,
         ),
       );
-      setStatus("Signlänk skickad.");
+      setStatus(payload.wasReminder ? "Påminnelse skickad." : "Signlänk skickad.");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
       setStatus(`Kunde inte skicka signlänk: ${message}`);
@@ -167,6 +176,10 @@ export default function AdminAgreementsPage() {
                 </p>
                 <p>
                   <span className="font-medium">Senast skickat:</span> {formatDateTime(agreement.sentAt)}
+                </p>
+                <p>
+                  <span className="font-medium">Senast påminnelse:</span>{" "}
+                  {formatDateTime(agreement.reminderSentAt)}
                 </p>
                 <p>
                   <span className="font-medium">Status:</span>{" "}
