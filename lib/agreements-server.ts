@@ -18,6 +18,7 @@ type FirestoreAgreementDoc = {
   createdAt?: { toDate?: () => Date };
   signedAt?: unknown;
   sentAt?: unknown;
+  reminderSentAt?: unknown;
   signProvider?: string;
   ticState?: string;
   ticStartedAt?: { toDate?: () => Date };
@@ -30,7 +31,9 @@ export type AgreementListItemServer = {
   recipientEmail: string | null;
   status: "draft" | "signing" | "signed";
   createdAt: string;
+  signedAt: string | null;
   sentAt: string | null;
+  reminderSentAt: string | null;
 };
 
 export type AgreementByTokenServer = {
@@ -43,6 +46,7 @@ export type AgreementByTokenServer = {
   createdAt: string;
   signedAt: string | null;
   sentAt: string | null;
+  reminderSentAt: string | null;
   signProvider: string | null;
 };
 
@@ -89,7 +93,9 @@ export async function listLatestAgreementsServer(maxItems = 20): Promise<Agreeme
       recipientEmail: data.recipientEmail ?? null,
       status: data.status ?? "draft",
       createdAt: createdAt ? createdAt.toISOString() : "",
+      signedAt: normalizeTimestamp(data.signedAt),
       sentAt: normalizeTimestamp(data.sentAt),
+      reminderSentAt: normalizeTimestamp(data.reminderSentAt),
     };
   });
 }
@@ -120,6 +126,7 @@ export async function getAgreementByTokenServer(token: string): Promise<Agreemen
     createdAt: createdAt ? createdAt.toISOString() : "",
     signedAt: normalizeTimestamp(data.signedAt),
     sentAt: normalizeTimestamp(data.sentAt),
+    reminderSentAt: normalizeTimestamp(data.reminderSentAt),
     signProvider: data.signProvider ?? null,
   };
 }
@@ -170,14 +177,19 @@ export async function markAgreementEmailSentByTokenServer(input: { token: string
     .get();
 
   if (snapshot.empty) {
-    return false;
+    return { updated: false, wasReminder: false };
   }
 
+  const data = snapshot.docs[0].data() as FirestoreAgreementDoc;
+  const hasPreviousSend = Boolean(normalizeTimestamp(data.sentAt));
+
   await snapshot.docs[0].ref.update({
-    sentAt: FieldValue.serverTimestamp(),
+    ...(hasPreviousSend
+      ? { reminderSentAt: FieldValue.serverTimestamp() }
+      : { sentAt: FieldValue.serverTimestamp() }),
   });
 
-  return true;
+  return { updated: true, wasReminder: hasPreviousSend };
 }
 
 async function getAgreementStatusByTokenFallback(token: string): Promise<AgreementStatusPayload | null> {

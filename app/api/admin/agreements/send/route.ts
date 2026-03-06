@@ -48,7 +48,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: message }, { status: 502 });
   }
 
-  await markAgreementEmailSentByTokenServer({ token: agreement.token });
+  const marked = await markAgreementEmailSentByTokenServer({ token: agreement.token });
 
-  return NextResponse.json({ ok: true });
+  if (!marked.updated) {
+    return NextResponse.json({ error: "Agreement not found while updating sentAt." }, { status: 404 });
+  }
+
+  return NextResponse.json({ ok: true, wasReminder: marked.wasReminder });
 }
