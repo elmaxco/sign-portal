@@ -1,7 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createAgreementServer } from "@/lib/agreements-server";
+import {
+  createAgreementServer,
+  markAgreementEmailSentByTokenServer,
+} from "@/lib/agreements-server";
+import { sendAgreementLinkEmail } from "@/lib/mail";
 
 export const dynamic = "force-dynamic";
+
+function getAbsoluteBaseUrl(rawBaseUrl: string | undefined, fallbackOrigin: string) {
+  const candidate = (rawBaseUrl || fallbackOrigin).trim();
+  const withProtocol = /^https?:\/\//i.test(candidate) ? candidate : `https://${candidate}`;
+
+  try {
+    return new URL(withProtocol).toString().replace(/\/$/, "");
+  } catch {
+    return fallbackOrigin.replace(/\/$/, "");
+  }
+}
 
 export async function POST(request: NextRequest) {
   let body: { title?: string; content?: string; recipientEmail?: string };
@@ -29,5 +44,30 @@ export async function POST(request: NextRequest) {
     recipientEmail,
   });
 
-  return NextResponse.json(created);
+  const rawBaseUrl = process.env.APP_PUBLIC_BASE_URL || process.env.APP_BASE_URL;
+  const baseUrl = getAbsoluteBaseUrl(rawBaseUrl, request.nextUrl.origin);
+  const signUrl = new URL(`/sign/${created.token}`, baseUrl).toString();
+
+  try {
+    await sendAgreementLinkEmail({
+      to: recipientEmail,
+      signUrl,
+      agreementTitle: title,
+    });
+
+    await markAgreementEmailSentByTokenServer({ token: created.token });
+
+    return NextResponse.json({
+      ...created,
+      mailSent: true,
+    });
+  } catch (error) {
+    const mailError = error instanceof Error ? error.message : "Failed to send email.";
+
+    return NextResponse.json({
+      ...created,
+      mailSent: false,
+      mailError,
+    });
+  }
 }
