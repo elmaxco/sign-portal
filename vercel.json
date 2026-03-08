@@ -1,7 +1,7 @@
 {
   "crons": [
     {
-      "path": "/api/agreements/reminders",
+      "path": "/api/agreements/reminders?firstReminderAfterMinutes=1&reminderIntervalMinutes=1",
       "schedule": "0 10 * * *"
     }
   ]
