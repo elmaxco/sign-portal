@@ -7,8 +7,8 @@ import { sendAgreementLinkEmail } from "@/lib/mail";
 
 export const dynamic = "force-dynamic";
 
-const DEFAULT_FIRST_REMINDER_AFTER_MINUTES = 24 * 60;
-const DEFAULT_REMINDER_INTERVAL_MINUTES = 24 * 60;
+const DEFAULT_FIRST_REMINDER_AFTER_MINUTES = 4 * 24 * 60;
+const DEFAULT_REMINDER_INTERVAL_MINUTES = 4 * 24 * 60;
 
 function getAbsoluteBaseUrl(rawBaseUrl: string | undefined, fallbackOrigin: string) {
   const candidate = (rawBaseUrl || fallbackOrigin).trim();
