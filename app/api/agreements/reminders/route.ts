@@ -85,6 +85,7 @@ async function handleReminders(request: NextRequest) {
         to: candidate.recipientEmail,
         signUrl,
         agreementTitle: candidate.title,
+        variant: "reminder",
       });
 
       const marked = await markAgreementEmailSentByTokenServer({ token: candidate.token });
