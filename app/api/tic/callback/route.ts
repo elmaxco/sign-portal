@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
+  getAgreementByTokenServer,
   markAgreementFailedByTicStateServer,
   markAgreementSignedByTicStateServer,
 } from "@/lib/agreements-server";
 import { parseIdTicCallback, verifySignedState } from "@/lib/idtic";
+import {
+  sendAdminAgreementSignedNoticeEmail,
+  sendAgreementSignedConfirmationEmail,
+} from "@/lib/mail";
 import { collectTicAuthSession } from "@/lib/tic-collect";
 
 function toQueryObject(searchParams: URLSearchParams) {
@@ -34,6 +39,17 @@ function safeNextUrl(request: NextRequest, token: string) {
     return parsed;
   } catch {
     return fallback;
+  }
+}
+
+function getAbsoluteBaseUrl(rawBaseUrl: string | undefined, fallbackOrigin: string) {
+  const candidate = (rawBaseUrl || fallbackOrigin).trim();
+  const withProtocol = /^https?:\/\//i.test(candidate) ? candidate : `https://${candidate}`;
+
+  try {
+    return new URL(withProtocol).toString().replace(/\/$/, "");
+  } catch {
+    return fallbackOrigin.replace(/\/$/, "");
   }
 }
 
@@ -112,6 +128,48 @@ async function handleCallback(request: NextRequest, query: Record<string, string
     if (!updated) {
       redirectTarget.searchParams.set("bankid", "agreement_not_found");
       return NextResponse.redirect(redirectTarget);
+    }
+
+    const agreement = await getAgreementByTokenServer(token);
+
+    if (agreement) {
+      const rawBaseUrl = process.env.APP_PUBLIC_BASE_URL || process.env.APP_BASE_URL;
+      const baseUrl = getAbsoluteBaseUrl(rawBaseUrl, request.nextUrl.origin);
+      const signUrl = new URL(`/sign/${agreement.token}`, baseUrl).toString();
+      const adminNotifyEmail =
+        process.env.ADMIN_NOTIFY_EMAIL || process.env.MAIL_ADMIN_NOTIFY_TO || "";
+
+      const emailTasks: Array<Promise<unknown>> = [];
+
+      if (agreement.recipientEmail) {
+        emailTasks.push(
+          sendAgreementSignedConfirmationEmail({
+            to: agreement.recipientEmail,
+            agreementTitle: agreement.title,
+            signUrl,
+          }),
+        );
+      }
+
+      if (adminNotifyEmail.trim()) {
+        emailTasks.push(
+          sendAdminAgreementSignedNoticeEmail({
+            to: adminNotifyEmail.trim(),
+            agreementTitle: agreement.title,
+            recipientEmail: agreement.recipientEmail || "(saknas)",
+            signUrl,
+          }),
+        );
+      }
+
+      if (emailTasks.length > 0) {
+        const emailResults = await Promise.allSettled(emailTasks);
+        const failedResults = emailResults.filter((result) => result.status === "rejected");
+
+        if (failedResults.length > 0) {
+          console.error("Signed notification emails failed:", failedResults);
+        }
+      }
     }
 
     redirectTarget.searchParams.set("bankid", "success");
