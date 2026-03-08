@@ -2,6 +2,7 @@ type SendAgreementEmailInput = {
   to: string;
   signUrl: string;
   agreementTitle: string;
+  variant?: "initial" | "reminder";
 };
 
 const DEFAULT_MAIL_FROM = "noreply@signportal.starring.se";
@@ -31,13 +32,20 @@ export async function sendAgreementLinkEmail(input: SendAgreementEmailInput) {
     throw new Error(`MAIL_FROM must use verified domain @${verifiedDomain}.`);
   }
 
-  const subject = `Signera avtal: ${input.agreementTitle || "Avtal"}`;
+  const isReminder = input.variant === "reminder";
+  const subject = isReminder
+    ? `Paminnelse: signera avtal ${input.agreementTitle || "Avtal"}`
+    : `Signera avtal: ${input.agreementTitle || "Avtal"}`;
   const safeSignUrl = escapeHtml(input.signUrl);
+  const introText = isReminder
+    ? "Paminnelse: du verkar ha missat att signera ditt avtal."
+    : "Du har ett avtal att signera.";
+
   const text = [
     "Hej!",
     "",
-    "Du har ett avtal att signera.",
-    `Signeringslänk: ${input.signUrl}`,
+    introText,
+    `Signeringslank: ${input.signUrl}`,
     "",
     "Om länken inte fungerar, kopiera in den i webbläsaren.",
   ].join("\n");
@@ -45,7 +53,9 @@ export async function sendAgreementLinkEmail(input: SendAgreementEmailInput) {
   const html = [
     '<div style="font-family:Arial,sans-serif;line-height:1.5;color:#111">',
     "<p>Hej!</p>",
-    "<p>Du har ett avtal att signera.</p>",
+    isReminder
+      ? "<p><strong>Påminnelse:</strong> du verkar ha missat att signera ditt avtal.</p>"
+      : "<p>Du har ett avtal att signera.</p>",
     `<p><a href="${safeSignUrl}" style="color:#0a58ca;text-decoration:underline">Klicka här för att signera avtalet</a></p>`,
     `<p>Om länken inte fungerar, kopiera denna adress: <a href="${safeSignUrl}">${safeSignUrl}</a></p>`,
     "</div>",

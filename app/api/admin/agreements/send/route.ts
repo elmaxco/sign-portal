@@ -52,6 +52,7 @@ export async function POST(request: NextRequest) {
       to: agreement.recipientEmail,
       signUrl,
       agreementTitle: agreement.title,
+      variant: agreement.sentAt ? "reminder" : "initial",
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to send email.";
