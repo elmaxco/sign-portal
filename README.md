@@ -34,3 +34,35 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Environment Variables
+
+The app uses server-side email sending (Resend) and scheduled reminders.
+
+### Required for email sending
+
+- `RESEND_API_KEY`: API key from Resend.
+- `MAIL_FROM`: Sender address, must belong to a verified domain in Resend.
+
+### Optional email config
+
+- `MAIL_VERIFIED_DOMAIN`: Domain validation for `MAIL_FROM`. Default: `signportal.starring.se`.
+- `APP_BASE_URL`: Absolute app base URL used in email links (e.g. `https://your-domain.se`).
+- `APP_PUBLIC_BASE_URL`: Optional override for `APP_BASE_URL` when building links.
+
+### Signed notification emails
+
+- `ADMIN_NOTIFY_EMAIL`: Internal admin recipient for "agreement signed" notices.
+- `MAIL_ADMIN_NOTIFY_TO`: Alternative variable name for internal admin recipient.
+
+When an agreement is signed successfully:
+
+- The signer receives a confirmation email (receipt).
+- Admin receives an internal notice if one of the admin notify env vars above is set.
+
+### Cron reminders
+
+- `CRON_SECRET` or `AGREEMENTS_REMINDER_SECRET`: Secret used by `/api/agreements/reminders`.
+
+The reminder endpoint accepts both `GET` and `POST` and is scheduled via `vercel.json`.
+Default reminder timing is 4 days for first reminder and 4 days between subsequent reminders.
