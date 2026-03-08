@@ -7,6 +7,17 @@ import { sendAgreementLinkEmail } from "@/lib/mail";
 
 export const dynamic = "force-dynamic";
 
+function getAbsoluteBaseUrl(rawBaseUrl: string | undefined, fallbackOrigin: string) {
+  const candidate = (rawBaseUrl || fallbackOrigin).trim();
+  const withProtocol = /^https?:\/\//i.test(candidate) ? candidate : `https://${candidate}`;
+
+  try {
+    return new URL(withProtocol).toString().replace(/\/$/, "");
+  } catch {
+    return fallbackOrigin.replace(/\/$/, "");
+  }
+}
+
 export async function POST(request: NextRequest) {
   let body: { token?: string };
 
@@ -32,10 +43,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Agreement is missing recipient email." }, { status: 400 });
   }
 
-  const baseUrl =
-    process.env.APP_PUBLIC_BASE_URL || process.env.APP_BASE_URL || request.nextUrl.origin;
-
-  const signUrl = `${baseUrl.replace(/\/$/, "")}/sign/${agreement.token}`;
+  const rawBaseUrl = process.env.APP_PUBLIC_BASE_URL || process.env.APP_BASE_URL;
+  const baseUrl = getAbsoluteBaseUrl(rawBaseUrl, request.nextUrl.origin);
+  const signUrl = new URL(`/sign/${agreement.token}`, baseUrl).toString();
 
   try {
     await sendAgreementLinkEmail({
