@@ -9,6 +9,7 @@ export default function AdminNewAgreementPage() {
   const [token, setToken] = useState("");
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
+  const isCreated = Boolean(token);
 
   const shareLink = useMemo(() => {
     if (!token || typeof window === "undefined") {
@@ -20,6 +21,10 @@ export default function AdminNewAgreementPage() {
 
   async function handleCreateAgreement(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    if (isCreated) {
+      return;
+    }
 
     if (!title.trim() || !content.trim() || !recipientEmail.trim()) {
       setStatus("Title, content och mottagarens e-post måste fyllas i.");
@@ -59,6 +64,14 @@ export default function AdminNewAgreementPage() {
     }
   }
 
+  function handleCreateAnother() {
+    setTitle("");
+    setContent("");
+    setRecipientEmail("");
+    setToken("");
+    setStatus("");
+  }
+
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-3xl flex-col gap-6 px-6 py-12">
       <h1 className="text-2xl font-semibold">Skapa avtal</h1>
@@ -69,6 +82,7 @@ export default function AdminNewAgreementPage() {
           <input
             value={title}
             onChange={(event) => setTitle(event.target.value)}
+            disabled={loading || isCreated}
             className="rounded-md border px-3 py-2"
             placeholder="Avtalstitel"
           />
@@ -79,6 +93,7 @@ export default function AdminNewAgreementPage() {
           <textarea
             value={content}
             onChange={(event) => setContent(event.target.value)}
+            disabled={loading || isCreated}
             className="min-h-40 rounded-md border px-3 py-2"
             placeholder="Avtalstext"
           />
@@ -90,6 +105,7 @@ export default function AdminNewAgreementPage() {
             type="email"
             value={recipientEmail}
             onChange={(event) => setRecipientEmail(event.target.value)}
+            disabled={loading || isCreated}
             className="rounded-md border px-3 py-2"
             placeholder="namn@domän.se"
           />
@@ -97,11 +113,21 @@ export default function AdminNewAgreementPage() {
 
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || isCreated}
           className="w-fit rounded-md bg-foreground px-4 py-2 text-background disabled:opacity-50"
         >
           Create
         </button>
+
+        {isCreated ? (
+          <button
+            type="button"
+            onClick={handleCreateAnother}
+            className="w-fit rounded-md border px-4 py-2"
+          >
+            Skapa nytt avtal
+          </button>
+        ) : null}
       </form>
 
       {status ? <p className="text-sm">{status}</p> : null}
