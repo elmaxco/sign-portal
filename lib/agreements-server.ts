@@ -50,6 +50,16 @@ export type AgreementByTokenServer = {
   signProvider: string | null;
 };
 
+export type AgreementReminderCandidateServer = {
+  id: string;
+  token: string;
+  title: string;
+  recipientEmail: string;
+  status: "draft" | "signing";
+  sentAt: string;
+  reminderSentAt: string | null;
+};
+
 function generateAgreementTokenServer() {
   return randomBytes(16).toString("hex");
 }
@@ -129,6 +139,77 @@ export async function getAgreementByTokenServer(token: string): Promise<Agreemen
     reminderSentAt: normalizeTimestamp(data.reminderSentAt),
     signProvider: data.signProvider ?? null,
   };
+}
+
+export async function listAutomaticReminderCandidatesServer(input: {
+  firstReminderAfterMinutes: number;
+  reminderIntervalMinutes: number;
+  maxItems?: number;
+  nowMs?: number;
+}) {
+  const db = getAdminDb();
+  const maxItems = Math.max(1, Math.min(input.maxItems ?? 100, 500));
+  const firstReminderAfterMs = Math.max(1, input.firstReminderAfterMinutes) * 60 * 1000;
+  const reminderIntervalMs = Math.max(1, input.reminderIntervalMinutes) * 60 * 1000;
+  const nowMs = input.nowMs ?? Date.now();
+
+  const snapshot = await db
+    .collection("agreements")
+    .where("status", "in", ["draft", "signing"])
+    .limit(maxItems * 5)
+    .get();
+
+  const candidates: AgreementReminderCandidateServer[] = [];
+
+  for (const doc of snapshot.docs) {
+    const data = doc.data() as FirestoreAgreementDoc;
+    const token = data.token ?? "";
+    const recipientEmail = data.recipientEmail ?? "";
+
+    if (!token || !recipientEmail) {
+      continue;
+    }
+
+    const sentAtIso = normalizeTimestamp(data.sentAt);
+
+    if (!sentAtIso) {
+      continue;
+    }
+
+    const sentAtMs = new Date(sentAtIso).getTime();
+
+    if (!Number.isFinite(sentAtMs)) {
+      continue;
+    }
+
+    const reminderSentAtIso = normalizeTimestamp(data.reminderSentAt);
+    const reminderSentAtMs = reminderSentAtIso ? new Date(reminderSentAtIso).getTime() : null;
+
+    const shouldSend =
+      reminderSentAtMs === null
+        ? nowMs - sentAtMs >= firstReminderAfterMs
+        : nowMs - reminderSentAtMs >= reminderIntervalMs;
+
+    if (!shouldSend) {
+      continue;
+    }
+
+    candidates.push({
+      id: doc.id,
+      token,
+      title: data.title ?? "",
+      recipientEmail,
+      status: data.status ?? "draft",
+      sentAt: sentAtIso,
+      reminderSentAt: reminderSentAtIso,
+    });
+
+    if (candidates.length >= maxItems) {
+      break;
+    }
+  }
+
+  return candidates;
 }
 
 function normalizeTimestamp(value: unknown) {
