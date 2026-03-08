@@ -32,15 +32,22 @@ function parsePositiveInt(value: string | null, fallback: number) {
 }
 
 export async function POST(request: NextRequest) {
-  const expectedSecret = process.env.AGREEMENTS_REMINDER_SECRET;
+  const expectedSecret = process.env.AGREEMENTS_REMINDER_SECRET || process.env.CRON_SECRET;
 
   if (!expectedSecret) {
-    return NextResponse.json({ error: "Missing AGREEMENTS_REMINDER_SECRET." }, { status: 503 });
+    return NextResponse.json(
+      { error: "Missing AGREEMENTS_REMINDER_SECRET or CRON_SECRET." },
+      { status: 503 },
+    );
   }
 
   const providedSecret = request.headers.get("x-cron-secret");
+  const authorization = request.headers.get("authorization");
+  const bearerSecret = authorization?.startsWith("Bearer ") ? authorization.slice(7) : null;
 
-  if (providedSecret !== expectedSecret) {
+  const isAuthorized = providedSecret === expectedSecret || bearerSecret === expectedSecret;
+
+  if (!isAuthorized) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 
