@@ -47,7 +47,12 @@ export default function AdminNewAgreementPage() {
         }),
       });
 
-      const result = (await response.json()) as { token?: string; error?: string };
+      const result = (await response.json()) as {
+        token?: string;
+        mailSent?: boolean;
+        mailError?: string;
+        error?: string;
+      };
 
       if (!response.ok || !result.token) {
         setStatus(result.error ?? "Kunde inte skapa avtal.");
@@ -55,7 +60,11 @@ export default function AdminNewAgreementPage() {
       }
 
       setToken(result.token);
-      setStatus("Avtalet skapades.");
+      if (result.mailSent === false) {
+        setStatus(`Avtalet skapades, men mejl kunde inte skickas: ${result.mailError || "okänt fel"}`);
+      } else {
+        setStatus("Avtalet skapades och mejl skickades.");
+      }
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
       setStatus(`Kunde inte skapa avtal: ${message}`);
