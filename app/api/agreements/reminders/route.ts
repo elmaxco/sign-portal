@@ -32,9 +32,12 @@ function parsePositiveInt(value: string | null, fallback: number) {
 }
 
 async function handleReminders(request: NextRequest) {
-  const expectedSecret = process.env.AGREEMENTS_REMINDER_SECRET || process.env.CRON_SECRET;
+  const acceptedSecrets = [
+    process.env.AGREEMENTS_REMINDER_SECRET,
+    process.env.CRON_SECRET,
+  ].filter((value): value is string => Boolean(value && value.trim()));
 
-  if (!expectedSecret) {
+  if (!acceptedSecrets.length) {
     return NextResponse.json(
       { error: "Missing AGREEMENTS_REMINDER_SECRET or CRON_SECRET." },
       { status: 503 },
@@ -45,7 +48,8 @@ async function handleReminders(request: NextRequest) {
   const authorization = request.headers.get("authorization");
   const bearerSecret = authorization?.startsWith("Bearer ") ? authorization.slice(7) : null;
 
-  const isAuthorized = providedSecret === expectedSecret || bearerSecret === expectedSecret;
+  const isAuthorized = acceptedSecrets.includes(providedSecret || "") ||
+    acceptedSecrets.includes(bearerSecret || "");
 
   if (!isAuthorized) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
