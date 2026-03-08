@@ -163,6 +163,12 @@ export async function listAutomaticReminderCandidatesServer(input: {
 
   for (const doc of snapshot.docs) {
     const data = doc.data() as FirestoreAgreementDoc;
+    const status = data.status ?? "draft";
+
+    if (status !== "draft" && status !== "signing") {
+      continue;
+    }
+
     const token = data.token ?? "";
     const recipientEmail = data.recipientEmail ?? "";
 
@@ -199,7 +205,7 @@ export async function listAutomaticReminderCandidatesServer(input: {
       token,
       title: data.title ?? "",
       recipientEmail,
-      status: data.status ?? "draft",
+      status,
       sentAt: sentAtIso,
       reminderSentAt: reminderSentAtIso,
     });
