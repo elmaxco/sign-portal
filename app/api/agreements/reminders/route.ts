@@ -31,7 +31,7 @@ function parsePositiveInt(value: string | null, fallback: number) {
   return Math.floor(parsed);
 }
 
-export async function POST(request: NextRequest) {
+async function handleReminders(request: NextRequest) {
   const expectedSecret = process.env.AGREEMENTS_REMINDER_SECRET || process.env.CRON_SECRET;
 
   if (!expectedSecret) {
@@ -109,4 +109,12 @@ export async function POST(request: NextRequest) {
       maxItems,
     },
   });
+}
+
+export async function GET(request: NextRequest) {
+  return handleReminders(request);
+}
+
+export async function POST(request: NextRequest) {
+  return handleReminders(request);
 }
