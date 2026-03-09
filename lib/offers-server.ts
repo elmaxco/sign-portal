@@ -8,6 +8,7 @@ type FirestoreOffer = {
   company?: string;
   orgNumber?: string;
   phone?: string;
+  smsConsent?: boolean;
   packageName?: string;
   notes?: string;
   status?: "new" | "converted";
@@ -24,6 +25,7 @@ export type OfferListItem = {
   company: string;
   orgNumber: string;
   phone: string;
+  smsConsent: boolean;
   packageName: string;
   notes: string;
   status: "new" | "converted";
@@ -44,6 +46,7 @@ function mapOffer(id: string, data: FirestoreOffer): OfferListItem {
     company: data.company ?? "",
     orgNumber: data.orgNumber ?? "",
     phone: data.phone ?? "",
+    smsConsent: data.smsConsent === true,
     packageName: data.packageName ?? "",
     notes: data.notes ?? "",
     status: data.status ?? "new",
@@ -60,6 +63,7 @@ export async function createOfferServer(input: {
   company: string;
   orgNumber: string;
   phone: string;
+  smsConsent?: boolean;
   packageName?: string;
   notes?: string;
 }) {
@@ -71,6 +75,7 @@ export async function createOfferServer(input: {
     company: input.company,
     orgNumber: input.orgNumber,
     phone: input.phone,
+    smsConsent: input.smsConsent === true,
     packageName: input.packageName ?? "",
     notes: input.notes ?? "",
     status: "new",
@@ -134,6 +139,8 @@ export async function createAgreementFromOfferServer(offerId: string) {
     title: agreementTitle,
     content: agreementContent,
     recipientEmail: offer.email,
+    recipientPhone: offer.phone,
+    recipientSmsConsent: offer.smsConsent,
   });
 
   await offerRef.update({
