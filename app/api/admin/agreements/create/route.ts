@@ -19,10 +19,22 @@ function getAbsoluteBaseUrl(rawBaseUrl: string | undefined, fallbackOrigin: stri
 }
 
 export async function POST(request: NextRequest) {
-  let body: { title?: string; content?: string; recipientEmail?: string };
+  let body: {
+    title?: string;
+    content?: string;
+    recipientEmail?: string;
+    recipientPhone?: string;
+    recipientSmsConsent?: boolean;
+  };
 
   try {
-    body = (await request.json()) as { title?: string; content?: string; recipientEmail?: string };
+    body = (await request.json()) as {
+      title?: string;
+      content?: string;
+      recipientEmail?: string;
+      recipientPhone?: string;
+      recipientSmsConsent?: boolean;
+    };
   } catch {
     return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
   }
@@ -30,6 +42,8 @@ export async function POST(request: NextRequest) {
   const title = body.title?.trim() || "";
   const content = body.content?.trim() || "";
   const recipientEmail = body.recipientEmail?.trim().toLowerCase() || "";
+  const recipientPhone = body.recipientPhone?.trim() || "";
+  const recipientSmsConsent = body.recipientSmsConsent === true;
 
   if (!title || !content || !recipientEmail) {
     return NextResponse.json(
@@ -42,6 +56,8 @@ export async function POST(request: NextRequest) {
     title,
     content,
     recipientEmail,
+    recipientPhone,
+    recipientSmsConsent,
   });
 
   const rawBaseUrl = process.env.APP_PUBLIC_BASE_URL || process.env.APP_BASE_URL;

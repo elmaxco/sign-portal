@@ -8,6 +8,8 @@ type AdminAgreement = {
   title: string;
   token: string;
   recipientEmail: string | null;
+  recipientPhone: string | null;
+  recipientSmsConsent: boolean;
   status: "draft" | "signing" | "signed";
   createdAt: string;
   signedAt: string | null;
@@ -189,6 +191,12 @@ export default function AdminAgreementsPage() {
                 </p>
                 <p>
                   <span className="font-medium">Mottagare:</span> {agreement.recipientEmail || "saknas"}
+                </p>
+                <p>
+                  <span className="font-medium">Telefon:</span> {agreement.recipientPhone || "saknas"}
+                </p>
+                <p>
+                  <span className="font-medium">SMS-samtycke:</span> {agreement.recipientSmsConsent ? "Ja" : "Nej"}
                 </p>
                 <p>
                   <span className="font-medium">Senast skickat:</span> {formatDateTime(agreement.sentAt)}
