@@ -95,6 +95,8 @@ export default function AdminOffersPage() {
         ok?: boolean;
         error?: string;
         agreement?: { id: string; token: string };
+        signLinkEmailSent?: boolean;
+        signLinkEmailError?: string;
       };
 
       if (!response.ok || !payload.ok || !payload.agreement) {
@@ -116,7 +118,13 @@ export default function AdminOffersPage() {
         ),
       );
 
-      setStatus("Avtal skapades från offert.");
+      setStatus(
+        payload.signLinkEmailSent
+          ? "Avtal skapades från offert och signlänk skickades till kunden."
+          : payload.signLinkEmailError
+            ? `Avtal skapades från offert, men signlänken kunde inte skickas: ${payload.signLinkEmailError}`
+            : "Avtal skapades från offert.",
+      );
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
       setStatus(`Kunde inte skapa avtal från offert: ${message}`);
