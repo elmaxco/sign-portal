@@ -11,7 +11,16 @@ type TwilioConfig = {
   fromNumber: string;
 };
 
+function isSmsFeatureEnabled() {
+  const raw = process.env.SMS_ENABLED?.trim().toLowerCase();
+  return raw === "true" || raw === "1" || raw === "yes";
+}
+
 function getTwilioConfig(): TwilioConfig | null {
+  if (!isSmsFeatureEnabled()) {
+    return null;
+  }
+
   const accountSid = process.env.TWILIO_ACCOUNT_SID?.trim() || "";
   const authToken = process.env.TWILIO_AUTH_TOKEN?.trim() || "";
   const fromNumber = process.env.TWILIO_FROM_NUMBER?.trim() || "";
@@ -53,7 +62,7 @@ export async function sendAgreementLinkSms(input: SendAgreementSmsInput) {
   const config = getTwilioConfig();
 
   if (!config) {
-    throw new Error("SMS is not configured.");
+    throw new Error("SMS is disabled or not configured.");
   }
 
   const auth = Buffer.from(`${config.accountSid}:${config.authToken}`).toString("base64");

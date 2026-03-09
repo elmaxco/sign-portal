@@ -71,9 +71,15 @@ Default reminder timing is 4 days for first reminder and 4 days between subseque
 
 SMS is optional and only sent when all conditions are met:
 
+- `SMS_ENABLED` is set to `true`.
 - Twilio env vars are configured.
 - Agreement has `recipientPhone`.
 - Agreement has `recipientSmsConsent = true`.
+
+### Feature flag
+
+- `SMS_ENABLED`: Set to `true` to activate SMS sending.
+- If unset or not `true`, SMS is skipped even when Twilio vars exist.
 
 ### Required Twilio env vars
 
