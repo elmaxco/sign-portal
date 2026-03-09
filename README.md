@@ -66,3 +66,29 @@ When an agreement is signed successfully:
 
 The reminder endpoint accepts both `GET` and `POST` and is scheduled via `vercel.json`.
 Default reminder timing is 4 days for first reminder and 4 days between subsequent reminders.
+
+## SMS Notifications (Twilio)
+
+SMS is optional and only sent when all conditions are met:
+
+- Twilio env vars are configured.
+- Agreement has `recipientPhone`.
+- Agreement has `recipientSmsConsent = true`.
+
+### Required Twilio env vars
+
+- `TWILIO_ACCOUNT_SID`
+- `TWILIO_AUTH_TOKEN`
+- `TWILIO_FROM_NUMBER` (E.164 format, e.g. `+46701234567`)
+
+### Where SMS is sent
+
+- Admin manual send sign link: `POST /api/admin/agreements/send`
+- Automatic reminders (cron): `GET|POST /api/agreements/reminders`
+- Offer conversion auto-send flow: `POST /api/admin/offers/create-agreement`
+
+### Consent model (MVP)
+
+- Offer form stores `smsConsent` from the checkbox.
+- When an offer is converted to an agreement, `recipientPhone` and `recipientSmsConsent` are copied to the agreement.
+- If consent is false, SMS is skipped even if phone number exists.
