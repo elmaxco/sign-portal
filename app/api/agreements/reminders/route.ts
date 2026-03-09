@@ -4,6 +4,7 @@ import {
   markAgreementEmailSentByTokenServer,
 } from "@/lib/agreements-server";
 import { sendAgreementLinkEmail } from "@/lib/mail";
+import { isSmsConfigured, sendAgreementLinkSms } from "@/lib/sms";
 
 export const dynamic = "force-dynamic";
 
@@ -76,6 +77,10 @@ async function handleReminders(request: NextRequest) {
 
   let sent = 0;
   const failed: Array<{ token: string; error: string }> = [];
+  let smsSent = 0;
+  let smsSkipped = 0;
+  const smsFailed: Array<{ token: string; error: string }> = [];
+  const smsEnabled = isSmsConfigured();
 
   for (const candidate of candidates) {
     const signUrl = new URL(`/sign/${candidate.token}`, baseUrl).toString();
@@ -92,6 +97,25 @@ async function handleReminders(request: NextRequest) {
 
       if (marked.updated) {
         sent += 1;
+
+        if (!candidate.recipientSmsConsent || !candidate.recipientPhone || !smsEnabled) {
+          smsSkipped += 1;
+        } else {
+          try {
+            await sendAgreementLinkSms({
+              to: candidate.recipientPhone,
+              signUrl,
+              agreementTitle: candidate.title,
+              variant: "reminder",
+            });
+            smsSent += 1;
+          } catch (error) {
+            smsFailed.push({
+              token: candidate.token,
+              error: error instanceof Error ? error.message : "Unknown SMS reminder error.",
+            });
+          }
+        }
       } else {
         failed.push({ token: candidate.token, error: "Failed to update reminder timestamp." });
       }
@@ -108,6 +132,12 @@ async function handleReminders(request: NextRequest) {
     checked: candidates.length,
     sent,
     failed,
+    sms: {
+      enabled: smsEnabled,
+      sent: smsSent,
+      skipped: smsSkipped,
+      failed: smsFailed,
+    },
     config: {
       firstReminderAfterMinutes,
       reminderIntervalMinutes,
