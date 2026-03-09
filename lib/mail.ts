@@ -18,6 +18,14 @@ type AdminSignedNoticeInput = {
   signUrl: string;
 };
 
+type OfferReceivedConfirmationInput = {
+  to: string;
+  customerName: string;
+  company: string;
+  packageName?: string;
+  offerId: string;
+};
+
 const DEFAULT_MAIL_FROM = "noreply@signportal.starring.se";
 const DEFAULT_VERIFIED_DOMAIN = "signportal.starring.se";
 
@@ -181,6 +189,43 @@ export async function sendAdminAgreementSignedNoticeEmail(input: AdminSignedNoti
     `<p><strong>Titel:</strong> ${escapeHtml(input.agreementTitle || "(utan titel)")}</p>`,
     `<p><strong>Mottagare:</strong> ${safeRecipient}</p>`,
     `<p><a href="${safeSignUrl}" style="color:#0a58ca;text-decoration:underline">Öppna avtal</a></p>`,
+    "</div>",
+  ].join("");
+
+  return sendEmail({
+    to: input.to,
+    subject,
+    text,
+    html,
+  });
+}
+
+export async function sendOfferReceivedConfirmationEmail(input: OfferReceivedConfirmationInput) {
+  const subject = "Vi har mottagit din offertforfragan";
+  const safeName = escapeHtml(input.customerName || "kund");
+  const safeCompany = escapeHtml(input.company || "-");
+  const safePackage = escapeHtml(input.packageName || "-");
+  const safeOfferId = escapeHtml(input.offerId);
+
+  const text = [
+    `Hej ${input.customerName || "kund"}!`,
+    "",
+    "Tack, vi har mottagit din offertforfragan.",
+    "Vi aterkommer normalt inom 24 timmar med nasta steg.",
+    "",
+    `Foretag: ${input.company || "-"}`,
+    `Paket: ${input.packageName || "-"}`,
+    `Referens-ID: ${input.offerId}`,
+  ].join("\n");
+
+  const html = [
+    '<div style="font-family:Arial,sans-serif;line-height:1.5;color:#111">',
+    `<p>Hej ${safeName}!</p>`,
+    "<p>Tack, vi har mottagit din offertforfragan.</p>",
+    "<p>Vi aterkommer normalt inom 24 timmar med nasta steg.</p>",
+    "<p><strong>Sammanfattning</strong></p>",
+    `<p><strong>Foretag:</strong> ${safeCompany}<br/><strong>Paket:</strong> ${safePackage}</p>`,
+    `<p><strong>Referens-ID:</strong> ${safeOfferId}</p>`,
     "</div>",
   ].join("");
 

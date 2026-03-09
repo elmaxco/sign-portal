@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createOfferServer } from "@/lib/offers-server";
+import { sendOfferReceivedConfirmationEmail } from "@/lib/mail";
 
 export const dynamic = "force-dynamic";
 
@@ -51,5 +52,24 @@ export async function POST(request: NextRequest) {
     notes: body.notes?.trim() || "",
   });
 
-  return NextResponse.json({ ok: true, id: created.id });
+  let emailError: string | null = null;
+
+  try {
+    await sendOfferReceivedConfirmationEmail({
+      to: email,
+      customerName: name,
+      company,
+      packageName: body.packageName?.trim() || "",
+      offerId: created.id,
+    });
+  } catch (error) {
+    emailError = error instanceof Error ? error.message : "Failed to send confirmation email.";
+  }
+
+  return NextResponse.json({
+    ok: true,
+    id: created.id,
+    confirmationEmailSent: !emailError,
+    ...(emailError ? { confirmationEmailError: emailError } : {}),
+  });
 }

@@ -51,7 +51,11 @@ export default function OfferPage() {
         body: JSON.stringify(form),
       });
 
-      const payload = (await response.json()) as { ok?: boolean; error?: string };
+      const payload = (await response.json()) as {
+        ok?: boolean;
+        error?: string;
+        confirmationEmailSent?: boolean;
+      };
 
       if (!response.ok || !payload.ok) {
         setStatus(payload.error ?? "Kunde inte skicka offertförfrågan.");
@@ -59,7 +63,11 @@ export default function OfferPage() {
       }
 
       setForm(INITIAL_FORM);
-      setStatus("Tack! Din offertförfrågan är inskickad.");
+      setStatus(
+        payload.confirmationEmailSent === false
+          ? "Tack! Din offertförfrågan är inskickad, men bekräftelsemejlet kunde inte skickas just nu."
+          : "Tack! Din offertförfrågan är inskickad.",
+      );
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
       setStatus(`Kunde inte skicka offertförfrågan: ${message}`);
