@@ -10,6 +10,7 @@ type OfferItem = {
   company: string;
   orgNumber: string;
   phone: string;
+  smsConsent: boolean;
   packageName: string;
   notes: string;
   status: "new" | "converted";
@@ -162,6 +163,9 @@ export default function AdminOffersPage() {
               </p>
               <p>
                 <span className="font-medium">Telefon:</span> {offer.phone}
+              </p>
+              <p>
+                <span className="font-medium">SMS-samtycke:</span> {offer.smsConsent ? "Ja" : "Nej"}
               </p>
               <p>
                 <span className="font-medium">Paket:</span> {offer.packageName || "-"}

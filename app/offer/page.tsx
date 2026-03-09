@@ -8,6 +8,7 @@ type OfferPayload = {
   company: string;
   orgNumber: string;
   phone: string;
+  smsConsent: boolean;
   packageName: string;
   notes: string;
 };
@@ -18,6 +19,7 @@ const INITIAL_FORM: OfferPayload = {
   company: "",
   orgNumber: "",
   phone: "",
+  smsConsent: false,
   packageName: "",
   notes: "",
 };
@@ -138,6 +140,17 @@ export default function OfferPage() {
             placeholder="070-123 45 67"
             disabled={loading}
           />
+        </label>
+
+        <label className="flex items-start gap-2 rounded-md border p-3 text-sm">
+          <input
+            type="checkbox"
+            checked={form.smsConsent}
+            onChange={(event) => setField("smsConsent", event.target.checked)}
+            disabled={loading}
+            className="mt-0.5"
+          />
+          <span>Jag godkanner att ni kontaktar mig via SMS.</span>
         </label>
 
         <label className="flex flex-col gap-2">
