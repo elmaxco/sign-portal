@@ -5,6 +5,7 @@ import {
   markAgreementEmailSentByTokenServer,
 } from "@/lib/agreements-server";
 import { sendAgreementLinkEmail } from "@/lib/mail";
+import { isSmsConfigured, sendAgreementLinkSms } from "@/lib/sms";
 
 export const dynamic = "force-dynamic";
 
@@ -43,6 +44,9 @@ export async function POST(request: NextRequest) {
 
     let signLinkEmailSent = false;
     let signLinkEmailError: string | null = null;
+    let signLinkSmsSent = false;
+    let signLinkSmsError: string | null = null;
+    let signLinkSmsSkippedReason: string | null = null;
 
     try {
       const createdAgreement = await getAgreementByTokenServer(agreement.token);
@@ -64,6 +68,26 @@ export async function POST(request: NextRequest) {
 
       await markAgreementEmailSentByTokenServer({ token: agreement.token });
       signLinkEmailSent = true;
+
+      if (!createdAgreement.recipientSmsConsent) {
+        signLinkSmsSkippedReason = "SMS consent is missing.";
+      } else if (!createdAgreement.recipientPhone) {
+        signLinkSmsSkippedReason = "Recipient phone is missing.";
+      } else if (!isSmsConfigured()) {
+        signLinkSmsSkippedReason = "SMS is not configured.";
+      } else {
+        try {
+          await sendAgreementLinkSms({
+            to: createdAgreement.recipientPhone,
+            signUrl,
+            agreementTitle: createdAgreement.title,
+            variant: "initial",
+          });
+          signLinkSmsSent = true;
+        } catch (error) {
+          signLinkSmsError = error instanceof Error ? error.message : "Failed to send SMS sign link.";
+        }
+      }
     } catch (error) {
       signLinkEmailError = error instanceof Error ? error.message : "Failed to send sign link.";
     }
@@ -72,7 +96,10 @@ export async function POST(request: NextRequest) {
       ok: true,
       agreement,
       signLinkEmailSent,
+      signLinkSmsSent,
       ...(signLinkEmailError ? { signLinkEmailError } : {}),
+      ...(signLinkSmsError ? { signLinkSmsError } : {}),
+      ...(signLinkSmsSkippedReason ? { signLinkSmsSkippedReason } : {}),
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to create agreement from offer.";
