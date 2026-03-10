@@ -11,6 +11,7 @@ export async function POST(request: NextRequest) {
     company?: string;
     orgNumber?: string;
     phone?: string;
+    smsConsent?: boolean;
     packageName?: string;
     notes?: string;
   };
@@ -22,6 +23,7 @@ export async function POST(request: NextRequest) {
       company?: string;
       orgNumber?: string;
       phone?: string;
+      smsConsent?: boolean;
       packageName?: string;
       notes?: string;
     };
@@ -48,6 +50,7 @@ export async function POST(request: NextRequest) {
     company,
     orgNumber,
     phone,
+    smsConsent: body.smsConsent === true,
     packageName: body.packageName?.trim() || "",
     notes: body.notes?.trim() || "",
   });

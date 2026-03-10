@@ -14,6 +14,8 @@ type FirestoreAgreementDoc = {
   content?: string;
   token?: string;
   recipientEmail?: string;
+  recipientPhone?: string;
+  recipientSmsConsent?: boolean;
   status?: "draft" | "signing" | "signed";
   createdAt?: { toDate?: () => Date };
   signedAt?: unknown;
@@ -29,6 +31,8 @@ export type AgreementListItemServer = {
   title: string;
   token: string;
   recipientEmail: string | null;
+  recipientPhone: string | null;
+  recipientSmsConsent: boolean;
   status: "draft" | "signing" | "signed";
   createdAt: string;
   signedAt: string | null;
@@ -42,6 +46,8 @@ export type AgreementByTokenServer = {
   content: string;
   token: string;
   recipientEmail: string | null;
+  recipientPhone: string | null;
+  recipientSmsConsent: boolean;
   status: "draft" | "signing" | "signed";
   createdAt: string;
   signedAt: string | null;
@@ -55,6 +61,8 @@ export type AgreementReminderCandidateServer = {
   token: string;
   title: string;
   recipientEmail: string;
+  recipientPhone: string | null;
+  recipientSmsConsent: boolean;
   status: "draft" | "signing";
   sentAt: string;
   reminderSentAt: string | null;
@@ -68,6 +76,8 @@ export async function createAgreementServer(input: {
   title: string;
   content: string;
   recipientEmail: string;
+  recipientPhone?: string;
+  recipientSmsConsent?: boolean;
 }) {
   const db = getAdminDb();
   const token = generateAgreementTokenServer();
@@ -77,6 +87,8 @@ export async function createAgreementServer(input: {
     content: input.content,
     token,
     recipientEmail: input.recipientEmail,
+    recipientPhone: input.recipientPhone ?? "",
+    recipientSmsConsent: input.recipientSmsConsent === true,
     status: "draft",
     createdAt: FieldValue.serverTimestamp(),
   });
@@ -101,6 +113,8 @@ export async function listLatestAgreementsServer(maxItems = 20): Promise<Agreeme
       title: data.title ?? "",
       token: data.token ?? "",
       recipientEmail: data.recipientEmail ?? null,
+      recipientPhone: data.recipientPhone ?? null,
+      recipientSmsConsent: data.recipientSmsConsent === true,
       status: data.status ?? "draft",
       createdAt: createdAt ? createdAt.toISOString() : "",
       signedAt: normalizeTimestamp(data.signedAt),
@@ -132,6 +146,8 @@ export async function getAgreementByTokenServer(token: string): Promise<Agreemen
     content: data.content ?? "",
     token: data.token ?? "",
     recipientEmail: data.recipientEmail ?? null,
+    recipientPhone: data.recipientPhone ?? null,
+    recipientSmsConsent: data.recipientSmsConsent === true,
     status: data.status ?? "draft",
     createdAt: createdAt ? createdAt.toISOString() : "",
     signedAt: normalizeTimestamp(data.signedAt),
@@ -171,6 +187,8 @@ export async function listAutomaticReminderCandidatesServer(input: {
 
     const token = data.token ?? "";
     const recipientEmail = data.recipientEmail ?? "";
+    const recipientPhone = data.recipientPhone ?? "";
+    const recipientSmsConsent = data.recipientSmsConsent === true;
 
     if (!token || !recipientEmail) {
       continue;
@@ -205,6 +223,8 @@ export async function listAutomaticReminderCandidatesServer(input: {
       token,
       title: data.title ?? "",
       recipientEmail,
+      recipientPhone: recipientPhone || null,
+      recipientSmsConsent,
       status,
       sentAt: sentAtIso,
       reminderSentAt: reminderSentAtIso,

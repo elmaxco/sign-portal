@@ -8,6 +8,8 @@ type AdminAgreement = {
   title: string;
   token: string;
   recipientEmail: string | null;
+  recipientPhone: string | null;
+  recipientSmsConsent: boolean;
   status: "draft" | "signing" | "signed";
   createdAt: string;
   signedAt: string | null;
@@ -116,6 +118,9 @@ export default function AdminAgreementsPage() {
       const payload = (await response.json()) as {
         ok?: boolean;
         wasReminder?: boolean;
+        smsSent?: boolean;
+        smsError?: string;
+        smsSkippedReason?: string;
         error?: string;
       };
 
@@ -135,7 +140,15 @@ export default function AdminAgreementsPage() {
             : agreement,
         ),
       );
-      setStatus(payload.wasReminder ? "Påminnelse skickad." : "Signlänk skickad.");
+      const smsPart = payload.smsSent
+        ? " SMS skickat."
+        : payload.smsError
+          ? ` SMS misslyckades: ${payload.smsError}`
+          : payload.smsSkippedReason
+            ? ` SMS hoppades over: ${payload.smsSkippedReason}`
+            : "";
+
+      setStatus(`${payload.wasReminder ? "Påminnelse skickad." : "Signlänk skickad."}${smsPart}`);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
       setStatus(`Kunde inte skicka signlänk: ${message}`);
@@ -178,6 +191,12 @@ export default function AdminAgreementsPage() {
                 </p>
                 <p>
                   <span className="font-medium">Mottagare:</span> {agreement.recipientEmail || "saknas"}
+                </p>
+                <p>
+                  <span className="font-medium">Telefon:</span> {agreement.recipientPhone || "saknas"}
+                </p>
+                <p>
+                  <span className="font-medium">SMS-samtycke:</span> {agreement.recipientSmsConsent ? "Ja" : "Nej"}
                 </p>
                 <p>
                   <span className="font-medium">Senast skickat:</span> {formatDateTime(agreement.sentAt)}
