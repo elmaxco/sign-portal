@@ -1,5 +1,6 @@
 import { applicationDefault, cert, getApps, initializeApp } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
+import { getStorage } from "firebase-admin/storage";
 
 type ServiceAccountLike = {
   project_id?: string;
@@ -36,6 +37,7 @@ function getServiceAccountFromJsonEnv() {
 
 function getCredentialedApp() {
   const projectId = process.env.FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+  const storageBucket = process.env.FIREBASE_STORAGE_BUCKET || process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
   const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
   const privateKey = getPrivateKey();
 
@@ -48,6 +50,7 @@ function getCredentialedApp() {
         clientEmail: serviceAccountFromJson.clientEmail,
         privateKey: serviceAccountFromJson.privateKey,
       }),
+      storageBucket: storageBucket || undefined,
     });
   }
 
@@ -58,12 +61,14 @@ function getCredentialedApp() {
         clientEmail,
         privateKey,
       }),
+      storageBucket: storageBucket || undefined,
     });
   }
 
   return initializeApp({
     credential: applicationDefault(),
     projectId: projectId || undefined,
+    storageBucket: storageBucket || undefined,
   });
 }
 
@@ -77,4 +82,14 @@ export function getAdminApp() {
 
 export function getAdminDb() {
   return getFirestore(getAdminApp());
+}
+
+export function getAdminBucket() {
+  const bucketName = process.env.FIREBASE_STORAGE_BUCKET || process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
+
+  if (!bucketName) {
+    throw new Error("Missing FIREBASE_STORAGE_BUCKET for attachment storage.");
+  }
+
+  return getStorage(getAdminApp()).bucket(bucketName);
 }

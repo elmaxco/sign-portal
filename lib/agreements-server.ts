@@ -2,6 +2,10 @@ import { getAgreementByToken } from "@/lib/agreements";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
 import { randomBytes } from "node:crypto";
+import {
+  MAX_ATTACHMENTS_PER_AGREEMENT,
+  type AttachmentItem,
+} from "@/lib/attachments";
 
 type AgreementStatusPayload = {
   status: "draft" | "signing" | "signed";
@@ -30,6 +34,16 @@ type FirestoreAgreementDoc = {
   ticState?: string;
   ticStartedAt?: { toDate?: () => Date };
   links?: Array<{ title?: string; url?: string }>;
+  attachments?: Array<{
+    id?: string;
+    filename?: string;
+    contentType?: string;
+    size?: number;
+    storagePath?: string;
+    createdAt?: { toDate?: () => Date };
+    uploadedBy?: "admin";
+  }>;
+  attachmentCount?: number;
 };
 
 export type AgreementListItemServer = {
@@ -45,6 +59,8 @@ export type AgreementListItemServer = {
   sentAt: string | null;
   reminderSentAt: string | null;
   links: AgreementLinkItem[];
+  attachments: AttachmentItem[];
+  attachmentCount: number;
 };
 
 export type AgreementByTokenServer = {
@@ -62,6 +78,8 @@ export type AgreementByTokenServer = {
   reminderSentAt: string | null;
   signProvider: string | null;
   links: AgreementLinkItem[];
+  attachments: AttachmentItem[];
+  attachmentCount: number;
 };
 
 export type AgreementReminderCandidateServer = {
@@ -87,6 +105,7 @@ export async function createAgreementServer(input: {
   recipientPhone?: string;
   recipientSmsConsent?: boolean;
   links?: AgreementLinkItem[];
+  attachments?: AttachmentItem[];
 }) {
   const db = getAdminDb();
   const token = generateAgreementTokenServer();
@@ -102,6 +121,16 @@ export async function createAgreementServer(input: {
       title: link.title,
       url: link.url,
     })),
+    attachments: (input.attachments ?? []).map((attachment) => ({
+      id: attachment.id,
+      filename: attachment.filename,
+      contentType: attachment.contentType,
+      size: attachment.size,
+      storagePath: attachment.storagePath,
+      createdAt: new Date(attachment.createdAt),
+      uploadedBy: attachment.uploadedBy,
+    })),
+    attachmentCount: input.attachments?.length ?? 0,
     status: "draft",
     createdAt: FieldValue.serverTimestamp(),
   });
@@ -134,6 +163,8 @@ export async function listLatestAgreementsServer(maxItems = 20): Promise<Agreeme
       sentAt: normalizeTimestamp(data.sentAt),
       reminderSentAt: normalizeTimestamp(data.reminderSentAt),
       links: normalizeLinks(data.links),
+      attachments: normalizeAttachments(data.attachments),
+      attachmentCount: normalizeAttachmentCount(data),
     };
   });
 }
@@ -169,7 +200,167 @@ export async function getAgreementByTokenServer(token: string): Promise<Agreemen
     reminderSentAt: normalizeTimestamp(data.reminderSentAt),
     signProvider: data.signProvider ?? null,
     links: normalizeLinks(data.links),
+    attachments: normalizeAttachments(data.attachments),
+    attachmentCount: normalizeAttachmentCount(data),
   };
+}
+
+function normalizeAttachmentCount(data: FirestoreAgreementDoc) {
+  if (typeof data.attachmentCount === "number" && data.attachmentCount >= 0) {
+    return data.attachmentCount;
+  }
+
+  return normalizeAttachments(data.attachments).length;
+}
+
+function normalizeAttachments(value: unknown): AttachmentItem[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .map((item) => {
+      const maybeObj = item as {
+        id?: unknown;
+        filename?: unknown;
+        contentType?: unknown;
+        size?: unknown;
+        storagePath?: unknown;
+        createdAt?: unknown;
+        uploadedBy?: unknown;
+      };
+
+      const id = typeof maybeObj.id === "string" ? maybeObj.id.trim() : "";
+      const filename = typeof maybeObj.filename === "string" ? maybeObj.filename.trim() : "";
+      const contentType = typeof maybeObj.contentType === "string" ? maybeObj.contentType.trim() : "";
+      const size = typeof maybeObj.size === "number" ? maybeObj.size : -1;
+      const storagePath = typeof maybeObj.storagePath === "string" ? maybeObj.storagePath.trim() : "";
+      const uploadedBy = maybeObj.uploadedBy === "admin" ? "admin" : null;
+      const createdAtIso = normalizeTimestamp(maybeObj.createdAt);
+
+      if (!id || !filename || !contentType || size < 0 || !storagePath || !createdAtIso || !uploadedBy) {
+        return null;
+      }
+
+      return {
+        id,
+        filename,
+        contentType,
+        size,
+        storagePath,
+        createdAt: createdAtIso,
+        uploadedBy,
+      };
+    })
+    .filter((item): item is AttachmentItem => item !== null);
+}
+
+export async function addAgreementAttachmentByTokenServer(input: {
+  token: string;
+  attachment: AttachmentItem;
+}) {
+  const db = getAdminDb();
+
+  return db.runTransaction(async (tx) => {
+    const snapshot = await tx.get(
+      db.collection("agreements").where("token", "==", input.token).limit(1),
+    );
+
+    if (snapshot.empty) {
+      return { ok: false as const, reason: "not_found" as const };
+    }
+
+    const doc = snapshot.docs[0];
+    const data = doc.data() as FirestoreAgreementDoc;
+    const attachments = normalizeAttachments(data.attachments);
+
+    if (attachments.some((attachment) => attachment.id === input.attachment.id)) {
+      return { ok: false as const, reason: "duplicate_id" as const };
+    }
+
+    if (attachments.length >= MAX_ATTACHMENTS_PER_AGREEMENT) {
+      return { ok: false as const, reason: "max_reached" as const };
+    }
+
+    const nextAttachments = [
+      ...attachments,
+      {
+        ...input.attachment,
+        createdAt: new Date(input.attachment.createdAt),
+      },
+    ];
+
+    tx.update(doc.ref, {
+      attachments: nextAttachments,
+      attachmentCount: nextAttachments.length,
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+
+    tx.set(
+      doc.ref.collection("agreementEvents").doc(),
+      {
+        type: "attachment_uploaded",
+        attachmentId: input.attachment.id,
+        filename: input.attachment.filename,
+        createdAt: FieldValue.serverTimestamp(),
+      },
+      { merge: true },
+    );
+
+    return { ok: true as const, agreementId: doc.id, attachmentCount: nextAttachments.length };
+  });
+}
+
+export async function removeAgreementAttachmentByTokenServer(input: {
+  token: string;
+  attachmentId: string;
+}) {
+  const db = getAdminDb();
+
+  return db.runTransaction(async (tx) => {
+    const snapshot = await tx.get(
+      db.collection("agreements").where("token", "==", input.token).limit(1),
+    );
+
+    if (snapshot.empty) {
+      return { ok: false as const, reason: "not_found" as const };
+    }
+
+    const doc = snapshot.docs[0];
+    const data = doc.data() as FirestoreAgreementDoc;
+    const attachments = normalizeAttachments(data.attachments);
+    const target = attachments.find((attachment) => attachment.id === input.attachmentId);
+
+    if (!target) {
+      return { ok: false as const, reason: "attachment_not_found" as const };
+    }
+
+    const nextAttachments = attachments.filter((attachment) => attachment.id !== input.attachmentId);
+
+    tx.update(doc.ref, {
+      attachments: nextAttachments,
+      attachmentCount: nextAttachments.length,
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+
+    tx.set(
+      doc.ref.collection("agreementEvents").doc(),
+      {
+        type: "attachment_deleted",
+        attachmentId: target.id,
+        filename: target.filename,
+        createdAt: FieldValue.serverTimestamp(),
+      },
+      { merge: true },
+    );
+
+    return {
+      ok: true as const,
+      agreementId: doc.id,
+      storagePath: target.storagePath,
+      attachmentCount: nextAttachments.length,
+    };
+  });
 }
 
 function normalizeLinks(value: unknown): AgreementLinkItem[] {
