@@ -26,7 +26,7 @@ type OfferReceivedConfirmationInput = {
   offerId: string;
 };
 
-const DEFAULT_MAIL_FROM = "noreply@signportal.starring.se";
+const DEFAULT_MAIL_FROM = "info@signportal.starring.se";
 const DEFAULT_VERIFIED_DOMAIN = "signportal.starring.se";
 
 function escapeHtml(value: string) {
