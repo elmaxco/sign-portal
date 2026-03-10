@@ -2,12 +2,18 @@
 
 import { useMemo, useState } from "react";
 
+type AgreementLinkItem = {
+  title: string;
+  url: string;
+};
+
 export default function AdminNewAgreementPage() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [recipientEmail, setRecipientEmail] = useState("");
   const [recipientPhone, setRecipientPhone] = useState("");
   const [recipientSmsConsent, setRecipientSmsConsent] = useState(false);
+  const [links, setLinks] = useState<AgreementLinkItem[]>([{ title: "", url: "" }]);
   const [token, setToken] = useState("");
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
@@ -48,6 +54,9 @@ export default function AdminNewAgreementPage() {
           recipientEmail: recipientEmail.trim(),
           recipientPhone: recipientPhone.trim(),
           recipientSmsConsent,
+          links: links
+            .map((link) => ({ title: link.title.trim(), url: link.url.trim() }))
+            .filter((link) => link.title && link.url),
         }),
       });
 
@@ -83,8 +92,24 @@ export default function AdminNewAgreementPage() {
     setRecipientEmail("");
     setRecipientPhone("");
     setRecipientSmsConsent(false);
+    setLinks([{ title: "", url: "" }]);
     setToken("");
     setStatus("");
+  }
+
+  function updateLink(index: number, patch: Partial<AgreementLinkItem>) {
+    setLinks((previous) => previous.map((item, i) => (i === index ? { ...item, ...patch } : item)));
+  }
+
+  function addLinkRow() {
+    setLinks((previous) => [...previous, { title: "", url: "" }]);
+  }
+
+  function removeLinkRow(index: number) {
+    setLinks((previous) => {
+      const next = previous.filter((_, i) => i !== index);
+      return next.length ? next : [{ title: "", url: "" }];
+    });
   }
 
   return (
@@ -147,6 +172,49 @@ export default function AdminNewAgreementPage() {
           />
           <span>Jag har samtycke att kontakta mottagaren via SMS.</span>
         </label>
+
+        <div className="rounded-md border p-4">
+          <p className="text-sm font-medium">Lankat innehall (valfritt)</p>
+          <p className="mt-1 text-xs text-muted-foreground">Lagg till titel + URL som visas pa signeringssidan.</p>
+
+          <div className="mt-3 space-y-3">
+            {links.map((link, index) => (
+              <div key={`link-${index}`} className="grid gap-2 md:grid-cols-[1fr_1fr_auto]">
+                <input
+                  value={link.title}
+                  onChange={(event) => updateLink(index, { title: event.target.value })}
+                  disabled={loading || isCreated}
+                  className="rounded-md border px-3 py-2"
+                  placeholder="Titel (t.ex. Prislista)"
+                />
+                <input
+                  value={link.url}
+                  onChange={(event) => updateLink(index, { url: event.target.value })}
+                  disabled={loading || isCreated}
+                  className="rounded-md border px-3 py-2"
+                  placeholder="https://..."
+                />
+                <button
+                  type="button"
+                  onClick={() => removeLinkRow(index)}
+                  disabled={loading || isCreated}
+                  className="rounded-md border px-3 py-2 text-sm"
+                >
+                  Ta bort
+                </button>
+              </div>
+            ))}
+          </div>
+
+          <button
+            type="button"
+            onClick={addLinkRow}
+            disabled={loading || isCreated}
+            className="mt-3 rounded-md border px-3 py-2 text-sm"
+          >
+            + Lagg till lank
+          </button>
+        </div>
 
         <button
           type="submit"
