@@ -11,6 +11,46 @@ type TwilioConfig = {
   fromNumber: string;
 };
 
+function getDefaultCountryCode() {
+  const raw = (process.env.SMS_DEFAULT_COUNTRY_CODE || "+46").trim();
+
+  if (!/^\+\d{1,3}$/.test(raw)) {
+    throw new Error("SMS_DEFAULT_COUNTRY_CODE must be in format +<countrycode>, e.g. +46.");
+  }
+
+  return raw;
+}
+
+function normalizePhoneToE164(input: string) {
+  const compact = input.replace(/[\s\-().]/g, "").trim();
+
+  if (!compact) {
+    throw new Error("Recipient phone is empty.");
+  }
+
+  let candidate = compact;
+
+  if (candidate.startsWith("00")) {
+    candidate = `+${candidate.slice(2)}`;
+  } else if (!candidate.startsWith("+")) {
+    const countryCode = getDefaultCountryCode();
+
+    if (candidate.startsWith("0")) {
+      candidate = `${countryCode}${candidate.slice(1)}`;
+    } else if (/^\d+$/.test(candidate)) {
+      candidate = `${countryCode}${candidate}`;
+    }
+  }
+
+  if (!/^\+[1-9]\d{7,14}$/.test(candidate)) {
+    throw new Error(
+      `Invalid recipient phone format. Use E.164 (example: +46701234567). Got: ${input}`,
+    );
+  }
+
+  return candidate;
+}
+
 function isSmsFeatureEnabled() {
   const raw = process.env.SMS_ENABLED?.trim().toLowerCase();
   return raw === "true" || raw === "1" || raw === "yes";
@@ -65,6 +105,8 @@ export async function sendAgreementLinkSms(input: SendAgreementSmsInput) {
     throw new Error("SMS is disabled or not configured.");
   }
 
+  const normalizedTo = normalizePhoneToE164(input.to);
+
   const auth = Buffer.from(`${config.accountSid}:${config.authToken}`).toString("base64");
   const response = await fetch(
     `https://api.twilio.com/2010-04-01/Accounts/${config.accountSid}/Messages.json`,
@@ -76,7 +118,7 @@ export async function sendAgreementLinkSms(input: SendAgreementSmsInput) {
       },
       body: new URLSearchParams({
         From: config.fromNumber,
-        To: input.to,
+        To: normalizedTo,
         Body: toSmsBody(input),
       }).toString(),
     },

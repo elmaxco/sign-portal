@@ -80,6 +80,7 @@ SMS is optional and only sent when all conditions are met:
 
 - `SMS_ENABLED`: Set to `true` to activate SMS sending.
 - If unset or not `true`, SMS is skipped even when Twilio vars exist.
+- `SMS_DEFAULT_COUNTRY_CODE`: Optional default country prefix used when phone is not in E.164. Default: `+46`.
 
 ### Required Twilio env vars
 
