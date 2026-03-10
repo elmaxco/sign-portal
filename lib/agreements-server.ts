@@ -9,6 +9,11 @@ type AgreementStatusPayload = {
   signProvider: string | null;
 };
 
+export type AgreementLinkItem = {
+  title: string;
+  url: string;
+};
+
 type FirestoreAgreementDoc = {
   title?: string;
   content?: string;
@@ -24,6 +29,7 @@ type FirestoreAgreementDoc = {
   signProvider?: string;
   ticState?: string;
   ticStartedAt?: { toDate?: () => Date };
+  links?: Array<{ title?: string; url?: string }>;
 };
 
 export type AgreementListItemServer = {
@@ -38,6 +44,7 @@ export type AgreementListItemServer = {
   signedAt: string | null;
   sentAt: string | null;
   reminderSentAt: string | null;
+  links: AgreementLinkItem[];
 };
 
 export type AgreementByTokenServer = {
@@ -54,6 +61,7 @@ export type AgreementByTokenServer = {
   sentAt: string | null;
   reminderSentAt: string | null;
   signProvider: string | null;
+  links: AgreementLinkItem[];
 };
 
 export type AgreementReminderCandidateServer = {
@@ -78,6 +86,7 @@ export async function createAgreementServer(input: {
   recipientEmail: string;
   recipientPhone?: string;
   recipientSmsConsent?: boolean;
+  links?: AgreementLinkItem[];
 }) {
   const db = getAdminDb();
   const token = generateAgreementTokenServer();
@@ -89,6 +98,10 @@ export async function createAgreementServer(input: {
     recipientEmail: input.recipientEmail,
     recipientPhone: input.recipientPhone ?? "",
     recipientSmsConsent: input.recipientSmsConsent === true,
+    links: (input.links ?? []).map((link) => ({
+      title: link.title,
+      url: link.url,
+    })),
     status: "draft",
     createdAt: FieldValue.serverTimestamp(),
   });
@@ -120,6 +133,7 @@ export async function listLatestAgreementsServer(maxItems = 20): Promise<Agreeme
       signedAt: normalizeTimestamp(data.signedAt),
       sentAt: normalizeTimestamp(data.sentAt),
       reminderSentAt: normalizeTimestamp(data.reminderSentAt),
+      links: normalizeLinks(data.links),
     };
   });
 }
@@ -154,7 +168,28 @@ export async function getAgreementByTokenServer(token: string): Promise<Agreemen
     sentAt: normalizeTimestamp(data.sentAt),
     reminderSentAt: normalizeTimestamp(data.reminderSentAt),
     signProvider: data.signProvider ?? null,
+    links: normalizeLinks(data.links),
   };
+}
+
+function normalizeLinks(value: unknown): AgreementLinkItem[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .map((item) => {
+      const maybeObj = item as { title?: unknown; url?: unknown };
+      const title = typeof maybeObj.title === "string" ? maybeObj.title.trim() : "";
+      const url = typeof maybeObj.url === "string" ? maybeObj.url.trim() : "";
+
+      if (!title || !url) {
+        return null;
+      }
+
+      return { title, url };
+    })
+    .filter((item): item is AgreementLinkItem => item !== null);
 }
 
 export async function listAutomaticReminderCandidatesServer(input: {
