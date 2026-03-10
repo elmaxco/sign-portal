@@ -10,6 +10,7 @@ type OfferItem = {
   company: string;
   orgNumber: string;
   phone: string;
+  smsConsent: boolean;
   packageName: string;
   notes: string;
   status: "new" | "converted";
@@ -97,6 +98,9 @@ export default function AdminOffersPage() {
         agreement?: { id: string; token: string };
         signLinkEmailSent?: boolean;
         signLinkEmailError?: string;
+        signLinkSmsSent?: boolean;
+        signLinkSmsError?: string;
+        signLinkSmsSkippedReason?: string;
       };
 
       if (!response.ok || !payload.ok || !payload.agreement) {
@@ -118,13 +122,20 @@ export default function AdminOffersPage() {
         ),
       );
 
-      setStatus(
-        payload.signLinkEmailSent
-          ? "Avtal skapades från offert och signlänk skickades till kunden."
-          : payload.signLinkEmailError
-            ? `Avtal skapades från offert, men signlänken kunde inte skickas: ${payload.signLinkEmailError}`
-            : "Avtal skapades från offert.",
-      );
+      const emailPart = payload.signLinkEmailSent
+        ? "signlank via e-post skickades"
+        : payload.signLinkEmailError
+          ? `signlank via e-post misslyckades: ${payload.signLinkEmailError}`
+          : "e-poststatus okand";
+      const smsPart = payload.signLinkSmsSent
+        ? "SMS skickades"
+        : payload.signLinkSmsError
+          ? `SMS misslyckades: ${payload.signLinkSmsError}`
+          : payload.signLinkSmsSkippedReason
+            ? `SMS hoppades over: ${payload.signLinkSmsSkippedReason}`
+            : "";
+
+      setStatus(`Avtal skapades fran offert, ${emailPart}.${smsPart ? ` ${smsPart}` : ""}`);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
       setStatus(`Kunde inte skapa avtal från offert: ${message}`);
@@ -162,6 +173,9 @@ export default function AdminOffersPage() {
               </p>
               <p>
                 <span className="font-medium">Telefon:</span> {offer.phone}
+              </p>
+              <p>
+                <span className="font-medium">SMS-samtycke:</span> {offer.smsConsent ? "Ja" : "Nej"}
               </p>
               <p>
                 <span className="font-medium">Paket:</span> {offer.packageName || "-"}

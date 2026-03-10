@@ -6,6 +6,8 @@ export default function AdminNewAgreementPage() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [recipientEmail, setRecipientEmail] = useState("");
+  const [recipientPhone, setRecipientPhone] = useState("");
+  const [recipientSmsConsent, setRecipientSmsConsent] = useState(false);
   const [token, setToken] = useState("");
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
@@ -44,6 +46,8 @@ export default function AdminNewAgreementPage() {
           title: title.trim(),
           content: content.trim(),
           recipientEmail: recipientEmail.trim(),
+          recipientPhone: recipientPhone.trim(),
+          recipientSmsConsent,
         }),
       });
 
@@ -77,6 +81,8 @@ export default function AdminNewAgreementPage() {
     setTitle("");
     setContent("");
     setRecipientEmail("");
+    setRecipientPhone("");
+    setRecipientSmsConsent(false);
     setToken("");
     setStatus("");
   }
@@ -118,6 +124,28 @@ export default function AdminNewAgreementPage() {
             className="rounded-md border px-3 py-2"
             placeholder="namn@domän.se"
           />
+        </label>
+
+        <label className="flex flex-col gap-2">
+          <span className="text-sm font-medium">Mottagarens telefon (valfritt, E.164)</span>
+          <input
+            value={recipientPhone}
+            onChange={(event) => setRecipientPhone(event.target.value)}
+            disabled={loading || isCreated}
+            className="rounded-md border px-3 py-2"
+            placeholder="+46701234567"
+          />
+        </label>
+
+        <label className="flex items-start gap-2 rounded-md border p-3 text-sm">
+          <input
+            type="checkbox"
+            checked={recipientSmsConsent}
+            onChange={(event) => setRecipientSmsConsent(event.target.checked)}
+            disabled={loading || isCreated}
+            className="mt-0.5"
+          />
+          <span>Jag har samtycke att kontakta mottagaren via SMS.</span>
         </label>
 
         <button

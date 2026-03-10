@@ -4,6 +4,7 @@ import {
   markAgreementEmailSentByTokenServer,
 } from "@/lib/agreements-server";
 import { sendAgreementLinkEmail } from "@/lib/mail";
+import { isSmsConfigured, sendAgreementLinkSms } from "@/lib/sms";
 
 export const dynamic = "force-dynamic";
 
@@ -65,5 +66,35 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Agreement not found while updating sentAt." }, { status: 404 });
   }
 
-  return NextResponse.json({ ok: true, wasReminder: marked.wasReminder });
+  let smsSent = false;
+  let smsError: string | null = null;
+  let smsSkippedReason: string | null = null;
+
+  if (!agreement.recipientSmsConsent) {
+    smsSkippedReason = "SMS consent is missing.";
+  } else if (!agreement.recipientPhone) {
+    smsSkippedReason = "Recipient phone is missing.";
+  } else if (!isSmsConfigured()) {
+    smsSkippedReason = "SMS is not configured.";
+  } else {
+    try {
+      await sendAgreementLinkSms({
+        to: agreement.recipientPhone,
+        signUrl,
+        agreementTitle: agreement.title,
+        variant: marked.wasReminder ? "reminder" : "initial",
+      });
+      smsSent = true;
+    } catch (error) {
+      smsError = error instanceof Error ? error.message : "Failed to send SMS.";
+    }
+  }
+
+  return NextResponse.json({
+    ok: true,
+    wasReminder: marked.wasReminder,
+    smsSent,
+    ...(smsError ? { smsError } : {}),
+    ...(smsSkippedReason ? { smsSkippedReason } : {}),
+  });
 }
