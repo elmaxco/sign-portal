@@ -5,6 +5,7 @@ import {
 } from "@/lib/agreements-server";
 import { sendAgreementLinkEmail } from "@/lib/mail";
 import { isSmsConfigured, sendAgreementLinkSms } from "@/lib/sms";
+import { consumeRateLimit } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -42,6 +43,25 @@ export async function POST(request: NextRequest) {
 
   if (!agreement.recipientEmail) {
     return NextResponse.json({ error: "Agreement is missing recipient email." }, { status: 400 });
+  }
+
+  const rate = await consumeRateLimit({
+    namespace: "agreement_send_token",
+    key: agreement.token,
+    windowMs: 60_000,
+    maxHits: 1,
+  });
+
+  if (!rate.allowed) {
+    return NextResponse.json(
+      { error: "Too many send attempts for this agreement. Please wait a minute." },
+      {
+        status: 429,
+        headers: {
+          "Retry-After": String(rate.retryAfterSeconds),
+        },
+      },
+    );
   }
 
   const rawBaseUrl = process.env.APP_PUBLIC_BASE_URL || process.env.APP_BASE_URL;
