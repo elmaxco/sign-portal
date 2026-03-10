@@ -8,6 +8,16 @@ type Agreement = {
   content: string;
   token: string;
   links?: Array<{ title: string; url: string }>;
+  attachments?: Array<{
+    id: string;
+    filename: string;
+    contentType: string;
+    size: number;
+    storagePath: string;
+    createdAt: string;
+    uploadedBy: "admin";
+  }>;
+  attachmentCount?: number;
   status: "draft" | "signing" | "signed";
   createdAt: string;
   signedAt?: string;
@@ -19,6 +29,14 @@ type SignAgreementClientProps = {
 };
 
 const SIGNING_TIMEOUT_MS = 5 * 60 * 1000;
+
+function formatAttachmentSize(size: number) {
+  if (size >= 1024 * 1024) {
+    return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+  }
+
+  return `${Math.ceil(size / 1024)} KB`;
+}
 
 export default function SignAgreementClient({ token }: SignAgreementClientProps) {
   const [agreement, setAgreement] = useState<Agreement | null>(null);
@@ -332,6 +350,30 @@ export default function SignAgreementClient({ token }: SignAgreementClientProps)
                       className="underline"
                     >
                       {link.title}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
+
+          {agreement.attachments?.length ? (
+            <section className="mt-4 rounded-md border p-3">
+              <h3 className="text-sm font-medium">Bilagor</h3>
+              <ul className="mt-2 space-y-2 text-sm">
+                {agreement.attachments.map((attachment) => (
+                  <li key={attachment.id} className="flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                      <p className="font-medium">{attachment.filename}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {attachment.contentType} - {formatAttachmentSize(attachment.size)}
+                      </p>
+                    </div>
+                    <a
+                      href={`/api/agreements/attachments/download?token=${encodeURIComponent(token)}&attachmentId=${encodeURIComponent(attachment.id)}`}
+                      className="rounded-md border px-3 py-1 text-xs"
+                    >
+                      Ladda ner
                     </a>
                   </li>
                 ))}
