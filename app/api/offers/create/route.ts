@@ -1,10 +1,38 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createOfferServer } from "@/lib/offers-server";
 import { sendOfferReceivedConfirmationEmail } from "@/lib/mail";
+import { consumeRateLimit } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
+function getClientIp(request: NextRequest) {
+  const forwarded = request.headers.get("x-forwarded-for");
+  const firstForwardedIp = forwarded?.split(",")[0]?.trim();
+
+  return firstForwardedIp || request.headers.get("x-real-ip") || "unknown";
+}
+
 export async function POST(request: NextRequest) {
+  const ip = getClientIp(request);
+  const rate = await consumeRateLimit({
+    namespace: "offers_create_ip",
+    key: ip,
+    windowMs: 60_000,
+    maxHits: 5,
+  });
+
+  if (!rate.allowed) {
+    return NextResponse.json(
+      { error: "Too many requests. Please try again soon." },
+      {
+        status: 429,
+        headers: {
+          "Retry-After": String(rate.retryAfterSeconds),
+        },
+      },
+    );
+  }
+
   let body: {
     name?: string;
     email?: string;
