@@ -727,3 +727,28 @@ export async function resetTimedOutSigningsServer(input: {
     reset: resetCount,
   };
 }
+
+export async function logAgreementEventByTokenServer(input: {
+  token: string;
+  type: string;
+  details?: Record<string, string | number | boolean | null>;
+}) {
+  const db = getAdminDb();
+  const snapshot = await db
+    .collection("agreements")
+    .where("token", "==", input.token)
+    .limit(1)
+    .get();
+
+  if (snapshot.empty) {
+    return false;
+  }
+
+  await snapshot.docs[0].ref.collection("agreementEvents").add({
+    type: input.type,
+    details: input.details ?? {},
+    createdAt: FieldValue.serverTimestamp(),
+  });
+
+  return true;
+}
