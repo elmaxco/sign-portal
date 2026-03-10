@@ -255,6 +255,18 @@ function normalizeAttachments(value: unknown): AttachmentItem[] {
     .filter((item): item is AttachmentItem => item !== null);
 }
 
+function attachmentToFirestore(attachment: AttachmentItem) {
+  return {
+    id: attachment.id,
+    filename: attachment.filename,
+    contentType: attachment.contentType,
+    size: attachment.size,
+    storagePath: attachment.storagePath,
+    createdAt: new Date(attachment.createdAt),
+    uploadedBy: attachment.uploadedBy,
+  };
+}
+
 export async function addAgreementAttachmentByTokenServer(input: {
   token: string;
   attachment: AttachmentItem;
@@ -284,14 +296,11 @@ export async function addAgreementAttachmentByTokenServer(input: {
 
     const nextAttachments = [
       ...attachments,
-      {
-        ...input.attachment,
-        createdAt: new Date(input.attachment.createdAt),
-      },
+      input.attachment,
     ];
 
     tx.update(doc.ref, {
-      attachments: nextAttachments,
+      attachments: nextAttachments.map(attachmentToFirestore),
       attachmentCount: nextAttachments.length,
       updatedAt: FieldValue.serverTimestamp(),
     });
@@ -338,7 +347,7 @@ export async function removeAgreementAttachmentByTokenServer(input: {
     const nextAttachments = attachments.filter((attachment) => attachment.id !== input.attachmentId);
 
     tx.update(doc.ref, {
-      attachments: nextAttachments,
+      attachments: nextAttachments.map(attachmentToFirestore),
       attachmentCount: nextAttachments.length,
       updatedAt: FieldValue.serverTimestamp(),
     });
