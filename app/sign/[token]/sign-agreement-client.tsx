@@ -7,6 +7,7 @@ type Agreement = {
   title: string;
   content: string;
   token: string;
+  links?: Array<{ title: string; url: string }>;
   status: "draft" | "signing" | "signed";
   createdAt: string;
   signedAt?: string;
@@ -317,6 +318,27 @@ export default function SignAgreementClient({ token }: SignAgreementClientProps)
         <article className="rounded-md border p-4">
           <h2 className="text-xl font-semibold">{agreement.title}</h2>
           <p className="mt-3 whitespace-pre-wrap">{agreement.content}</p>
+
+          {agreement.links?.length ? (
+            <section className="mt-4 rounded-md border p-3">
+              <h3 className="text-sm font-medium">Bilagor / lankat innehall</h3>
+              <ul className="mt-2 space-y-1 text-sm">
+                {agreement.links.map((link, index) => (
+                  <li key={`${link.url}-${index}`}>
+                    <a
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline"
+                    >
+                      {link.title}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
+
           <p className="mt-4 text-sm">
             Status:{" "}
             {agreement.status === "signed"
