@@ -1,10 +1,20 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type AgreementLinkItem = {
   title: string;
   url: string;
+};
+
+type AgreementAttachmentItem = {
+  id: string;
+  filename: string;
+  contentType: string;
+  size: number;
+  storagePath: string;
+  createdAt: string;
+  uploadedBy: "admin";
 };
 
 export default function AdminNewAgreementPage() {
@@ -17,6 +27,11 @@ export default function AdminNewAgreementPage() {
   const [token, setToken] = useState("");
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
+  const [attachments, setAttachments] = useState<AgreementAttachmentItem[]>([]);
+  const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
+  const [uploadingAttachment, setUploadingAttachment] = useState(false);
+  const [deletingAttachmentId, setDeletingAttachmentId] = useState<string | null>(null);
+  const [attachmentStatus, setAttachmentStatus] = useState("");
   const isCreated = Boolean(token);
 
   const shareLink = useMemo(() => {
@@ -25,6 +40,56 @@ export default function AdminNewAgreementPage() {
     }
 
     return `${window.location.origin}/sign/${token}`;
+  }, [token]);
+
+  useEffect(() => {
+    if (!token) {
+      setAttachments([]);
+      return;
+    }
+
+    let active = true;
+
+    async function loadAttachments() {
+      try {
+        const response = await fetch(
+          `/api/agreements/attachments/list?token=${encodeURIComponent(token)}`,
+          {
+            method: "GET",
+            cache: "no-store",
+          },
+        );
+
+        const payload = (await response.json()) as {
+          ok?: boolean;
+          attachments?: AgreementAttachmentItem[];
+          error?: string;
+        };
+
+        if (!response.ok || !payload.ok) {
+          throw new Error(payload.error ?? "Kunde inte läsa bilagor.");
+        }
+
+        if (!active) {
+          return;
+        }
+
+        setAttachments(payload.attachments ?? []);
+      } catch (error) {
+        if (!active) {
+          return;
+        }
+
+        const message = error instanceof Error ? error.message : "Unknown error";
+        setAttachmentStatus(`Kunde inte läsa bilagor: ${message}`);
+      }
+    }
+
+    loadAttachments();
+
+    return () => {
+      active = false;
+    };
   }, [token]);
 
   async function handleCreateAgreement(event: React.FormEvent<HTMLFormElement>) {
@@ -93,8 +158,86 @@ export default function AdminNewAgreementPage() {
     setRecipientPhone("");
     setRecipientSmsConsent(false);
     setLinks([{ title: "", url: "" }]);
+    setAttachments([]);
+    setAttachmentFile(null);
+    setAttachmentStatus("");
     setToken("");
     setStatus("");
+  }
+
+  async function handleUploadAttachment() {
+    if (!token || !attachmentFile) {
+      setAttachmentStatus("Skapa avtalet först och välj en fil.");
+      return;
+    }
+
+    setUploadingAttachment(true);
+    setAttachmentStatus("");
+
+    try {
+      const formData = new FormData();
+      formData.set("token", token);
+      formData.set("file", attachmentFile);
+
+      const response = await fetch("/api/admin/agreements/attachments/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const payload = (await response.json()) as {
+        ok?: boolean;
+        attachment?: AgreementAttachmentItem;
+        error?: string;
+      };
+
+      if (!response.ok || !payload.ok || !payload.attachment) {
+        setAttachmentStatus(payload.error ?? "Kunde inte ladda upp bilaga.");
+        return;
+      }
+
+      setAttachmentFile(null);
+      setAttachments((previous) => [...previous, payload.attachment as AgreementAttachmentItem]);
+      setAttachmentStatus("Bilaga uppladdad.");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      setAttachmentStatus(`Kunde inte ladda upp bilaga: ${message}`);
+    } finally {
+      setUploadingAttachment(false);
+    }
+  }
+
+  async function handleDeleteAttachment(attachmentId: string) {
+    if (!token) {
+      return;
+    }
+
+    setDeletingAttachmentId(attachmentId);
+    setAttachmentStatus("");
+
+    try {
+      const response = await fetch("/api/admin/agreements/attachments/delete", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ token, attachmentId }),
+      });
+
+      const payload = (await response.json()) as { ok?: boolean; error?: string };
+
+      if (!response.ok || !payload.ok) {
+        setAttachmentStatus(payload.error ?? "Kunde inte ta bort bilagan.");
+        return;
+      }
+
+      setAttachments((previous) => previous.filter((item) => item.id !== attachmentId));
+      setAttachmentStatus("Bilaga borttagen.");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      setAttachmentStatus(`Kunde inte ta bort bilagan: ${message}`);
+    } finally {
+      setDeletingAttachmentId(null);
+    }
   }
 
   function updateLink(index: number, patch: Partial<AgreementLinkItem>) {
@@ -244,6 +387,55 @@ export default function AdminNewAgreementPage() {
             {shareLink}
           </a>
         </div>
+      ) : null}
+
+      {isCreated ? (
+        <section className="rounded-md border p-4">
+          <h2 className="text-lg font-semibold">Bilagor</h2>
+
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <input
+              type="file"
+              onChange={(event) => setAttachmentFile(event.target.files?.[0] ?? null)}
+              disabled={uploadingAttachment}
+              className="text-sm"
+            />
+            <button
+              type="button"
+              onClick={handleUploadAttachment}
+              disabled={uploadingAttachment || !attachmentFile}
+              className="rounded-md border px-3 py-2 text-sm disabled:opacity-50"
+            >
+              {uploadingAttachment ? "Laddar upp..." : "Ladda upp"}
+            </button>
+          </div>
+
+          {attachmentStatus ? <p className="mt-2 text-sm">{attachmentStatus}</p> : null}
+
+          <ul className="mt-3 space-y-2 text-sm">
+            {attachments.map((attachment) => (
+              <li
+                key={attachment.id}
+                className="flex flex-wrap items-center justify-between gap-2 rounded-md border p-2"
+              >
+                <div>
+                  <p className="font-medium">{attachment.filename}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {attachment.contentType} - {Math.ceil(attachment.size / 1024)} KB
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleDeleteAttachment(attachment.id)}
+                  disabled={deletingAttachmentId === attachment.id}
+                  className="rounded-md border px-3 py-1 text-xs"
+                >
+                  {deletingAttachmentId === attachment.id ? "Tar bort..." : "Ta bort"}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
       ) : null}
     </main>
   );
