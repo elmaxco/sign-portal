@@ -88,6 +88,48 @@ SMS is optional and only sent when all conditions are met:
 - `TWILIO_AUTH_TOKEN`
 - `TWILIO_FROM_NUMBER` (E.164 format, e.g. `+46701234567`)
 
+## Agreement Attachments
+
+Attachments are stored privately in Firebase Storage and metadata is saved on each agreement document.
+
+### Firestore model
+
+- `attachments: AttachmentItem[]`
+- `attachmentCount: number`
+
+`AttachmentItem` fields:
+
+- `id`
+- `filename`
+- `contentType`
+- `size`
+- `storagePath`
+- `createdAt`
+- `uploadedBy` (currently `"admin"`)
+
+### Limits (MVP defaults)
+
+- Max attachments per agreement: `10`
+- Max file size per attachment: `10MB`
+- Allowed content types: `application/pdf`, `image/png`, `image/jpeg`
+
+### Required storage env vars
+
+- `FIREBASE_STORAGE_BUCKET` (or `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET`)
+
+### API endpoints
+
+- `POST /api/admin/agreements/attachments/upload` (multipart `token` + `file`)
+- `GET /api/agreements/attachments/list?token=...`
+- `GET /api/agreements/attachments/download?token=...&attachmentId=...`
+- `DELETE /api/admin/agreements/attachments/delete` (`{ token, attachmentId }`)
+
+Downloads use short-lived signed URLs (5 minutes) generated server-side.
+
+### Storage rules
+
+Client access is blocked by default in `storage.rules`. All attachment access should go through server APIs.
+
 ### Where SMS is sent
 
 - Admin manual send sign link: `POST /api/admin/agreements/send`
