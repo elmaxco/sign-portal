@@ -13,6 +13,7 @@ import {
 } from "@/lib/attachments";
 import { uploadAttachmentToStorage } from "@/lib/attachment-storage";
 import { consumeRateLimit } from "@/lib/rate-limit";
+import { requireAdminAuth } from "@/lib/admin-auth";
 
 export const dynamic = "force-dynamic";
 
@@ -22,6 +23,12 @@ function getClientIp(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const authError = requireAdminAuth(request);
+
+  if (authError) {
+    return authError;
+  }
+
   const ip = getClientIp(request);
   const ipRate = await consumeRateLimit({
     namespace: "attachment_upload_ip",
