@@ -4,6 +4,8 @@ import { getAgreementByTokenServer } from "@/lib/agreements-server";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
+// Legacy alias kept for backward compatibility. Prefer /api/agreements/by-token.
+
 const NO_STORE_HEADERS = {
   "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
   Pragma: "no-cache",
