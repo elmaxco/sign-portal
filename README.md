@@ -73,6 +73,9 @@ Optional load-control env vars:
 - `REMINDERS_MAX_ITEMS_PER_RUN` (default `25`)
 - `REMINDERS_MAX_RUNTIME_MS` (default `45000`)
 
+The reminders endpoint also uses a distributed Firestore lock to avoid overlapping runs.
+If a run is already active, a new invocation returns `202` with `{ skipped: true }`.
+
 ## SMS Notifications (Twilio)
 
 SMS is optional and only sent when all conditions are met:
