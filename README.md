@@ -65,6 +65,7 @@ When an agreement is signed successfully:
 - `CRON_SECRET` or `AGREEMENTS_REMINDER_SECRET`: Secret used by `/api/agreements/reminders`.
 
 The reminder endpoint accepts both `GET` and `POST` and is scheduled via `vercel.json`.
+Current cron schedule: `30 1 * * *` (UTC, nightly run).
 Default reminder timing is 4 days for first reminder and 4 days between subsequent reminders.
 
 ## SMS Notifications (Twilio)
