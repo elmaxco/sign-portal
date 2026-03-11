@@ -50,7 +50,7 @@ export default function SignAgreementClient({ token }: SignAgreementClientProps)
 
     async function loadAgreement() {
       try {
-        const response = await fetch(`/api/agreements/get?token=${encodeURIComponent(token)}`, {
+        const response = await fetch(`/api/agreements/by-token?token=${encodeURIComponent(token)}`, {
           method: "GET",
           cache: "no-store",
         });
