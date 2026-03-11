@@ -1,4 +1,3 @@
-import { getAgreementByToken } from "@/lib/agreements";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
 import { randomBytes } from "node:crypto";
@@ -534,26 +533,8 @@ export async function markAgreementEmailSentByTokenServer(input: { token: string
   return { updated: true, wasReminder: hasPreviousSend };
 }
 
-async function getAgreementStatusByTokenFallback(token: string): Promise<AgreementStatusPayload | null> {
-  const agreement = await getAgreementByToken(token);
-
-  if (!agreement) {
-    return null;
-  }
-
-  return {
-    status: agreement.status,
-    signedAt: agreement.signedAt ?? null,
-    signProvider: agreement.signProvider ?? null,
-  };
-}
-
 export async function getAgreementStatusByTokenServer(token: string) {
-  try {
-    return await getAgreementStatusByTokenAdmin(token);
-  } catch {
-    return getAgreementStatusByTokenFallback(token);
-  }
+  return getAgreementStatusByTokenAdmin(token);
 }
 
 export async function getAgreementLifecycleByTokenServer(token: string) {
