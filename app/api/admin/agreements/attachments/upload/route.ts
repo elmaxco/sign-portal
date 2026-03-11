@@ -114,9 +114,26 @@ export async function POST(request: NextRequest) {
       content: data,
     });
   } catch (error) {
-    await removeAgreementAttachmentByTokenServer({ token, attachmentId });
-    const message = error instanceof Error ? error.message : "Failed to upload attachment.";
-    return NextResponse.json({ error: message }, { status: 502 });
+    const uploadMessage = error instanceof Error ? error.message : "Failed to upload attachment.";
+
+    try {
+      await removeAgreementAttachmentByTokenServer({ token, attachmentId });
+    } catch (cleanupError) {
+      const cleanupMessage = cleanupError instanceof Error
+        ? cleanupError.message
+        : "Failed to cleanup attachment metadata.";
+
+      return NextResponse.json(
+        {
+          error: uploadMessage,
+          warning: "Upload failed and metadata cleanup may be incomplete.",
+          cleanupError: cleanupMessage,
+        },
+        { status: 502 },
+      );
+    }
+
+    return NextResponse.json({ error: uploadMessage }, { status: 502 });
   }
 
   return NextResponse.json({ ok: true, attachment });
