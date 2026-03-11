@@ -68,6 +68,11 @@ The reminder endpoint accepts both `GET` and `POST` and is scheduled via `vercel
 Current cron schedule: `30 1 * * *` (UTC, nightly run).
 Default reminder timing is 4 days for first reminder and 4 days between subsequent reminders.
 
+Optional load-control env vars:
+
+- `REMINDERS_MAX_ITEMS_PER_RUN` (default `25`)
+- `REMINDERS_MAX_RUNTIME_MS` (default `45000`)
+
 ## SMS Notifications (Twilio)
 
 SMS is optional and only sent when all conditions are met:

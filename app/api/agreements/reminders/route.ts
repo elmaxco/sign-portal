@@ -10,6 +10,8 @@ export const dynamic = "force-dynamic";
 
 const DEFAULT_FIRST_REMINDER_AFTER_MINUTES = 4 * 24 * 60;
 const DEFAULT_REMINDER_INTERVAL_MINUTES = 4 * 24 * 60;
+const DEFAULT_MAX_ITEMS_PER_RUN = 25;
+const DEFAULT_MAX_RUNTIME_MS = 45_000;
 
 function getAbsoluteBaseUrl(rawBaseUrl: string | undefined, fallbackOrigin: string) {
   const candidate = (rawBaseUrl || fallbackOrigin).trim();
@@ -30,6 +32,14 @@ function parsePositiveInt(value: string | null, fallback: number) {
   }
 
   return Math.floor(parsed);
+}
+
+function parseMaxItemsFromEnv() {
+  return parsePositiveInt(process.env.REMINDERS_MAX_ITEMS_PER_RUN ?? null, DEFAULT_MAX_ITEMS_PER_RUN);
+}
+
+function parseMaxRuntimeMsFromEnv() {
+  return parsePositiveInt(process.env.REMINDERS_MAX_RUNTIME_MS ?? null, DEFAULT_MAX_RUNTIME_MS);
 }
 
 async function handleReminders(request: NextRequest) {
@@ -65,11 +75,13 @@ async function handleReminders(request: NextRequest) {
     DEFAULT_REMINDER_INTERVAL_MINUTES,
   );
   const maxItems = parsePositiveInt(request.nextUrl.searchParams.get("maxItems"), 100);
+  const maxItemsPerRun = Math.min(maxItems, parseMaxItemsFromEnv());
+  const maxRuntimeMs = parseMaxRuntimeMsFromEnv();
 
   const candidates = await listAutomaticReminderCandidatesServer({
     firstReminderAfterMinutes,
     reminderIntervalMinutes,
-    maxItems,
+    maxItems: maxItemsPerRun,
   });
 
   const rawBaseUrl = process.env.APP_PUBLIC_BASE_URL || process.env.APP_BASE_URL;
@@ -81,8 +93,15 @@ async function handleReminders(request: NextRequest) {
   let smsSkipped = 0;
   const smsFailed: Array<{ token: string; error: string }> = [];
   const smsEnabled = isSmsConfigured();
+  const startedAtMs = Date.now();
+  let stoppedDueToRuntimeLimit = false;
 
   for (const candidate of candidates) {
+    if (Date.now() - startedAtMs >= maxRuntimeMs) {
+      stoppedDueToRuntimeLimit = true;
+      break;
+    }
+
     const signUrl = new URL(`/sign/${candidate.token}`, baseUrl).toString();
 
     try {
@@ -130,6 +149,7 @@ async function handleReminders(request: NextRequest) {
   return NextResponse.json({
     ok: true,
     checked: candidates.length,
+    processed: sent + failed.length,
     sent,
     failed,
     sms: {
@@ -141,8 +161,11 @@ async function handleReminders(request: NextRequest) {
     config: {
       firstReminderAfterMinutes,
       reminderIntervalMinutes,
-      maxItems,
+      maxItemsRequested: maxItems,
+      maxItemsPerRun,
+      maxRuntimeMs,
     },
+    stoppedDueToRuntimeLimit,
   });
 }
 
