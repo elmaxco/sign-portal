@@ -148,9 +148,14 @@ export default function AdminOffersPage() {
     <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-6 px-6 py-12">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold">Admin - Offerter</h1>
-        <Link href="/admin" className="rounded-md border px-4 py-2 text-sm">
-          Tillbaka till avtal
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Link href="/offer" className="rounded-md border px-4 py-2 text-sm">
+            Oppna offertformular
+          </Link>
+          <Link href="/admin" className="rounded-md border px-4 py-2 text-sm">
+            Tillbaka till avtal
+          </Link>
+        </div>
       </header>
 
       {status ? <p className="text-sm">{status}</p> : null}
