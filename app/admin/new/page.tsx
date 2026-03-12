@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 
 type AgreementLinkItem = {
   title: string;
@@ -16,6 +17,23 @@ type AgreementAttachmentItem = {
   createdAt: string;
   uploadedBy: "admin";
 };
+
+function isImageAttachment(attachment: AgreementAttachmentItem) {
+  return attachment.contentType === "image/png" || attachment.contentType === "image/jpeg";
+}
+
+function attachmentDownloadHref(token: string, attachmentId: string, intent?: "download" | "preview") {
+  const query = new URLSearchParams({
+    token,
+    attachmentId,
+  });
+
+  if (intent === "preview") {
+    query.set("intent", "preview");
+  }
+
+  return `/api/agreements/attachments/download?${query.toString()}`;
+}
 
 export default function AdminNewAgreementPage() {
   const [title, setTitle] = useState("");
@@ -418,7 +436,23 @@ export default function AdminNewAgreementPage() {
                 key={attachment.id}
                 className="flex flex-wrap items-center justify-between gap-2 rounded-md border p-2"
               >
-                <div>
+                <div className="flex items-center gap-3">
+                  {isImageAttachment(attachment) ? (
+                    <a
+                      href={attachmentDownloadHref(token, attachment.id, "preview")}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <Image
+                        src={attachmentDownloadHref(token, attachment.id, "preview")}
+                        alt={attachment.filename}
+                        width={64}
+                        height={64}
+                        className="h-16 w-16 rounded object-cover"
+                        unoptimized
+                      />
+                    </a>
+                  ) : null}
                   <p className="font-medium">{attachment.filename}</p>
                   <p className="text-xs text-muted-foreground">
                     {attachment.contentType} - {Math.ceil(attachment.size / 1024)} KB
