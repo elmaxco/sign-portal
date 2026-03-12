@@ -1,6 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
+
+type AgreementAttachment = {
+  id: string;
+  filename: string;
+  contentType: string;
+  size: number;
+  storagePath: string;
+  createdAt: string;
+  uploadedBy: "admin";
+};
 
 type Agreement = {
   id: string;
@@ -8,15 +19,7 @@ type Agreement = {
   content: string;
   token: string;
   links?: Array<{ title: string; url: string }>;
-  attachments?: Array<{
-    id: string;
-    filename: string;
-    contentType: string;
-    size: number;
-    storagePath: string;
-    createdAt: string;
-    uploadedBy: "admin";
-  }>;
+  attachments?: AgreementAttachment[];
   attachmentCount?: number;
   status: "draft" | "signing" | "signed";
   createdAt: string;
@@ -38,12 +41,21 @@ function formatAttachmentSize(size: number) {
   return `${Math.ceil(size / 1024)} KB`;
 }
 
+function isImageAttachment(attachment: AgreementAttachment) {
+  return attachment.contentType === "image/png" || attachment.contentType === "image/jpeg";
+}
+
+function attachmentDownloadHref(token: string, attachmentId: string) {
+  return `/api/agreements/attachments/download?token=${encodeURIComponent(token)}&attachmentId=${encodeURIComponent(attachmentId)}`;
+}
+
 export default function SignAgreementClient({ token }: SignAgreementClientProps) {
   const [agreement, setAgreement] = useState<Agreement | null>(null);
   const [status, setStatus] = useState("Laddar avtal...");
   const [startSigningError, setStartSigningError] = useState("");
   const [pendingFromCallback, setPendingFromCallback] = useState(false);
   const [isPollingActive, setIsPollingActive] = useState(false);
+  const [previewAttachment, setPreviewAttachment] = useState<AgreementAttachment | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -360,6 +372,33 @@ export default function SignAgreementClient({ token }: SignAgreementClientProps)
           {agreement.attachments?.length ? (
             <section className="mt-4 rounded-md border p-3">
               <h3 className="text-sm font-medium">Bilagor</h3>
+
+              {agreement.attachments.filter(isImageAttachment).length ? (
+                <div className="mt-3">
+                  <p className="text-xs font-medium text-muted-foreground">Bildgalleri</p>
+                  <ul className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
+                    {agreement.attachments.filter(isImageAttachment).map((attachment) => (
+                      <li key={`thumb-${attachment.id}`} className="rounded-md border p-1">
+                        <button
+                          type="button"
+                          className="block w-full"
+                          onClick={() => setPreviewAttachment(attachment)}
+                        >
+                          <Image
+                            src={attachmentDownloadHref(token, attachment.id)}
+                            alt={attachment.filename}
+                            className="h-28 w-full rounded object-cover"
+                            width={320}
+                            height={180}
+                            unoptimized
+                          />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+
               <ul className="mt-2 space-y-2 text-sm">
                 {agreement.attachments.map((attachment) => (
                   <li key={attachment.id} className="flex flex-wrap items-center justify-between gap-2">
@@ -369,12 +408,23 @@ export default function SignAgreementClient({ token }: SignAgreementClientProps)
                         {attachment.contentType} - {formatAttachmentSize(attachment.size)}
                       </p>
                     </div>
-                    <a
-                      href={`/api/agreements/attachments/download?token=${encodeURIComponent(token)}&attachmentId=${encodeURIComponent(attachment.id)}`}
-                      className="rounded-md border px-3 py-1 text-xs"
-                    >
-                      Ladda ner
-                    </a>
+                    <div className="flex items-center gap-2">
+                      {isImageAttachment(attachment) ? (
+                        <button
+                          type="button"
+                          className="rounded-md border px-3 py-1 text-xs"
+                          onClick={() => setPreviewAttachment(attachment)}
+                        >
+                          Forhandsvisa
+                        </button>
+                      ) : null}
+                      <a
+                        href={attachmentDownloadHref(token, attachment.id)}
+                        className="rounded-md border px-3 py-1 text-xs"
+                      >
+                        Ladda ner
+                      </a>
+                    </div>
                   </li>
                 ))}
               </ul>
@@ -420,6 +470,31 @@ export default function SignAgreementClient({ token }: SignAgreementClientProps)
             </div>
           ) : null}
         </article>
+      ) : null}
+
+      {previewAttachment ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+          <div className="w-full max-w-5xl rounded-md bg-black p-3">
+            <div className="mb-2 flex items-center justify-between text-white">
+              <p className="text-sm font-medium">{previewAttachment.filename}</p>
+              <button
+                type="button"
+                onClick={() => setPreviewAttachment(null)}
+                className="rounded border border-white/40 px-3 py-1 text-xs"
+              >
+                Stang
+              </button>
+            </div>
+            <Image
+              src={attachmentDownloadHref(token, previewAttachment.id)}
+              alt={previewAttachment.filename}
+              className="max-h-[80vh] w-full rounded object-contain"
+              width={1600}
+              height={1200}
+              unoptimized
+            />
+          </div>
+        </div>
       ) : null}
     </main>
   );
