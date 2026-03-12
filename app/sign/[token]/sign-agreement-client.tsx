@@ -45,8 +45,17 @@ function isImageAttachment(attachment: AgreementAttachment) {
   return attachment.contentType === "image/png" || attachment.contentType === "image/jpeg";
 }
 
-function attachmentDownloadHref(token: string, attachmentId: string) {
-  return `/api/agreements/attachments/download?token=${encodeURIComponent(token)}&attachmentId=${encodeURIComponent(attachmentId)}`;
+function attachmentDownloadHref(token: string, attachmentId: string, intent?: "download" | "preview") {
+  const query = new URLSearchParams({
+    token,
+    attachmentId,
+  });
+
+  if (intent === "preview") {
+    query.set("intent", "preview");
+  }
+
+  return `/api/agreements/attachments/download?${query.toString()}`;
 }
 
 export default function SignAgreementClient({ token }: SignAgreementClientProps) {
@@ -385,7 +394,7 @@ export default function SignAgreementClient({ token }: SignAgreementClientProps)
                           onClick={() => setPreviewAttachment(attachment)}
                         >
                           <Image
-                            src={attachmentDownloadHref(token, attachment.id)}
+                            src={attachmentDownloadHref(token, attachment.id, "preview")}
                             alt={attachment.filename}
                             className="h-28 w-full rounded object-cover"
                             width={320}
@@ -419,7 +428,7 @@ export default function SignAgreementClient({ token }: SignAgreementClientProps)
                         </button>
                       ) : null}
                       <a
-                        href={attachmentDownloadHref(token, attachment.id)}
+                        href={attachmentDownloadHref(token, attachment.id, "download")}
                         className="rounded-md border px-3 py-1 text-xs"
                       >
                         Ladda ner
@@ -486,7 +495,7 @@ export default function SignAgreementClient({ token }: SignAgreementClientProps)
               </button>
             </div>
             <Image
-              src={attachmentDownloadHref(token, previewAttachment.id)}
+              src={attachmentDownloadHref(token, previewAttachment.id, "preview")}
               alt={previewAttachment.filename}
               className="max-h-[80vh] w-full rounded object-contain"
               width={1600}
