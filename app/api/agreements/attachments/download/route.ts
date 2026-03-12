@@ -16,6 +16,7 @@ function getClientIp(request: NextRequest) {
 export async function GET(request: NextRequest) {
   const token = request.nextUrl.searchParams.get("token")?.trim() || "";
   const attachmentId = request.nextUrl.searchParams.get("attachmentId")?.trim() || "";
+  const intent = request.nextUrl.searchParams.get("intent")?.trim() || "download";
 
   if (!token || !attachmentId) {
     return NextResponse.json({ error: "Missing token or attachmentId." }, { status: 400 });
@@ -53,15 +54,17 @@ export async function GET(request: NextRequest) {
     expiresInMinutes: 5,
   });
 
-  await logAgreementEventByTokenServer({
-    token,
-    type: "attachment_downloaded",
-    details: {
-      attachmentId,
-      filename: attachment.filename,
-      ip,
-    },
-  });
+  if (intent !== "preview") {
+    await logAgreementEventByTokenServer({
+      token,
+      type: "attachment_downloaded",
+      details: {
+        attachmentId,
+        filename: attachment.filename,
+        ip,
+      },
+    });
+  }
 
   return NextResponse.redirect(signedUrl, { status: 302 });
 }
