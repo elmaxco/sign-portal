@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
 
   const rawBaseUrl = process.env.APP_PUBLIC_BASE_URL || process.env.APP_BASE_URL;
   const baseUrl = getAbsoluteBaseUrl(rawBaseUrl, request.nextUrl.origin);
-  const signUrl = new URL(`/sign/${created.token}`, baseUrl).toString();
+  const signUrl = new URL(`/signup/${created.token}`, baseUrl).toString();
 
   try {
     await sendAgreementLinkEmail({

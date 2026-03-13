@@ -121,7 +121,7 @@ async function handleReminders(request: NextRequest) {
         break;
       }
 
-      const signUrl = new URL(`/sign/${candidate.token}`, baseUrl).toString();
+      const signUrl = new URL(`/signup/${candidate.token}`, baseUrl).toString();
 
       try {
         await sendAgreementLinkEmail({
