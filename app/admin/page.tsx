@@ -96,7 +96,7 @@ export default function AdminAgreementsPage() {
   async function copyLink(token: string) {
     try {
       const baseUrl = window.location.origin;
-      await navigator.clipboard.writeText(`${baseUrl}/sign/${token}`);
+      await navigator.clipboard.writeText(`${baseUrl}/signup/${token}`);
       setStatus("Länk kopierad.");
     } catch {
       setStatus("Kunde inte kopiera länken.");
