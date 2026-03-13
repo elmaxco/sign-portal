@@ -9,22 +9,22 @@ export default function Home() {
 
   const steps = [
     {
-      title: "Skapa avtal pa minuter",
-      text: "Bygg avtal med text, bilagor och lankat innehall - klart for signering direkt.",
+      title: "Skapa avtal på minuter",
+      text: "Bygg avtal med text, bilagor och länkat innehåll - klart för signering direkt.",
     },
     {
-      title: "Skicka unik signup-lank",
-      text: "Mottagaren far en personlig lank och identifierar sig tryggt med BankID.",
+      title: "Skicka unik signup-länk",
+      text: "Mottagaren får en personlig länk och identifierar sig tryggt med BankID.",
     },
     {
-      title: "Folj hela flodet live",
-      text: "Se status, paminnelser och signerat resultat i admin utan manuellt jagande.",
+      title: "Följ hela flödet live",
+      text: "Se status, påminnelser och signerat resultat i admin utan manuellt jagande.",
     },
   ];
 
   const features = [
-    "Offertformular for nya kunder",
-    "Automatiska mail och SMS-paminnelser",
+    "Offertformulär för nya kunder",
+    "Automatiska mejl och SMS-påminnelser",
     "Bilagor med privat lagring och signerad nedladdning",
     "Rate limits, admin-skydd och cron-kontroll",
   ];
@@ -36,14 +36,14 @@ export default function Home() {
           <nav className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <p className="text-sm font-semibold tracking-[0.18em] text-[var(--brand)]">SIGNPORTAL</p>
-              <p className="mt-1 text-xs text-slate-600">Saker e-signering for nordiska team</p>
+              <p className="mt-1 text-xs text-slate-600">Säker e-signering för nordiska team</p>
             </div>
             <div className="flex flex-wrap items-center gap-2 text-sm">
               <Link href="/offer" className="rounded-full border border-[var(--border)] px-4 py-2 hover:bg-[var(--surface-soft)]">
-                Begar offert
+                Begär offert
               </Link>
               <Link href="/admin" className="rounded-full bg-[var(--brand)] px-4 py-2 font-semibold text-white hover:bg-[var(--brand-strong)]">
-                Oppna admin
+                Öppna admin
               </Link>
             </div>
           </nav>
@@ -55,11 +55,11 @@ export default function Home() {
               PUBLIC PRODUCT FRONT
             </p>
             <h1 className="text-balance mt-5 text-4xl font-semibold leading-tight sm:text-5xl">
-              Signera avtal snabbare med samma trygghet som storbolag kraver.
+              Signera avtal snabbare med samma trygghet som storbolag kräver.
             </h1>
             <p className="mt-5 max-w-2xl text-base leading-7 text-slate-700 sm:text-lg">
-              Skapa avtal, skicka unika signup-lankar, samla BankID-signering och folj varje steg i ett tydligt flode.
-              Allt byggt for att kunna koras pa Vercel eller din egen Linux-server.
+              Skapa avtal, skicka unika signup-länkar, samla BankID-signering och följ varje steg i ett tydligt flöde.
+              Allt byggt för att kunna köras på Vercel eller din egen Linux-server.
             </p>
 
             <div className="mt-7 flex flex-wrap gap-3">
@@ -67,7 +67,7 @@ export default function Home() {
                 Starta med offert
               </Link>
               <Link href="/signup/demo-token" className="rounded-full border border-[var(--border)] px-5 py-3 text-sm font-semibold hover:bg-[var(--surface-soft)]">
-                Testa signup-flode
+                Testa signup-flöde
               </Link>
             </div>
 
@@ -81,7 +81,7 @@ export default function Home() {
           </article>
 
           <aside className="glass-card fade-in-up rounded-3xl p-7 [animation-delay:120ms] sm:p-8">
-            <p className="text-sm font-semibold text-[var(--brand)]">Varfor team valjer oss</p>
+            <p className="text-sm font-semibold text-[var(--brand)]">Varför team väljer oss</p>
             <ul className="mt-4 space-y-4">
               {steps.map((step, index) => (
                 <li key={step.title} className="rounded-2xl border border-[var(--border)] bg-white p-4">
@@ -96,9 +96,9 @@ export default function Home() {
 
         <section className="mt-8 grid gap-5 lg:grid-cols-[1fr_1.15fr]">
           <article className="glass-card rounded-3xl p-7 sm:p-8">
-            <h2 className="font-serif text-3xl leading-tight text-slate-900">Byggt for hela avtalsresan</h2>
+            <h2 className="font-serif text-3xl leading-tight text-slate-900">Byggt för hela avtalsresan</h2>
             <p className="mt-3 text-sm leading-7 text-slate-700">
-              Fron forsta offertforfragan till signerat avtal och uppfoljning - utan att hoppa mellan fem olika verktyg.
+              Från första offertförfrågan till signerat avtal och uppföljning - utan att hoppa mellan fem olika verktyg.
             </p>
             <ul className="mt-5 space-y-3 text-sm text-slate-700">
               {features.map((feature) => (
@@ -114,16 +114,16 @@ export default function Home() {
             <p className="text-xs font-semibold tracking-[0.2em] text-slate-500">KUNDRESA</p>
             <div className="mt-4 space-y-3">
               <div className="rounded-2xl border border-[var(--border)] bg-white p-4 text-sm">
-                1. Kunden fyller formularet pa <span className="font-semibold">/offer</span>.
+                1. Kunden fyller formuläret på <span className="font-semibold">/offer</span>.
               </div>
               <div className="rounded-2xl border border-[var(--border)] bg-white p-4 text-sm">
-                2. Admin skapar avtal och skickar unik lank pa <span className="font-semibold">/signup/[token]</span>.
+                2. Admin skapar avtal och skickar unik länk på <span className="font-semibold">/signup/[token]</span>.
               </div>
               <div className="rounded-2xl border border-[var(--border)] bg-white p-4 text-sm">
                 3. Mottagaren identifierar sig med BankID och signerar.
               </div>
               <div className="rounded-2xl border border-[var(--border)] bg-white p-4 text-sm">
-                4. Teamet far notis, historik och full status i admin.
+                4. Teamet får notis, historik och full status i admin.
               </div>
             </div>
           </article>
@@ -131,15 +131,15 @@ export default function Home() {
 
         <section className="glass-card mt-8 rounded-3xl px-7 py-9 text-center sm:px-10 sm:py-12">
           <h2 className="text-balance text-3xl font-semibold leading-tight sm:text-4xl">
-            Redo att ga fran intern verktygskansla till riktig publik produktfront?
+            Redo att gå från intern verktygskänsla till riktig publik produktfront?
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-slate-700 sm:text-base">
-            Vi har nu byggt floden, sakrat API:erna och forberett onboarding. Nu tar vi nasta steg med design,
+            Vi har nu byggt flöden, säkrat API:erna och förberett onboarding. Nu tar vi nästa steg med design,
             konvertering och tydlig kundupplevelse.
           </p>
           <div className="mt-7 flex flex-wrap justify-center gap-3">
             <Link href="/offer" className="rounded-full bg-[var(--brand)] px-5 py-3 text-sm font-semibold text-white hover:bg-[var(--brand-strong)]">
-              Begar offert
+              Begär offert
             </Link>
             <Link href="/admin" className="rounded-full border border-[var(--border)] px-5 py-3 text-sm font-semibold hover:bg-[var(--surface-soft)]">
               Logga in i admin
