@@ -1,8 +1,13 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { Plus_Jakarta_Sans, Spectral } from "next/font/google";
 import "./globals.css";
 import FirebaseAnalytics from "./firebase-analytics";
 import CookieConsentBanner from "./cookie-consent-banner";
+import {
+  COOKIE_CONSENT_NAME,
+  type CookieConsentValue,
+} from "@/lib/cookie-consent";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   variable: "--font-plus-jakarta-sans",
@@ -21,11 +26,16 @@ export const metadata: Metadata = {
     "Skapa avtal, skicka signeringslankar och folj varje steg i ett snabbt och tydligt e-signeringsflode.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const cookieStore = await cookies();
+  const consent = cookieStore.get(COOKIE_CONSENT_NAME)?.value;
+  const initialConsent: CookieConsentValue | null =
+    consent === "accepted" || consent === "rejected" ? consent : null;
+
   return (
     <html lang="en">
       <body
@@ -33,7 +43,7 @@ export default function RootLayout({
       >
         <FirebaseAnalytics />
         {children}
-        <CookieConsentBanner />
+        <CookieConsentBanner initialConsent={initialConsent} />
       </body>
     </html>
   );
