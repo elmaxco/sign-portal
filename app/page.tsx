@@ -110,7 +110,7 @@ export default function Home() {
           </p>
           <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {steps.map((step, index) => (
-              <article key={step.title} className="overflow-hidden rounded-2xl border border-[var(--border)] bg-white">
+              <article key={step.title} className="marketing-card overflow-hidden rounded-2xl border border-[var(--border)] bg-white">
                 <div className="h-24 bg-[linear-gradient(130deg,#e2e8f0,#cbd5e1_55%,#f8fafc)]" />
                 <div className="p-4">
                   <p className="text-xs font-semibold tracking-[0.15em] text-slate-500">LÖSNING {index + 1}</p>
@@ -122,34 +122,38 @@ export default function Home() {
           </div>
         </section>
 
+        <div className="section-divider mt-8" aria-hidden />
+
         <section className="mt-10 rounded-3xl bg-white px-6 py-8 sm:px-10">
           <h2 className="text-center text-2xl font-semibold text-slate-900">Tillit och säkerhet i varje steg</h2>
           <p className="mx-auto mt-3 max-w-2xl text-center text-sm text-slate-600">
             Infrastruktur och processer byggda för företag med höga krav på spårbarhet, identitet och dataskydd.
           </p>
           <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <article className="rounded-2xl border border-[var(--border)] bg-[var(--surface-soft)] p-4 text-center">
+            <article className="marketing-card rounded-2xl border border-[var(--border)] bg-[var(--surface-soft)] p-4 text-center">
               <p className="text-2xl">🔐</p>
               <p className="mt-2 text-sm font-semibold text-slate-900">Verifierad identitet</p>
               <p className="mt-1 text-xs text-slate-600">BankID-inloggning och säkrad länkhantering</p>
             </article>
-            <article className="rounded-2xl border border-[var(--border)] bg-[var(--surface-soft)] p-4 text-center">
+            <article className="marketing-card rounded-2xl border border-[var(--border)] bg-[var(--surface-soft)] p-4 text-center">
               <p className="text-2xl">🛡️</p>
               <p className="mt-2 text-sm font-semibold text-slate-900">ISO-riktad struktur</p>
               <p className="mt-1 text-xs text-slate-600">Audit-spår, serverlogik och kontrollerad access</p>
             </article>
-            <article className="rounded-2xl border border-[var(--border)] bg-[var(--surface-soft)] p-4 text-center">
+            <article className="marketing-card rounded-2xl border border-[var(--border)] bg-[var(--surface-soft)] p-4 text-center">
               <p className="text-2xl">⚖️</p>
               <p className="mt-2 text-sm font-semibold text-slate-900">eIDAS-kompatibel process</p>
               <p className="mt-1 text-xs text-slate-600">Tydlig signeringskedja för juridisk trygghet</p>
             </article>
-            <article className="rounded-2xl border border-[var(--border)] bg-[var(--surface-soft)] p-4 text-center">
+            <article className="marketing-card rounded-2xl border border-[var(--border)] bg-[var(--surface-soft)] p-4 text-center">
               <p className="text-2xl">🇪🇺</p>
               <p className="mt-2 text-sm font-semibold text-slate-900">EU-fokuserad datahantering</p>
               <p className="mt-1 text-xs text-slate-600">Privat lagring och kontrollerad nedladdning</p>
             </article>
           </div>
         </section>
+
+        <div className="section-divider mt-8" aria-hidden />
 
         <section className="mt-10 px-4 sm:px-0">
           <h2 className="text-center text-2xl font-semibold text-slate-900">Effektivisera kundflöden i din bransch</h2>
