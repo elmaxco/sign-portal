@@ -29,6 +29,7 @@ type Agreement = {
 
 type SignAgreementClientProps = {
   token: string;
+  entryMode?: "sign" | "signup";
 };
 
 const SIGNING_TIMEOUT_MS = 5 * 60 * 1000;
@@ -58,7 +59,7 @@ function attachmentDownloadHref(token: string, attachmentId: string, intent?: "d
   return `/api/agreements/attachments/download?${query.toString()}`;
 }
 
-export default function SignAgreementClient({ token }: SignAgreementClientProps) {
+export default function SignAgreementClient({ token, entryMode = "sign" }: SignAgreementClientProps) {
   const [agreement, setAgreement] = useState<Agreement | null>(null);
   const [status, setStatus] = useState("Laddar avtal...");
   const [startSigningError, setStartSigningError] = useState("");
@@ -349,7 +350,15 @@ export default function SignAgreementClient({ token }: SignAgreementClientProps)
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-3xl flex-col gap-6 px-6 py-12">
-      <h1 className="text-2xl font-semibold">Signering</h1>
+      <h1 className="text-2xl font-semibold">
+        {entryMode === "signup" ? "Verifiera dig och signera" : "Signering"}
+      </h1>
+
+      {entryMode === "signup" ? (
+        <p className="text-sm text-muted-foreground">
+          Du har fatt en unik lank. Klicka pa knappen nedan for att identifiera dig med BankID.
+        </p>
+      ) : null}
 
       {status ? <p className="text-sm">{status}</p> : null}
 
@@ -455,7 +464,7 @@ export default function SignAgreementClient({ token }: SignAgreementClientProps)
                 onClick={handleStartSigning}
                 className="inline-flex rounded-md bg-foreground px-4 py-2 text-background"
               >
-                Signera med BankID
+                {entryMode === "signup" ? "Identifiera dig med BankID" : "Signera med BankID"}
               </button>
 
               {isPollingActive ? (
