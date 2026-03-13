@@ -22,7 +22,7 @@ function toQueryObject(searchParams: URLSearchParams) {
 }
 
 function safeNextUrl(request: NextRequest, token: string) {
-  const fallback = new URL(`/sign/${token}`, request.nextUrl.origin);
+  const fallback = new URL(`/signup/${token}`, request.nextUrl.origin);
   const nextValue = request.nextUrl.searchParams.get("next");
 
   if (!nextValue) {
@@ -135,7 +135,7 @@ async function handleCallback(request: NextRequest, query: Record<string, string
     if (agreement) {
       const rawBaseUrl = process.env.APP_PUBLIC_BASE_URL || process.env.APP_BASE_URL;
       const baseUrl = getAbsoluteBaseUrl(rawBaseUrl, request.nextUrl.origin);
-      const signUrl = new URL(`/sign/${agreement.token}`, baseUrl).toString();
+      const signUrl = new URL(`/signup/${agreement.token}`, baseUrl).toString();
       const adminNotifyEmail =
         process.env.ADMIN_NOTIFY_EMAIL || process.env.MAIL_ADMIN_NOTIFY_TO || "";
 

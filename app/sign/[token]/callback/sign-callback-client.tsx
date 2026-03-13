@@ -21,7 +21,7 @@ export default function SignCallbackClient({ token, query }: SignCallbackClientP
     <main className="mx-auto flex min-h-screen w-full max-w-3xl flex-col gap-4 px-6 py-12">
       <h1 className="text-2xl font-semibold">BankID callback</h1>
       <p className="text-sm">{message}</p>
-      <Link href={`/sign/${token}`} className="w-fit rounded-md border px-4 py-2 text-sm">
+      <Link href={`/signup/${token}`} className="w-fit rounded-md border px-4 py-2 text-sm">
         Tillbaka till avtalet
       </Link>
     </main>
