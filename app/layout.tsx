@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Plus_Jakarta_Sans, Spectral } from "next/font/google";
 import "./globals.css";
 import FirebaseAnalytics from "./firebase-analytics";
+import CookieConsentBanner from "./cookie-consent-banner";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   variable: "--font-plus-jakarta-sans",
@@ -32,6 +33,7 @@ export default function RootLayout({
       >
         <FirebaseAnalytics />
         {children}
+        <CookieConsentBanner />
       </body>
     </html>
   );
