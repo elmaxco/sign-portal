@@ -154,16 +154,6 @@ body {
   border-color: #0b3da3;
 }
 
-.cookie-button--ghost {
-  border: 1px solid transparent;
-  color: #475569;
-  background: transparent;
-}
-
-.cookie-button--ghost:hover {
-  background: #f8fafc;
-}
-
 @media (max-width: 640px) {
   .cookie-banner {
     left: 0.75rem;

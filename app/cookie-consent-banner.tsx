@@ -65,15 +65,6 @@ export default function CookieConsentBanner({ initialConsent }: CookieConsentBan
             >
               Godkänn alla
             </button>
-            {consentValue !== null ? (
-              <button
-                type="button"
-                className="cookie-button cookie-button--ghost"
-                onClick={() => setIsVisible(false)}
-              >
-                Stäng
-              </button>
-            ) : null}
           </div>
         </aside>
       ) : null}
