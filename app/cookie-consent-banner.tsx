@@ -2,17 +2,18 @@
 
 import { useState } from "react";
 import {
-  readCookieConsent,
   setCookieConsent,
   type CookieConsentValue,
 } from "@/lib/cookie-consent";
 
 const CONSENT_UPDATED_EVENT = "cookie-consent-updated";
 
-export default function CookieConsentBanner() {
-  const [consentValue, setConsentValue] = useState<CookieConsentValue | null>(() =>
-    readCookieConsent()
-  );
+type CookieConsentBannerProps = {
+  initialConsent: CookieConsentValue | null;
+};
+
+export default function CookieConsentBanner({ initialConsent }: CookieConsentBannerProps) {
+  const [consentValue, setConsentValue] = useState<CookieConsentValue | null>(initialConsent);
   const [isVisible, setIsVisible] = useState(() => consentValue === null);
 
   const handleChoice = (value: CookieConsentValue) => {
