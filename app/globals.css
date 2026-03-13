@@ -44,6 +44,25 @@ body {
   animation: fade-in-up 650ms ease-out both;
 }
 
+.marketing-card {
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+.marketing-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 26px -20px rgba(15, 23, 42, 0.6);
+}
+
+.section-divider {
+  margin-left: auto;
+  margin-right: auto;
+  height: 12px;
+  width: min(220px, 60vw);
+  border-top: 2px solid #f1cc4f;
+  border-radius: 9999px;
+  opacity: 0.85;
+}
+
 @keyframes fade-in-up {
   from {
     opacity: 0;
