@@ -187,6 +187,75 @@ export default function Home() {
             </article>
           </div>
         </section>
+
+        <section className="mt-10 overflow-hidden rounded-3xl bg-[#0a76d8] text-white">
+          <div className="grid gap-6 px-6 py-9 sm:px-10 lg:grid-cols-[1.15fr_0.85fr]">
+            <article>
+              <p className="text-xs font-semibold tracking-[0.2em] text-cyan-100">KOM IGÅNG IDAG</p>
+              <h2 className="mt-3 text-3xl font-semibold leading-tight">Kom igång med e-signering på riktigt</h2>
+              <p className="mt-3 max-w-xl text-sm leading-7 text-cyan-50">
+                Vi hjälper dig sätta upp rätt flöde för offert, onboarding och signering. Från första kund till fullt
+                team i drift.
+              </p>
+              <div className="mt-6 flex flex-wrap gap-3">
+                <Link href="/offer" className="rounded-full bg-white px-5 py-3 text-sm font-semibold text-[#0a76d8] hover:bg-slate-100">
+                  Prata med sälj
+                </Link>
+                <Link href="/signup/demo-token" className="rounded-full border border-white/45 px-5 py-3 text-sm font-semibold hover:bg-white/10">
+                  Testa gratis
+                </Link>
+              </div>
+            </article>
+            <article className="rounded-2xl border border-white/25 bg-white/10 p-5 text-sm">
+              <p className="font-semibold">Vi hjälper dig att komma live snabbt</p>
+              <ul className="mt-3 space-y-2 text-cyan-50">
+                <li>• Setup av avtal och mallar</li>
+                <li>• Import av befintliga processer</li>
+                <li>• Teknisk onboarding för team</li>
+              </ul>
+            </article>
+          </div>
+        </section>
+
+        <footer className="mt-6 rounded-3xl bg-[#f4f7fa] px-6 py-8 sm:px-10">
+          <div className="grid gap-8 text-sm text-slate-600 sm:grid-cols-2 lg:grid-cols-4">
+            <div>
+              <p className="font-semibold text-slate-900">Varför Signportal?</p>
+              <p className="mt-3 leading-7">
+                En svensk plattform för avtalshantering med enterprise-känsla, hög säkerhet och snabb implementation.
+              </p>
+            </div>
+            <div>
+              <p className="font-semibold text-slate-900">Produkter</p>
+              <ul className="mt-3 space-y-2">
+                <li>E-signering</li>
+                <li>Avtalsflöden</li>
+                <li>Påminnelser</li>
+                <li>Adminpanel</li>
+              </ul>
+            </div>
+            <div>
+              <p className="font-semibold text-slate-900">Resurser</p>
+              <ul className="mt-3 space-y-2">
+                <li>Guides</li>
+                <li>Driftstatus</li>
+                <li>API-dokumentation</li>
+                <li>Kundcase</li>
+              </ul>
+            </div>
+            <div>
+              <p className="font-semibold text-slate-900">Kontakt</p>
+              <ul className="mt-3 space-y-2">
+                <li>sales@signportal.se</li>
+                <li>support@signportal.se</li>
+                <li>+46 8 123 45 67</li>
+              </ul>
+            </div>
+          </div>
+          <div className="mt-8 border-t border-slate-200 pt-4 text-xs text-slate-500">
+            © {new Date().getFullYear()} Signportal. Alla rättigheter förbehållna.
+          </div>
+        </footer>
       </main>
     </div>
   );
