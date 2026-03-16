@@ -24,6 +24,11 @@ export const metadata: Metadata = {
   title: "SignPortal - Enkel e-signering for team",
   description:
     "Skapa avtal, skicka signeringslankar och folj varje steg i ett snabbt och tydligt e-signeringsflode.",
+  icons: {
+    icon: "/favicon-signportal.svg",
+    shortcut: "/favicon-signportal.svg",
+    apple: "/favicon-signportal.svg",
+  },
 };
 
 export default async function RootLayout({
