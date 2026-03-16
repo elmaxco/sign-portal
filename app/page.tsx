@@ -6,13 +6,12 @@ export default function Home() {
   const trustBadges = ["BankID-klar identitet", "Server-side kontroll", "E-sign med tydligt audit-spår"];
 
   const customerLogos = [
-    { name: "Avanza", logo: "/company-logos/avanza.svg" },
-    { name: "Volvo", logo: "/company-logos/volvo.svg" },
-    { name: "Peab", logo: "/company-logos/peab.svg" },
-    { name: "Nordnet", logo: "/company-logos/nordnet.svg" },
-    { name: "Randstad", logo: "/company-logos/randstad.svg" },
-    { name: "Lovable", logo: "/company-logos/lovable.svg" },
-    { name: "SEB", logo: "/company-logos/seb.svg" },
+    { name: "Avanza", logo: "/company-logos/Avanza_Dark.svg" },
+    { name: "Volvo", logo: "/company-logos/VOLVO_HORIZ_Orig.svg" },
+    { name: "Peab", logo: "/company-logos/PEAB_Dark.svg" },
+    { name: "Nordnet", logo: "/company-logos/Nordnet_Dark.svg" },
+    { name: "Randstad", logo: "/company-logos/Randstad_Dark.svg" },
+    { name: "Lovable", logo: "/company-logos/Logo_Lovable_Dark.svg" },
   ];
 
   const steps = [
