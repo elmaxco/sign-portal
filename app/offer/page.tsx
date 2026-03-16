@@ -104,7 +104,7 @@ export default function OfferPage() {
             value={form.email}
             onChange={(event) => setField("email", event.target.value)}
             className="rounded-md border px-3 py-2"
-            placeholder="namn@foretag.se"
+            placeholder="namn@företag.se"
             disabled={loading}
           />
         </label>

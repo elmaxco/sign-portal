@@ -108,18 +108,18 @@ async function sendEmail(input: {
 export async function sendAgreementLinkEmail(input: SendAgreementEmailInput) {
   const isReminder = input.variant === "reminder";
   const subject = isReminder
-    ? `Paminnelse: signera avtal ${input.agreementTitle || "Avtal"}`
+    ? `Påminnelse: signera avtal ${input.agreementTitle || "Avtal"}`
     : `Signera avtal: ${input.agreementTitle || "Avtal"}`;
   const safeSignUrl = escapeHtml(input.signUrl);
   const introText = isReminder
-    ? "Paminnelse: du verkar ha missat att signera ditt avtal."
+    ? "Påminnelse: du verkar ha missat att signera ditt avtal."
     : "Du har ett avtal att signera.";
 
   const text = [
     "Hej!",
     "",
     introText,
-    `Signeringslank: ${input.signUrl}`,
+    `Signeringslänk: ${input.signUrl}`,
     "",
     "Om länken inte fungerar, kopiera in den i webbläsaren.",
   ].join("\n");
@@ -149,8 +149,8 @@ export async function sendAgreementSignedConfirmationEmail(input: SignedConfirma
   const text = [
     "Hej!",
     "",
-    "Kvittensen ar korrekt inskickad.",
-    "Ditt avtal ar nu signerat.",
+    "Kvittensen är korrekt inskickad.",
+    "Ditt avtal är nu signerat.",
     "",
     `Visa avtal: ${input.signUrl}`,
   ].join("\n");
@@ -180,7 +180,7 @@ export async function sendAdminAgreementSignedNoticeEmail(input: AdminSignedNoti
     "Ett avtal har signerats.",
     `Titel: ${input.agreementTitle || "(utan titel)"}`,
     `Mottagare: ${input.recipientEmail}`,
-    `Avtalslank: ${input.signUrl}`,
+    `Avtalslänk: ${input.signUrl}`,
   ].join("\n");
 
   const html = [
@@ -201,7 +201,7 @@ export async function sendAdminAgreementSignedNoticeEmail(input: AdminSignedNoti
 }
 
 export async function sendOfferReceivedConfirmationEmail(input: OfferReceivedConfirmationInput) {
-  const subject = "Vi har mottagit din offertforfragan";
+  const subject = "Vi har mottagit din offertförfrågan";
   const safeName = escapeHtml(input.customerName || "kund");
   const safeCompany = escapeHtml(input.company || "-");
   const safePackage = escapeHtml(input.packageName || "-");
@@ -210,10 +210,10 @@ export async function sendOfferReceivedConfirmationEmail(input: OfferReceivedCon
   const text = [
     `Hej ${input.customerName || "kund"}!`,
     "",
-    "Tack, vi har mottagit din offertforfragan.",
-    "Vi aterkommer normalt inom 24 timmar med nasta steg.",
+    "Tack, vi har mottagit din offertförfrågan.",
+    "Vi återkommer normalt inom 24 timmar med nästa steg.",
     "",
-    `Foretag: ${input.company || "-"}`,
+    `Företag: ${input.company || "-"}`,
     `Paket: ${input.packageName || "-"}`,
     `Referens-ID: ${input.offerId}`,
   ].join("\n");
@@ -221,10 +221,10 @@ export async function sendOfferReceivedConfirmationEmail(input: OfferReceivedCon
   const html = [
     '<div style="font-family:Arial,sans-serif;line-height:1.5;color:#111">',
     `<p>Hej ${safeName}!</p>`,
-    "<p>Tack, vi har mottagit din offertforfragan.</p>",
-    "<p>Vi aterkommer normalt inom 24 timmar med nasta steg.</p>",
+    "<p>Tack, vi har mottagit din offertförfrågan.</p>",
+    "<p>Vi återkommer normalt inom 24 timmar med nästa steg.</p>",
     "<p><strong>Sammanfattning</strong></p>",
-    `<p><strong>Foretag:</strong> ${safeCompany}<br/><strong>Paket:</strong> ${safePackage}</p>`,
+    `<p><strong>Företag:</strong> ${safeCompany}<br/><strong>Paket:</strong> ${safePackage}</p>`,
     `<p><strong>Referens-ID:</strong> ${safeOfferId}</p>`,
     "</div>",
   ].join("");

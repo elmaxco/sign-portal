@@ -21,9 +21,9 @@ const spectral = Spectral({
 });
 
 export const metadata: Metadata = {
-  title: "SignPortal - Enkel e-signering for team",
+  title: "SignPortal - Enkel e-signering för team",
   description:
-    "Skapa avtal, skicka signeringslankar och folj varje steg i ett snabbt och tydligt e-signeringsflode.",
+    "Skapa avtal, skicka signeringslänkar och följ varje steg i ett snabbt och tydligt e-signeringsflöde.",
   icons: {
     icon: "/favicon-signportal.svg",
     shortcut: "/favicon-signportal.svg",

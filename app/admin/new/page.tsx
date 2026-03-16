@@ -335,8 +335,8 @@ export default function AdminNewAgreementPage() {
         </label>
 
         <div className="rounded-md border p-4">
-          <p className="text-sm font-medium">Lankat innehall (valfritt)</p>
-          <p className="mt-1 text-xs text-muted-foreground">Lagg till titel + URL som visas pa signeringssidan.</p>
+          <p className="text-sm font-medium">Länkat innehåll (valfritt)</p>
+          <p className="mt-1 text-xs text-muted-foreground">Lägg till titel + URL som visas på signeringssidan.</p>
 
           <div className="mt-3 space-y-3">
             {links.map((link, index) => (
@@ -373,7 +373,7 @@ export default function AdminNewAgreementPage() {
             disabled={loading || isCreated}
             className="mt-3 rounded-md border px-3 py-2 text-sm"
           >
-            + Lagg till lank
+            + Lägg till länk
           </button>
         </div>
 

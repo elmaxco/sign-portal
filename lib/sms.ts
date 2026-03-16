@@ -92,7 +92,7 @@ function toSmsBody(input: SendAgreementSmsInput) {
   const compactTitle = (input.agreementTitle || "Avtal").trim();
 
   if (input.variant === "reminder") {
-    return `Paminnelse: signera avtalet \"${compactTitle}\": ${input.signUrl}`;
+    return `Påminnelse: signera avtalet \"${compactTitle}\": ${input.signUrl}`;
   }
 
   return `Signera avtal \"${compactTitle}\": ${input.signUrl}`;

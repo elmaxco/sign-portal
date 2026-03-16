@@ -124,19 +124,19 @@ export default function AdminOffersPage() {
       );
 
       const emailPart = payload.signLinkEmailSent
-        ? "signlank via e-post skickades"
+        ? "signlänk via e-post skickades"
         : payload.signLinkEmailError
-          ? `signlank via e-post misslyckades: ${payload.signLinkEmailError}`
-          : "e-poststatus okand";
+          ? `signlänk via e-post misslyckades: ${payload.signLinkEmailError}`
+          : "e-poststatus okänd";
       const smsPart = payload.signLinkSmsSent
         ? "SMS skickades"
         : payload.signLinkSmsError
           ? `SMS misslyckades: ${payload.signLinkSmsError}`
           : payload.signLinkSmsSkippedReason
-            ? `SMS hoppades over: ${payload.signLinkSmsSkippedReason}`
+            ? `SMS hoppades över: ${payload.signLinkSmsSkippedReason}`
             : "";
 
-      setStatus(`Avtal skapades fran offert, ${emailPart}.${smsPart ? ` ${smsPart}` : ""}`);
+      setStatus(`Avtal skapades från offert, ${emailPart}.${smsPart ? ` ${smsPart}` : ""}`);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
       setStatus(`Kunde inte skapa avtal från offert: ${message}`);

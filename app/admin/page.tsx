@@ -146,7 +146,7 @@ export default function AdminAgreementsPage() {
         : payload.smsError
           ? ` SMS misslyckades: ${payload.smsError}`
           : payload.smsSkippedReason
-            ? ` SMS hoppades over: ${payload.smsSkippedReason}`
+            ? ` SMS hoppades över: ${payload.smsSkippedReason}`
             : "";
 
       setStatus(`${payload.wasReminder ? "Påminnelse skickad." : "Signlänk skickad."}${smsPart}`);

@@ -356,7 +356,7 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
 
       {entryMode === "signup" ? (
         <p className="text-sm text-muted-foreground">
-          Du har fatt en unik lank. Klicka pa knappen nedan for att identifiera dig med BankID.
+          Du har fått en unik länk. Klicka på knappen nedan för att identifiera dig med BankID.
         </p>
       ) : null}
 
@@ -369,7 +369,7 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
 
           {agreement.links?.length ? (
             <section className="mt-4 rounded-md border p-3">
-              <h3 className="text-sm font-medium">Bilagor / lankat innehall</h3>
+              <h3 className="text-sm font-medium">Bilagor / länkat innehåll</h3>
               <ul className="mt-2 space-y-1 text-sm">
                 {agreement.links.map((link, index) => (
                   <li key={`${link.url}-${index}`}>
