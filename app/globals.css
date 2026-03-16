@@ -63,6 +63,36 @@ body {
   opacity: 0.85;
 }
 
+.company-marquee {
+  position: relative;
+  overflow: hidden;
+  mask-image: linear-gradient(to right, transparent 0, black 8%, black 92%, transparent 100%);
+}
+
+.company-marquee__track {
+  display: flex;
+  width: max-content;
+  align-items: center;
+  gap: 1.25rem;
+  animation: company-marquee-scroll 24s linear infinite;
+}
+
+.company-marquee__item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 220px;
+  height: 64px;
+  border-radius: 0.75rem;
+  background: #f8fafc;
+  border: 1px solid #dde5ee;
+}
+
+.company-marquee__logo {
+  width: auto;
+  height: 36px;
+}
+
 .cookie-banner {
   position: fixed;
   right: 1rem;
@@ -180,5 +210,14 @@ body {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes company-marquee-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(calc(-50% - 0.625rem));
   }
 }
