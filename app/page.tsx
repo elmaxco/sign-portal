@@ -128,7 +128,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="mt-4 rounded-2xl bg-[#edf1f4] px-5 py-5 sm:px-7">
+        <section className="mt-4 rounded-2xl border border-[#d7e0ea] bg-white px-5 py-5 sm:px-7">
           <p className="text-center text-sm font-semibold text-slate-700">Fler än 12 000 kunder förlitar sig på Signportal</p>
           <div className="mt-4">
             <CompanyCarousel companies={customerLogos} />
