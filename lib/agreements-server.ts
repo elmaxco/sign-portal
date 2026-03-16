@@ -93,6 +93,10 @@ export type AgreementReminderCandidateServer = {
   reminderSentAt: string | null;
 };
 
+export type DeleteAgreementByTokenServerResult =
+  | { ok: true; agreementId: string; token: string; attachmentStoragePaths: string[] }
+  | { ok: false; reason: "not_found" };
+
 function generateAgreementTokenServer() {
   return randomBytes(16).toString("hex");
 }
@@ -201,6 +205,42 @@ export async function getAgreementByTokenServer(token: string): Promise<Agreemen
     links: normalizeLinks(data.links),
     attachments: normalizeAttachments(data.attachments),
     attachmentCount: normalizeAttachmentCount(data),
+  };
+}
+
+export async function deleteAgreementByTokenServer(
+  token: string,
+): Promise<DeleteAgreementByTokenServerResult> {
+  const trimmedToken = token.trim();
+
+  if (!trimmedToken) {
+    return { ok: false, reason: "not_found" };
+  }
+
+  const db = getAdminDb();
+  const snapshot = await db
+    .collection("agreements")
+    .where("token", "==", trimmedToken)
+    .limit(1)
+    .get();
+
+  if (snapshot.empty) {
+    return { ok: false, reason: "not_found" };
+  }
+
+  const doc = snapshot.docs[0];
+  const data = doc.data() as FirestoreAgreementDoc;
+  const attachmentStoragePaths = normalizeAttachments(data.attachments)
+    .map((attachment) => attachment.storagePath)
+    .filter((path) => path.length > 0);
+
+  await doc.ref.delete();
+
+  return {
+    ok: true,
+    agreementId: doc.id,
+    token: trimmedToken,
+    attachmentStoragePaths,
   };
 }
 
