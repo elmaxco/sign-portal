@@ -1,10 +1,21 @@
 import Image from "next/image";
 import Link from "next/link";
+import CompanyCarousel from "./company-carousel";
 
 export default function Home() {
   const trustBadges = ["BankID-klar identitet", "Server-side kontroll", "E-sign med tydligt audit-spår"];
 
-  const customerLogos = ["Atea", "Securitas", "WSP", "Bonnier", "Vasakronan", "Sweco"];
+  const customerLogos = [
+    "Volvo",
+    "IKEA",
+    "Spotify",
+    "H&M",
+    "SEB",
+    "Skanska",
+    "Ericsson",
+    "SAS",
+    "Nordea",
+  ];
 
   const steps = [
     {
@@ -120,13 +131,9 @@ export default function Home() {
         </section>
 
         <section className="mt-4 rounded-2xl bg-[#edf1f4] px-5 py-5 sm:px-7">
-          <p className="text-center text-sm font-semibold text-slate-700">Fler än 1 200 kunder litar på vår signering</p>
-          <div className="mt-4 grid grid-cols-2 gap-2 text-center text-sm font-semibold text-slate-500 sm:grid-cols-3 lg:grid-cols-6">
-            {customerLogos.map((logo) => (
-              <div key={logo} className="rounded-xl bg-white px-3 py-2">
-                {logo}
-              </div>
-            ))}
+          <p className="text-center text-sm font-semibold text-slate-700">Företag som gillar digitala avtal just nu</p>
+          <div className="mt-4">
+            <CompanyCarousel companies={customerLogos} />
           </div>
         </section>
 
