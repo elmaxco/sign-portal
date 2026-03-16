@@ -192,7 +192,7 @@ export default function AdminOffersPage() {
         <h1 className="text-2xl font-semibold">Admin - Offerter</h1>
         <div className="flex flex-wrap gap-2">
           <Link href="/offer" className="rounded-md border px-4 py-2 text-sm">
-            Oppna offertformular
+            Öppna offertformulär
           </Link>
           <Link href="/admin" prefetch={false} className="rounded-md border px-4 py-2 text-sm">
             Tillbaka till avtal
