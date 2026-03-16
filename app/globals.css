@@ -77,6 +77,10 @@ body {
   animation: company-marquee-scroll 24s linear infinite;
 }
 
+.company-marquee:hover .company-marquee__track {
+  animation-play-state: paused;
+}
+
 .company-marquee__item {
   display: flex;
   align-items: center;
@@ -199,6 +203,16 @@ body {
 
   .cookie-button {
     flex: 1;
+  }
+
+  .company-marquee__track {
+    animation-duration: 30s;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .company-marquee__track {
+    animation: none;
   }
 }
 
