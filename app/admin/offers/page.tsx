@@ -38,6 +38,7 @@ export default function AdminOffersPage() {
   const [offers, setOffers] = useState<OfferItem[]>([]);
   const [status, setStatus] = useState("Laddar offerter...");
   const [creatingForOfferId, setCreatingForOfferId] = useState<string | null>(null);
+  const [deletingForOfferId, setDeletingForOfferId] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -144,6 +145,46 @@ export default function AdminOffersPage() {
     }
   }
 
+  async function deleteOffer(offer: OfferItem) {
+    const confirmed = window.confirm(
+      `Ta bort offerten från ${offer.company || offer.name}? Detta kan inte ångras.`,
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setDeletingForOfferId(offer.id);
+
+    try {
+      const response = await fetch("/api/admin/offers/delete", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ offerId: offer.id }),
+      });
+
+      const payload = (await response.json()) as {
+        ok?: boolean;
+        error?: string;
+      };
+
+      if (!response.ok || !payload.ok) {
+        setStatus(payload.error ?? "Kunde inte ta bort offert.");
+        return;
+      }
+
+      setOffers((previous) => previous.filter((item) => item.id !== offer.id));
+      setStatus("Offerten togs bort.");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      setStatus(`Kunde inte ta bort offert: ${message}`);
+    } finally {
+      setDeletingForOfferId(null);
+    }
+  }
+
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-6 px-6 py-12">
       <header className="flex flex-wrap items-center justify-between gap-3">
@@ -207,6 +248,15 @@ export default function AdminOffersPage() {
                 onClick={() => createAgreementFromOffer(offer.id)}
               >
                 {creatingForOfferId === offer.id ? "Skapar..." : "Skapa avtal från offert"}
+              </button>
+
+              <button
+                type="button"
+                className="rounded-md border border-red-300 px-3 py-1 text-sm text-red-700 disabled:opacity-50"
+                disabled={deletingForOfferId === offer.id}
+                onClick={() => deleteOffer(offer)}
+              >
+                {deletingForOfferId === offer.id ? "Tar bort..." : "Ta bort offert"}
               </button>
 
               {offer.agreementToken ? (
