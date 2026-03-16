@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import CompanyCarousel from "./company-carousel";
+import StickyHeader from "./sticky-header";
 
 export default function Home() {
   const trustBadges = ["BankID-klar identitet", "Server-side kontroll", "E-sign med tydligt audit-spår"];
@@ -44,24 +45,9 @@ export default function Home() {
 
   return (
     <div className="min-h-screen pb-8">
-      <header className="sticky top-0 z-50 w-full border-b border-[#d7e0ea] bg-white/95 px-5 py-4 backdrop-blur supports-[backdrop-filter]:bg-white/85 sm:px-7">
-        <nav className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-4">
-            <div>
-              <p className="text-sm font-semibold tracking-[0.18em] text-[var(--brand)]">SIGNPORTAL</p>
-              <p className="mt-1 text-xs text-slate-600">Säker e-signering för nordiska team</p>
-            </div>
-            <div className="flex flex-wrap items-center gap-2 text-sm">
-              <Link href="/offer" className="rounded-full border border-[var(--border)] px-4 py-2 hover:bg-[var(--surface-soft)]">
-                Begär offert
-              </Link>
-              <Link href="/admin" className="rounded-full bg-[var(--brand)] px-4 py-2 font-semibold text-white hover:bg-[var(--brand-strong)]">
-                Öppna admin
-              </Link>
-            </div>
-        </nav>
-      </header>
+      <StickyHeader />
 
-      <main className="mx-auto w-full max-w-6xl pt-4">
+      <main className="mx-auto w-full max-w-6xl pt-28 sm:pt-32">
 
         <section className="mt-4 overflow-hidden rounded-3xl bg-[#111827] text-white">
           <div className="grid gap-6 px-6 py-8 sm:px-10 sm:py-12 lg:grid-cols-[1.1fr_0.9fr]">
