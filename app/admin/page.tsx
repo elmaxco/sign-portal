@@ -189,13 +189,14 @@ export default function AdminAgreementsPage() {
         return;
       }
 
-      setAgreements((previous) => previous.filter((item) => item.token !== agreement.token));
+      const nextAgreements = agreements.filter((item) => item.token !== agreement.token);
+      setAgreements(nextAgreements);
 
       const warning = payload.storageDeleteErrors?.length
         ? ` Varning: ${payload.storageDeleteErrors.length} bilaga kunde inte rensas i storage.`
         : "";
 
-      setStatus(`Avtalet togs bort.${warning}`);
+      setStatus(nextAgreements.length === 0 ? `Avtalet togs bort.${warning} Inga avtal ännu.` : `Avtalet togs bort.${warning}`);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
       setStatus(`Kunde inte ta bort avtalet: ${message}`);
@@ -278,7 +279,11 @@ export default function AdminAgreementsPage() {
                 <button
                   type="button"
                   className="text-sm underline disabled:opacity-50"
-                  disabled={sendingToken === agreement.token || !agreement.recipientEmail}
+                  disabled={
+                    sendingToken === agreement.token ||
+                    deletingToken === agreement.token ||
+                    !agreement.recipientEmail
+                  }
                   onClick={() => sendAgreementLink(agreement.token)}
                 >
                   {sendingToken === agreement.token
@@ -290,7 +295,7 @@ export default function AdminAgreementsPage() {
                 <button
                   type="button"
                   className="text-sm underline text-red-700 disabled:opacity-50"
-                  disabled={deletingToken === agreement.token}
+                  disabled={deletingToken === agreement.token || sendingToken === agreement.token}
                   onClick={() => deleteAgreement(agreement)}
                 >
                   {deletingToken === agreement.token ? "Tar bort..." : "Ta bort avtal"}
