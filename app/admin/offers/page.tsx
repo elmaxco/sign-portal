@@ -175,8 +175,9 @@ export default function AdminOffersPage() {
         return;
       }
 
-      setOffers((previous) => previous.filter((item) => item.id !== offer.id));
-      setStatus("Offerten togs bort.");
+      const nextOffers = offers.filter((item) => item.id !== offer.id);
+      setOffers(nextOffers);
+      setStatus(nextOffers.length === 0 ? "Offerten togs bort. Inga offerter ännu." : "Offerten togs bort.");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
       setStatus(`Kunde inte ta bort offert: ${message}`);
@@ -244,7 +245,11 @@ export default function AdminOffersPage() {
               <button
                 type="button"
                 className="rounded-md border px-3 py-1 text-sm disabled:opacity-50"
-                disabled={creatingForOfferId === offer.id || offer.status === "converted"}
+                disabled={
+                  creatingForOfferId === offer.id ||
+                  deletingForOfferId === offer.id ||
+                  offer.status === "converted"
+                }
                 onClick={() => createAgreementFromOffer(offer.id)}
               >
                 {creatingForOfferId === offer.id ? "Skapar..." : "Skapa avtal från offert"}
@@ -253,7 +258,7 @@ export default function AdminOffersPage() {
               <button
                 type="button"
                 className="rounded-md border border-red-300 px-3 py-1 text-sm text-red-700 disabled:opacity-50"
-                disabled={deletingForOfferId === offer.id}
+                disabled={deletingForOfferId === offer.id || creatingForOfferId === offer.id}
                 onClick={() => deleteOffer(offer)}
               >
                 {deletingForOfferId === offer.id ? "Tar bort..." : "Ta bort offert"}
