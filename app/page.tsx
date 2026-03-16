@@ -44,9 +44,8 @@ export default function Home() {
 
   return (
     <div className="min-h-screen pb-8">
-      <main className="mx-auto w-full max-w-6xl">
-        <header className="glass-card fade-in-up sticky top-3 z-40 mt-6 rounded-2xl px-5 py-4 backdrop-blur supports-[backdrop-filter]:bg-white/90 sm:px-7">
-          <nav className="flex flex-wrap items-center justify-between gap-4">
+      <header className="sticky top-0 z-50 w-full border-b border-[#d7e0ea] bg-white/95 px-5 py-4 backdrop-blur supports-[backdrop-filter]:bg-white/85 sm:px-7">
+        <nav className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-4">
             <div>
               <p className="text-sm font-semibold tracking-[0.18em] text-[var(--brand)]">SIGNPORTAL</p>
               <p className="mt-1 text-xs text-slate-600">Säker e-signering för nordiska team</p>
@@ -59,8 +58,10 @@ export default function Home() {
                 Öppna admin
               </Link>
             </div>
-          </nav>
-        </header>
+        </nav>
+      </header>
+
+      <main className="mx-auto w-full max-w-6xl pt-4">
 
         <section className="mt-4 overflow-hidden rounded-3xl bg-[#111827] text-white">
           <div className="grid gap-6 px-6 py-8 sm:px-10 sm:py-12 lg:grid-cols-[1.1fr_0.9fr]">
