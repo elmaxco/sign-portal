@@ -1,86 +1,33 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
+import { useMemo } from "react";
 
 type CompanyCarouselProps = {
-  companies: string[];
+  companies: Array<{
+    name: string;
+    logo: string;
+  }>;
 };
 
-const VISIBLE_CARDS = 3;
-
 export default function CompanyCarousel({ companies }: CompanyCarouselProps) {
-  const [index, setIndex] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
-
-  const maxIndex = Math.max(0, companies.length - VISIBLE_CARDS);
-
-  const visibleCompanies = useMemo(() => {
-    return companies.slice(index, index + VISIBLE_CARDS);
-  }, [companies, index]);
-
-  const goPrev = () => {
-    setIndex((prev) => (prev === 0 ? maxIndex : prev - 1));
-  };
-
-  const goNext = () => {
-    setIndex((prev) => (prev === maxIndex ? 0 : prev + 1));
-  };
-
-  useEffect(() => {
-    if (isPaused || maxIndex === 0) {
-      return;
-    }
-
-    const timer = window.setInterval(() => {
-      setIndex((prev) => (prev === maxIndex ? 0 : prev + 1));
-    }, 2800);
-
-    return () => {
-      window.clearInterval(timer);
-    };
-  }, [isPaused, maxIndex]);
+  const loopedCompanies = useMemo(() => {
+    return [...companies, ...companies];
+  }, [companies]);
 
   return (
-    <div onMouseEnter={() => setIsPaused(true)} onMouseLeave={() => setIsPaused(false)}>
-      <div className="flex items-center justify-between gap-3">
-        <button
-          type="button"
-          onClick={goPrev}
-          className="rounded-full border border-slate-300 bg-white px-3 py-1 text-sm font-semibold text-slate-700 hover:bg-slate-100"
-          aria-label="Föregående företag"
-        >
-          ←
-        </button>
-        <button
-          type="button"
-          onClick={goNext}
-          className="rounded-full border border-slate-300 bg-white px-3 py-1 text-sm font-semibold text-slate-700 hover:bg-slate-100"
-          aria-label="Nästa företag"
-        >
-          →
-        </button>
-      </div>
-
-      <div className="mt-4 grid gap-2 sm:grid-cols-3">
-        {visibleCompanies.map((company) => (
-          <div
-            key={company}
-            className="rounded-xl border border-slate-200 bg-white px-3 py-3 text-center text-sm font-semibold text-slate-600"
-          >
-            {company}
+    <div className="company-marquee">
+      <div className="company-marquee__track">
+        {loopedCompanies.map((company, index) => (
+          <div key={`${company.name}-${index}`} className="company-marquee__item" aria-label={company.name}>
+            <Image
+              src={company.logo}
+              alt={`Logotyp för ${company.name}`}
+              width={220}
+              height={64}
+              className="company-marquee__logo"
+            />
           </div>
-        ))}
-      </div>
-
-      <div className="mt-3 flex justify-center gap-1.5">
-        {Array.from({ length: maxIndex + 1 }).map((_, dotIndex) => (
-          <button
-            key={dotIndex}
-            type="button"
-            onClick={() => setIndex(dotIndex)}
-            className={`h-2 w-2 rounded-full ${dotIndex === index ? "bg-[var(--brand)]" : "bg-slate-300"}`}
-            aria-label={`Gå till position ${dotIndex + 1}`}
-          />
         ))}
       </div>
     </div>

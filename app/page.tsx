@@ -6,15 +6,13 @@ export default function Home() {
   const trustBadges = ["BankID-klar identitet", "Server-side kontroll", "E-sign med tydligt audit-spår"];
 
   const customerLogos = [
-    "Volvo",
-    "IKEA",
-    "Spotify",
-    "H&M",
-    "SEB",
-    "Skanska",
-    "Ericsson",
-    "SAS",
-    "Nordea",
+    { name: "Avanza", logo: "/company-logos/avanza.svg" },
+    { name: "Volvo", logo: "/company-logos/volvo.svg" },
+    { name: "Peab", logo: "/company-logos/peab.svg" },
+    { name: "Nordnet", logo: "/company-logos/nordnet.svg" },
+    { name: "Randstad", logo: "/company-logos/randstad.svg" },
+    { name: "Lovable", logo: "/company-logos/lovable.svg" },
+    { name: "SEB", logo: "/company-logos/seb.svg" },
   ];
 
   const steps = [
@@ -131,7 +129,7 @@ export default function Home() {
         </section>
 
         <section className="mt-4 rounded-2xl bg-[#edf1f4] px-5 py-5 sm:px-7">
-          <p className="text-center text-sm font-semibold text-slate-700">Företag som gillar digitala avtal just nu</p>
+          <p className="text-center text-sm font-semibold text-slate-700">Fler än 12 000 kunder förlitar sig på Signportal</p>
           <div className="mt-4">
             <CompanyCarousel companies={customerLogos} />
           </div>
