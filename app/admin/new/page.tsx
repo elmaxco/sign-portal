@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
+import AdminNav from "../admin-nav";
+import AdminQuickLinks from "../admin-quick-links";
 
 type AgreementLinkItem = {
   title: string;
@@ -275,7 +277,7 @@ export default function AdminNewAgreementPage() {
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-3xl flex-col gap-6 px-6 py-12">
-      <h1 className="text-2xl font-semibold">Skapa avtal</h1>
+      <AdminNav title="Admin - Skapa avtal" />
 
       <form onSubmit={handleCreateAgreement} className="flex flex-col gap-4">
         <label className="flex flex-col gap-2">
@@ -471,6 +473,8 @@ export default function AdminNewAgreementPage() {
           </ul>
         </section>
       ) : null}
+
+      <AdminQuickLinks />
     </main>
   );
 }

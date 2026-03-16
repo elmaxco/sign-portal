@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import AdminNav from "../admin-nav";
+import AdminQuickLinks from "../admin-quick-links";
 
 type OfferItem = {
   id: string;
@@ -188,17 +190,7 @@ export default function AdminOffersPage() {
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-6 px-6 py-12">
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold">Admin - Offerter</h1>
-        <div className="flex flex-wrap gap-2">
-          <Link href="/offer" className="rounded-md border px-4 py-2 text-sm">
-            Öppna offertformulär
-          </Link>
-          <Link href="/admin" prefetch={false} className="rounded-md border px-4 py-2 text-sm">
-            Tillbaka till avtal
-          </Link>
-        </div>
-      </header>
+      <AdminNav title="Admin - Offerter" />
 
       {status ? <p className="text-sm">{status}</p> : null}
 
@@ -273,6 +265,8 @@ export default function AdminOffersPage() {
           </li>
         ))}
       </ul>
+
+      <AdminQuickLinks />
     </main>
   );
 }
