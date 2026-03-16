@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type CompanyCarouselProps = {
   companies: string[];
@@ -10,6 +10,7 @@ const VISIBLE_CARDS = 3;
 
 export default function CompanyCarousel({ companies }: CompanyCarouselProps) {
   const [index, setIndex] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
 
   const maxIndex = Math.max(0, companies.length - VISIBLE_CARDS);
 
@@ -25,8 +26,22 @@ export default function CompanyCarousel({ companies }: CompanyCarouselProps) {
     setIndex((prev) => (prev === maxIndex ? 0 : prev + 1));
   };
 
+  useEffect(() => {
+    if (isPaused || maxIndex === 0) {
+      return;
+    }
+
+    const timer = window.setInterval(() => {
+      setIndex((prev) => (prev === maxIndex ? 0 : prev + 1));
+    }, 2800);
+
+    return () => {
+      window.clearInterval(timer);
+    };
+  }, [isPaused, maxIndex]);
+
   return (
-    <div>
+    <div onMouseEnter={() => setIsPaused(true)} onMouseLeave={() => setIsPaused(false)}>
       <div className="flex items-center justify-between gap-3">
         <button
           type="button"
