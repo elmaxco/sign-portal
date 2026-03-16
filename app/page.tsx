@@ -83,17 +83,37 @@ export default function Home() {
             </article>
 
             <aside className="rounded-3xl border border-white/20 bg-white/5 p-5 backdrop-blur-sm sm:p-6">
-              <p className="text-xs font-semibold tracking-[0.18em] text-cyan-200">TESTA SIGNPORTAL</p>
-              <h2 className="mt-3 text-2xl font-semibold leading-tight">Gratis i 14 dagar</h2>
-              <p className="mt-2 text-sm text-slate-200">Ingen bindningstid. Sätt upp ett avtal och skicka första länken på under 10 minuter.</p>
+              <p className="text-xs font-semibold tracking-[0.18em] text-cyan-200">NÄSTA STEG</p>
+              <h2 className="mt-3 text-2xl font-semibold leading-tight">Kom igång med rätt upplägg</h2>
+              <p className="mt-2 text-sm text-slate-200">
+                Vi erbjuder offert, genomgång av flöden och onboarding för team. Välj det som passar er bäst.
+              </p>
 
-              <div className="mt-5 space-y-3 text-sm">
-                <input className="w-full rounded-xl border border-white/20 bg-white/10 px-3 py-2.5 placeholder:text-slate-300/80" placeholder="Företagsnamn" />
-                <input className="w-full rounded-xl border border-white/20 bg-white/10 px-3 py-2.5 placeholder:text-slate-300/80" placeholder="E-post" />
-                <input className="w-full rounded-xl border border-white/20 bg-white/10 px-3 py-2.5 placeholder:text-slate-300/80" placeholder="Telefon" />
-                <button className="w-full rounded-xl bg-cyan-400 px-3 py-2.5 text-sm font-semibold text-slate-950 hover:bg-cyan-300">
-                  Skapa testkonto
-                </button>
+              <ul className="mt-4 space-y-2 text-sm text-slate-200">
+                <li>• Begär prisförslag utifrån volym och användare</li>
+                <li>• Få demo av signering, signup-länkar och adminflöde</li>
+                <li>• Sätt upp första avtalsflödet tillsammans med oss</li>
+              </ul>
+
+              <div className="mt-5 grid gap-2 text-sm">
+                <Link
+                  href="/offer"
+                  className="rounded-xl bg-cyan-400 px-3 py-2.5 text-center font-semibold text-slate-950 hover:bg-cyan-300"
+                >
+                  Begär offert
+                </Link>
+                <Link
+                  href="mailto:sales@signportal.se?subject=Demo%20av%20Signportal"
+                  className="rounded-xl border border-white/30 px-3 py-2.5 text-center font-semibold text-white hover:bg-white/10"
+                >
+                  Boka demo
+                </Link>
+                <Link
+                  href="/admin"
+                  className="rounded-xl border border-white/20 px-3 py-2.5 text-center text-slate-200 hover:bg-white/10"
+                >
+                  Se adminflöde
+                </Link>
               </div>
             </aside>
           </div>
