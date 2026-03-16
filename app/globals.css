@@ -88,13 +88,14 @@ body {
   min-width: 220px;
   height: 64px;
   border-radius: 0.75rem;
-  background: #f8fafc;
-  border: 1px solid #dde5ee;
+  background: #ffffff;
+  border: 1px solid #d7e0ea;
 }
 
 .company-marquee__logo {
   width: auto;
-  height: 36px;
+  height: 40px;
+  display: block;
 }
 
 .cookie-banner {
