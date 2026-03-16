@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 export default function Home() {
@@ -18,6 +19,12 @@ export default function Home() {
       title: "Följ hela flödet live",
       text: "Se status, påminnelser och signerat resultat i admin utan manuellt jagande.",
     },
+  ];
+
+  const solutionImages = [
+    "/solutions/solution-1.svg",
+    "/solutions/solution-2.svg",
+    "/solutions/solution-3.svg",
   ];
 
   const features = [
@@ -111,7 +118,15 @@ export default function Home() {
           <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {steps.map((step, index) => (
               <article key={step.title} className="marketing-card overflow-hidden rounded-2xl border border-[var(--border)] bg-white">
-                <div className="h-24 bg-[linear-gradient(130deg,#e2e8f0,#cbd5e1_55%,#f8fafc)]" />
+                <div className="relative h-28">
+                  <Image
+                    src={solutionImages[index]}
+                    alt={`Illustration för ${step.title}`}
+                    fill
+                    sizes="(max-width: 1024px) 100vw, 33vw"
+                    className="object-cover"
+                  />
+                </div>
                 <div className="p-4">
                   <p className="text-xs font-semibold tracking-[0.15em] text-slate-500">LÖSNING {index + 1}</p>
                   <h3 className="mt-1 text-sm font-semibold text-slate-900">{step.title}</h3>
