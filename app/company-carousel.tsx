@@ -20,13 +20,15 @@ export default function CompanyCarousel({ companies }: CompanyCarouselProps) {
       <div className="company-marquee__track">
         {loopedCompanies.map((company, index) => (
           <div key={`${company.name}-${index}`} className="company-marquee__item" aria-label={company.name}>
-            <Image
-              src={company.logo}
-              alt={`Logotyp för ${company.name}`}
-              width={220}
-              height={64}
-              className="company-marquee__logo"
-            />
+            <div className="company-marquee__logo-wrap">
+              <Image
+                src={company.logo}
+                alt={`Logotyp för ${company.name}`}
+                fill
+                sizes="220px"
+                className="company-marquee__logo"
+              />
+            </div>
           </div>
         ))}
       </div>

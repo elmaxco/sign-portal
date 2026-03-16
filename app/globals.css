@@ -66,7 +66,8 @@ body {
 .company-marquee {
   position: relative;
   overflow: hidden;
-  mask-image: linear-gradient(to right, transparent 0, black 8%, black 92%, transparent 100%);
+  padding-inline: 0.25rem;
+  mask-image: linear-gradient(to right, transparent 0, black 4%, black 96%, transparent 100%);
 }
 
 .company-marquee__track {
@@ -85,18 +86,24 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 220px;
-  height: 64px;
+  min-width: 270px;
+  height: 72px;
   border-radius: 0.75rem;
   background-color: #ffffff;
   border: 1px solid #d7e0ea;
   box-shadow: 0 1px 0 rgba(15, 23, 42, 0.03);
+  padding-inline: 0.75rem;
+}
+
+.company-marquee__logo-wrap {
+  position: relative;
+  width: min(210px, 84%);
+  height: 42px;
 }
 
 .company-marquee__logo {
-  width: auto;
-  height: 40px;
-  display: block;
+  object-fit: contain;
+  object-position: center;
 }
 
 .cookie-banner {
