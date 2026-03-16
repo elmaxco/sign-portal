@@ -1,0 +1,37 @@
+"use client";
+
+import Image from "next/image";
+import { useMemo } from "react";
+
+type CompanyCarouselProps = {
+  companies: Array<{
+    name: string;
+    logo: string;
+  }>;
+};
+
+export default function CompanyCarousel({ companies }: CompanyCarouselProps) {
+  const loopedCompanies = useMemo(() => {
+    return [...companies, ...companies];
+  }, [companies]);
+
+  return (
+    <div className="company-marquee">
+      <div className="company-marquee__track">
+        {loopedCompanies.map((company, index) => (
+          <div key={`${company.name}-${index}`} className="company-marquee__item" aria-label={company.name}>
+            <div className="company-marquee__logo-wrap">
+              <Image
+                src={company.logo}
+                alt={`Logotyp för ${company.name}`}
+                fill
+                sizes="220px"
+                className="company-marquee__logo"
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
