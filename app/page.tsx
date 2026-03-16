@@ -45,7 +45,7 @@ export default function Home() {
   return (
     <div className="min-h-screen pb-8">
       <main className="mx-auto w-full max-w-6xl">
-        <header className="glass-card fade-in-up mt-6 rounded-2xl px-5 py-4 sm:px-7">
+        <header className="glass-card fade-in-up sticky top-3 z-40 mt-6 rounded-2xl px-5 py-4 backdrop-blur supports-[backdrop-filter]:bg-white/90 sm:px-7">
           <nav className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <p className="text-sm font-semibold tracking-[0.18em] text-[var(--brand)]">SIGNPORTAL</p>
