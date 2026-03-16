@@ -47,6 +47,7 @@ export default function AdminAgreementsPage() {
   const [agreements, setAgreements] = useState<AdminAgreement[]>([]);
   const [status, setStatus] = useState("Laddar avtal...");
   const [sendingToken, setSendingToken] = useState<string | null>(null);
+  const [deletingToken, setDeletingToken] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -157,6 +158,52 @@ export default function AdminAgreementsPage() {
     }
   }
 
+  async function deleteAgreement(agreement: AdminAgreement) {
+    const confirmed = window.confirm(
+      `Ta bort avtalet \"${agreement.title || "(utan titel)"}\"? Detta kan inte ångras.`,
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setDeletingToken(agreement.token);
+
+    try {
+      const response = await fetch("/api/admin/agreements/delete", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ token: agreement.token }),
+      });
+
+      const payload = (await response.json()) as {
+        ok?: boolean;
+        storageDeleteErrors?: string[];
+        error?: string;
+      };
+
+      if (!response.ok || !payload.ok) {
+        setStatus(payload.error ?? "Kunde inte ta bort avtalet.");
+        return;
+      }
+
+      setAgreements((previous) => previous.filter((item) => item.token !== agreement.token));
+
+      const warning = payload.storageDeleteErrors?.length
+        ? ` Varning: ${payload.storageDeleteErrors.length} bilaga kunde inte rensas i storage.`
+        : "";
+
+      setStatus(`Avtalet togs bort.${warning}`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      setStatus(`Kunde inte ta bort avtalet: ${message}`);
+    } finally {
+      setDeletingToken(null);
+    }
+  }
+
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-4xl flex-col gap-6 px-6 py-12">
       <header className="flex flex-wrap items-center justify-between gap-3">
@@ -239,6 +286,14 @@ export default function AdminAgreementsPage() {
                     : agreement.sentAt
                       ? "Skicka igen"
                       : "Skicka signlänk"}
+                </button>
+                <button
+                  type="button"
+                  className="text-sm underline text-red-700 disabled:opacity-50"
+                  disabled={deletingToken === agreement.token}
+                  onClick={() => deleteAgreement(agreement)}
+                >
+                  {deletingToken === agreement.token ? "Tar bort..." : "Ta bort avtal"}
                 </button>
               </div>
             </li>
