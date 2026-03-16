@@ -35,6 +35,10 @@ export type OfferListItem = {
   agreementToken: string | null;
 };
 
+export type DeleteOfferByIdServerResult =
+  | { ok: true; offerId: string }
+  | { ok: false; reason: "not_found" };
+
 function mapOffer(id: string, data: FirestoreOffer): OfferListItem {
   const createdAt = data.createdAt?.toDate?.();
   const convertedAt = data.convertedToAgreementAt?.toDate?.();
@@ -151,4 +155,26 @@ export async function createAgreementFromOfferServer(offerId: string) {
   });
 
   return createdAgreement;
+}
+
+export async function deleteOfferByIdServer(
+  offerId: string,
+): Promise<DeleteOfferByIdServerResult> {
+  const trimmedId = offerId.trim();
+
+  if (!trimmedId) {
+    return { ok: false, reason: "not_found" };
+  }
+
+  const db = getAdminDb();
+  const offerRef = db.collection("offers").doc(trimmedId);
+  const offerDoc = await offerRef.get();
+
+  if (!offerDoc.exists) {
+    return { ok: false, reason: "not_found" };
+  }
+
+  await offerRef.delete();
+
+  return { ok: true, offerId: trimmedId };
 }
