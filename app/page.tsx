@@ -64,7 +64,7 @@ export default function Home() {
                 <Link href="/offer" className="rounded-full bg-cyan-500 px-5 py-3 text-sm font-semibold text-slate-950 hover:bg-cyan-400">
                   Starta gratisdemo
                 </Link>
-                <Link href="/admin" className="rounded-full border border-white/30 px-5 py-3 text-sm font-semibold hover:bg-white/10">
+                <Link href="/admin" prefetch={false} className="rounded-full border border-white/30 px-5 py-3 text-sm font-semibold hover:bg-white/10">
                   Se adminflöde
                 </Link>
               </div>
@@ -105,6 +105,7 @@ export default function Home() {
                 </Link>
                 <Link
                   href="/admin"
+                  prefetch={false}
                   className="rounded-xl border border-white/20 px-3 py-2.5 text-center text-slate-200 hover:bg-white/10"
                 >
                   Se adminflöde

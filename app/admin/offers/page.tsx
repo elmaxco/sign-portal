@@ -152,7 +152,7 @@ export default function AdminOffersPage() {
           <Link href="/offer" className="rounded-md border px-4 py-2 text-sm">
             Oppna offertformular
           </Link>
-          <Link href="/admin" className="rounded-md border px-4 py-2 text-sm">
+          <Link href="/admin" prefetch={false} className="rounded-md border px-4 py-2 text-sm">
             Tillbaka till avtal
           </Link>
         </div>

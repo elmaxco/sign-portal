@@ -20,6 +20,7 @@ export default function StickyHeader() {
 						</Link>
 						<Link
 							href="/admin"
+							prefetch={false}
 							className="rounded-full bg-[var(--brand)] px-4 py-2 font-semibold text-white hover:bg-[var(--brand-strong)]"
 						>
 							  Öppna admin
