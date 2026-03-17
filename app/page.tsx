@@ -64,6 +64,9 @@ export default function Home() {
                 <Link href="/offer" className="rounded-full bg-cyan-500 px-5 py-3 text-sm font-semibold text-slate-950 hover:bg-cyan-400">
                   Starta gratisdemo
                 </Link>
+                <Link href="/sign/start" className="rounded-full bg-white px-5 py-3 text-sm font-semibold text-cyan-700 border border-cyan-200 hover:bg-cyan-50">
+                  Signera avtal
+                </Link>
                 <Link href="/admin" prefetch={false} className="rounded-full border border-white/30 px-5 py-3 text-sm font-semibold hover:bg-white/10">
                   Se adminflöde
                 </Link>
