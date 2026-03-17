@@ -1,39 +1,55 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+
+# SignPortal
+
+SignPortal is a modern e-signing platform for Swedish and Nordic teams. Create agreements, send signing links, and track every step in a fast, secure, and user-friendly workflow.
+
+## Features
+
+- Public offer form for new customers
+- Admin dashboard for managing agreements and offers
+- E-signing with BankID
+- Attachments and linked content support
+- Automated email and SMS reminders
+- Secure download and audit trail
 
 ## Getting Started
 
-First, run the development server:
+1. Install dependencies:
+	```bash
+	npm install
+	```
+2. Start the development server:
+	```bash
+	npm run dev
+	```
+3. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Usage
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- Visit `/offer` to submit a new offer request as a customer.
+- Admins can log in at `/admin` to manage agreements and offers.
+- Recipients sign agreements via unique links (e.g. `/sign/{token}`).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Deployment
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Deploy on [Vercel](https://vercel.com/) or your preferred Node.js hosting. Configure environment variables as below.
 
-## Learn More
+## Environment Variables
 
-To learn more about Next.js, take a look at the following resources:
+See `.env.example` for all required and optional variables.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- `RESEND_API_KEY`: API key for Resend (email delivery)
+- `MAIL_FROM`: Sender email (must be verified)
+- `APP_BASE_URL`: Public base URL (e.g. https://your-domain.se)
+- `ADMIN_NOTIFY_EMAIL`: Internal admin notification address
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Demo
 
-## Deploy on Vercel
+Contact info@signportal.se for a live demo or onboarding help.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## License
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+MIT
 
 ## Environment Variables
 
