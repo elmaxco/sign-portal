@@ -7,6 +7,19 @@ export default function SignStartPage() {
       <p className="text-lg text-slate-700 max-w-xl">
         Har du fått en signeringslänk? Klistra in den här eller klicka på länken du fått via e-post eller SMS.
       </p>
+      <form className="flex flex-col gap-4 w-full max-w-md mx-auto items-center">
+        <input
+          type="text"
+          className="w-full rounded border px-3 py-2 text-base"
+          placeholder="Klistra in signeringslänk eller kod"
+        />
+        <button
+          type="submit"
+          className="rounded bg-cyan-600 px-5 py-2 text-white font-semibold hover:bg-cyan-700"
+        >
+          Gå till signering
+        </button>
+      </form>
       <div className="flex flex-col gap-4 w-full max-w-md mx-auto">
         <Link href="/" className="text-cyan-700 underline">Tillbaka till startsidan</Link>
       </div>
