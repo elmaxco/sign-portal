@@ -123,8 +123,6 @@ export async function collectTicAuthSession(input: { sessionId: string }) {
   const apiKey = process.env.TIC_API_KEY;
   const baseUrl = getTicApiBaseUrl();
 
-  console.log("TIC_API_KEY length:", (process.env.TIC_API_KEY ?? "").length);
-
   if (!apiKey) {
     return {
       ok: false,
