@@ -231,6 +231,10 @@ export default function AdminNewAgreementPage() {
       return;
     }
 
+    if (!window.confirm("Är du säker på att du vill ta bort bilagan?")) {
+      return;
+    }
+
     setDeletingAttachmentId(attachmentId);
     setAttachmentStatus("");
 
