@@ -7,11 +7,9 @@ export default function SignStartPage() {
   const [input, setInput] = useState("");
   const router = useRouter();
 
-  function extractToken(value: string) {
-    // Försök hitta token i en full länk eller använd som det är
+  function extractToken(value: string) {    
     const match = value.match(/\/sign\/([\w-]+)/);
-    if (match) return match[1];
-    // Om det ser ut som en token (typ 20+ tecken)
+    if (match) return match[1];   
     if (/^[\w-]{20,}$/.test(value)) return value;
     return null;
   }

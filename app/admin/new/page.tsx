@@ -446,48 +446,6 @@ export default function AdminNewAgreementPage() {
           </div>
           {attachmentStatus && <p className="mt-2 text-xs text-red-600">{attachmentStatus}</p>}
         </div>
-
-
-          <ul className="mt-3 space-y-2 text-sm">
-            {attachments.map((attachment) => (
-              <li
-                key={attachment.id}
-                className="flex flex-wrap items-center justify-between gap-2 rounded-md border p-2"
-              >
-                <div className="flex items-center gap-3">
-                  {isImageAttachment(attachment) ? (
-                    <a
-                      href={attachmentDownloadHref(token, attachment.id, "preview")}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <Image
-                        src={attachmentDownloadHref(token, attachment.id, "preview")}
-                        alt={attachment.filename}
-                        width={64}
-                        height={64}
-                        className="h-16 w-16 rounded object-cover"
-                        unoptimized
-                      />
-                    </a>
-                  ) : null}
-                  <p className="font-medium">{attachment.filename}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {attachment.contentType} - {Math.ceil(attachment.size / 1024)} KB
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => handleDeleteAttachment(attachment.id)}
-                  disabled={deletingAttachmentId === attachment.id}
-                  className="rounded-md border px-3 py-1 text-xs"
-                >
-                  {deletingAttachmentId === attachment.id ? "Tar bort..." : "Ta bort"}
-                </button>
-              </li>
-            ))}
-          </ul>
-        </section>
       ) : null}
 
       <AdminQuickLinks />
