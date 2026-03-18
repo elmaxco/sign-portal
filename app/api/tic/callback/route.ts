@@ -9,7 +9,7 @@ import {
   sendAdminAgreementSignedNoticeEmail,
   sendAgreementSignedConfirmationEmail,
 } from "@/lib/mail";
-import { collectTicAuthSession } from "@/lib/tic-collect";
+import { collectTicAuthSession, ticDebugLog } from "@/lib/tic-collect";
 
 function toQueryObject(searchParams: URLSearchParams) {
   const output: Record<string, string> = {};
@@ -110,11 +110,11 @@ async function handleCallback(request: NextRequest, query: Record<string, string
 
   const collect = await collectTicAuthSession({ sessionId });
 
-  console.log("TIC collect:", {
+  ticDebugLog("Collect result", {
     ok: collect.ok,
     outcome: collect.outcome,
     error: collect.error,
-    statusValue: collect.statusValue,    
+    statusValue: collect.statusValue,
   });
 
   if (collect.ok && collect.outcome === "success") {
