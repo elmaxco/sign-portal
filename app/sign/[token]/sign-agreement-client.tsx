@@ -71,6 +71,7 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
   const [agreement, setAgreement] = useState<Agreement | null>(null);
   const [status, setStatus] = useState("Laddar avtal...");
   const [startSigningError, setStartSigningError] = useState("");
+  const [isRestartingSigning, setIsRestartingSigning] = useState(false);
   const [pendingFromCallback, setPendingFromCallback] = useState(false);
   const [isPollingActive, setIsPollingActive] = useState(false);
   const [previewAttachment, setPreviewAttachment] = useState<AgreementAttachment | null>(null);
@@ -276,7 +277,7 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
             };
           });
 
-          setStatus("Tiden gick ut. Försök igen.");
+          setStatus("Tiden gick ut. Starta om signeringen för att försöka igen.");
           setPendingFromCallback(false);
           stopPolling();
           return;
@@ -311,7 +312,7 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
     };
   }, [agreement?.status, pendingFromCallback, token]);
 
-  function handleCancelOrRetry() {
+  function clearBankIdQueryParam() {
     if (typeof window === "undefined") {
       return;
     }
@@ -322,9 +323,37 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
       url.searchParams.delete("bankid");
       window.history.replaceState({}, "", url.toString());
     }
+  }
 
+  async function handleRestartSigning() {
+    setStartSigningError("");
+    setIsRestartingSigning(true);
+    clearBankIdQueryParam();
     setPendingFromCallback(false);
-    setStatus("Signering avbröts. Du kan försöka igen.");
+
+    try {
+      await fetch(`/api/agreements/reset?token=${encodeURIComponent(token)}`, {
+        method: "POST",
+        cache: "no-store",
+      });
+
+      setAgreement((previous) => {
+        if (!previous) {
+          return previous;
+        }
+
+        return {
+          ...previous,
+          status: "draft",
+        };
+      });
+
+      setStatus("Signeringen är återställd. Starta om med BankID.");
+    } catch {
+      setStatus("Kunde inte återställa signeringen just nu. Försök igen.");
+    } finally {
+      setIsRestartingSigning(false);
+    }
   }
 
   async function handleStartSigning() {
@@ -485,10 +514,11 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
               {isPollingActive ? (
                 <button
                   type="button"
-                  onClick={handleCancelOrRetry}
-                  className="mt-2 inline-flex rounded-md border px-3 py-1 text-sm"
+                  onClick={handleRestartSigning}
+                  disabled={isRestartingSigning}
+                  className="mt-2 inline-flex rounded-md border px-3 py-1 text-sm disabled:opacity-50"
                 >
-                  Avbryt / Försök igen
+                  {isRestartingSigning ? "Återställer..." : "Avbryt och starta om"}
                 </button>
               ) : null}
 
