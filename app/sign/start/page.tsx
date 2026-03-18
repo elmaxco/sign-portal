@@ -8,7 +8,7 @@ export default function SignStartPage() {
   const router = useRouter();
 
   function extractToken(value: string) {    
-    const match = value.match(/\/sign\/([\w-]+)/);
+    const match = value.match(/\/(?:sign|signup)\/([\w-]+)/);
     if (match) return match[1];   
     if (/^[\w-]{20,}$/.test(value)) return value;
     return null;
