@@ -1,55 +1,23 @@
 
+
 # SignPortal
 
-SignPortal is a modern e-signing platform for Swedish and Nordic teams. Create agreements, send signing links, and track every step in a fast, secure, and user-friendly workflow.
+Modern e-signing for Swedish teams. Create, send, and sign agreements with BankID.
 
-## Features
-
-- Public offer form for new customers
-- Admin dashboard for managing agreements and offers
-- E-signing with BankID
-- Attachments and linked content support
-- Automated email and SMS reminders
-- Secure download and audit trail
-
-## Getting Started
-
-1. Install dependencies:
-	```bash
-	npm install
-	```
-2. Start the development server:
-	```bash
-	npm run dev
-	```
-3. Open [http://localhost:3000](http://localhost:3000) in your browser.
+## Quick start
+1. `npm install`
+2. `npm run dev`
+3. Open [localhost:3000](http://localhost:3000)
 
 ## Usage
+- `/offer`: Customer offer form
+- `/admin`: Admin dashboard
+- `/sign/{token}`: Sign agreement
 
-- Visit `/offer` to submit a new offer request as a customer.
-- Admins can log in at `/admin` to manage agreements and offers.
-- Recipients sign agreements via unique links (e.g. `/sign/{token}`).
+## Env vars
+See `.env.example` for config (Resend, base URL, etc).
 
-## Deployment
-
-Deploy on [Vercel](https://vercel.com/) or your preferred Node.js hosting. Configure environment variables as below.
-
-## Environment Variables
-
-See `.env.example` for all required and optional variables.
-
-- `RESEND_API_KEY`: API key for Resend (email delivery)
-- `MAIL_FROM`: Sender email (must be verified)
-- `APP_BASE_URL`: Public base URL (e.g. https://your-domain.se)
-- `ADMIN_NOTIFY_EMAIL`: Internal admin notification address
-
-## Demo
-
-Contact info@signportal.se for a live demo or onboarding help.
-
-## License
-
-MIT
+MIT License
 
 ## Environment Variables
 
