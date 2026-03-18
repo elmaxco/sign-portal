@@ -275,6 +275,18 @@ export default function AdminNewAgreementPage() {
     });
   }
 
+  // Sort attachments: newest first, then by type
+  const sortedAttachments = [...attachments].sort((a, b) => {
+    // Newest first
+    const dateA = new Date(a.createdAt).getTime();
+    const dateB = new Date(b.createdAt).getTime();
+    if (dateA !== dateB) return dateB - dateA;
+    // By type
+    if (a.contentType < b.contentType) return -1;
+    if (a.contentType > b.contentType) return 1;
+    return 0;
+  });
+
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-3xl flex-col gap-6 px-6 py-12">
       <AdminNav title="Admin - Skapa avtal" />
@@ -410,26 +422,26 @@ export default function AdminNewAgreementPage() {
       ) : null}
 
       {isCreated ? (
-        <section className="rounded-md border p-4">
-          <h2 className="text-lg font-semibold">Bilagor</h2>
-
-          <div className="mt-3 flex flex-wrap items-center gap-2">
-            <input
-              type="file"
-              onChange={(event) => setAttachmentFile(event.target.files?.[0] ?? null)}
-              disabled={uploadingAttachment}
-              className="text-sm"
-            />
-            <button
-              type="button"
-              onClick={handleUploadAttachment}
-              disabled={uploadingAttachment || !attachmentFile}
-              className="rounded-md border px-3 py-2 text-sm disabled:opacity-50"
-            >
-              {uploadingAttachment ? "Laddar upp..." : "Ladda upp"}
-            </button>
+        <div className="rounded-md border p-4">
+          <p className="text-sm font-medium">Bilagor (sorterat: nyast först, typ)</p>
+          <div className="mt-3 space-y-3">
+            {sortedAttachments.map((attachment) => (
+              <div key={attachment.id} className="flex items-center gap-3">
+                <span className="text-xs font-medium">{attachment.filename}</span>
+                <span className="text-xs text-muted-foreground">{attachment.contentType}</span>
+                <button
+                  type="button"
+                  className="rounded border px-2 py-1 text-xs"
+                  disabled={deletingAttachmentId === attachment.id}
+                  onClick={() => handleDeleteAttachment(attachment.id)}
+                >
+                  {deletingAttachmentId === attachment.id ? "Tar bort..." : "Ta bort"}
+                </button>
+              </div>
+            ))}
           </div>
-
+          {attachmentStatus && <p className="mt-2 text-xs text-red-600">{attachmentStatus}</p>}
+        </div>
           {attachmentStatus ? <p className="mt-2 text-sm">{attachmentStatus}</p> : null}
 
           <ul className="mt-3 space-y-2 text-sm">
