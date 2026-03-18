@@ -7,18 +7,26 @@ export default function SignStartPage() {
   const [input, setInput] = useState("");
   const router = useRouter();
 
-  function extractToken(value: string) {    
-    const match = value.match(/\/(?:sign|signup)\/([\w-]+)/);
-    if (match) return match[1];   
-    if (/^[\w-]{20,}$/.test(value)) return value;
+  function resolveSignPath(value: string) {
+    const match = value.match(/\/(sign|signup)\/([\w-]+)/);
+    if (match) {
+      const mode = match[1];
+      const token = match[2];
+      return `/${mode}/${token}`;
+    }
+
+    if (/^[\w-]{20,}$/.test(value)) {
+      return `/sign/${value}`;
+    }
+
     return null;
   }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const token = extractToken(input.trim());
-    if (token) {
-      router.push(`/sign/${token}`);
+    const signPath = resolveSignPath(input.trim());
+    if (signPath) {
+      router.push(signPath);
     } else {
       alert("Ogiltig länk eller kod. Kontrollera och försök igen.");
     }
@@ -34,7 +42,7 @@ export default function SignStartPage() {
         <input
           type="text"
           className="w-full rounded border px-3 py-2 text-base"
-          placeholder="Klistra in signeringslänk eller kod"
+          placeholder="Klistra in signerings- eller signup-länk, eller kod"
           value={input}
           onChange={e => setInput(e.target.value)}
         />
