@@ -67,9 +67,6 @@ export default function Home() {
                 <Link href="/sign/start" className="rounded-full bg-white px-5 py-3 text-sm font-semibold text-cyan-700 border border-cyan-200 hover:bg-cyan-50">
                   Signera avtal
                 </Link>
-                <Link href="/admin" prefetch={false} className="rounded-full border border-white/30 px-5 py-3 text-sm font-semibold hover:bg-white/10">
-                  Se adminflöde
-                </Link>
               </div>
               <ul className="mt-6 flex flex-wrap gap-2 text-xs text-slate-200 sm:text-sm">
                 {trustBadges.map((badge) => (
@@ -105,13 +102,6 @@ export default function Home() {
                   className="rounded-xl border border-white/30 px-3 py-2.5 text-center font-semibold text-white hover:bg-white/10"
                 >
                   Boka demo
-                </Link>
-                <Link
-                  href="/admin"
-                  prefetch={false}
-                  className="rounded-xl border border-white/20 px-3 py-2.5 text-center text-slate-200 hover:bg-white/10"
-                >
-                  Se adminflöde
                 </Link>
               </div>
             </aside>
