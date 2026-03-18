@@ -2,6 +2,32 @@ type JsonObject = Record<string, unknown>;
 
 type CollectOutcome = "success" | "failed" | "pending" | "unknown";
 
+function isTruthyEnv(value: string | undefined) {
+  if (!value) {
+    return false;
+  }
+
+  const normalized = value.trim().toLowerCase();
+  return normalized === "1" || normalized === "true" || normalized === "yes" || normalized === "on";
+}
+
+export function isTicDebugEnabled() {
+  return isTruthyEnv(process.env.TIC_DEBUG_LOGS);
+}
+
+export function ticDebugLog(message: string, details?: unknown) {
+  if (!isTicDebugEnabled()) {
+    return;
+  }
+
+  if (typeof details === "undefined") {
+    console.log(`[tic:debug] ${message}`);
+    return;
+  }
+
+  console.log(`[tic:debug] ${message}`, details);
+}
+
 function normalizeValue(value: unknown) {
   if (typeof value !== "string") {
     return "";
