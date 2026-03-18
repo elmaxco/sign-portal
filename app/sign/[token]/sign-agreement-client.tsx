@@ -42,8 +42,16 @@ function formatAttachmentSize(size: number) {
   return `${Math.ceil(size / 1024)} KB`;
 }
 
+
 function isImageAttachment(attachment: AgreementAttachment) {
-  return attachment.contentType === "image/png" || attachment.contentType === "image/jpeg";
+  return (
+    attachment.contentType === "image/png" ||
+    attachment.contentType === "image/jpeg"
+  );
+}
+
+function isPdfAttachment(attachment: AgreementAttachment) {
+  return attachment.contentType === "application/pdf";
 }
 
 function attachmentDownloadHref(token: string, attachmentId: string, intent?: "download" | "preview") {
@@ -427,13 +435,13 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
-                      {isImageAttachment(attachment) ? (
+                      {(isImageAttachment(attachment) || isPdfAttachment(attachment)) ? (
                         <button
                           type="button"
                           className="rounded-md border px-3 py-1 text-xs"
                           onClick={() => setPreviewAttachment(attachment)}
                         >
-                          Forhandsvisa
+                          Förhandsvisa
                         </button>
                       ) : null}
                       <a
@@ -500,17 +508,26 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
                 onClick={() => setPreviewAttachment(null)}
                 className="rounded border border-white/40 px-3 py-1 text-xs"
               >
-                Stang
+                Stäng
               </button>
             </div>
-            <Image
-              src={attachmentDownloadHref(token, previewAttachment.id, "preview")}
-              alt={previewAttachment.filename}
-              className="max-h-[80vh] w-full rounded object-contain"
-              width={1600}
-              height={1200}
-              unoptimized
-            />
+            {isImageAttachment(previewAttachment) ? (
+              <Image
+                src={attachmentDownloadHref(token, previewAttachment.id, "preview")}
+                alt={previewAttachment.filename}
+                className="max-h-[80vh] w-full rounded object-contain"
+                width={1600}
+                height={1200}
+                unoptimized
+              />
+            ) : isPdfAttachment(previewAttachment) ? (
+              <iframe
+                src={attachmentDownloadHref(token, previewAttachment.id, "preview")}
+                title={previewAttachment.filename}
+                className="w-full min-h-[60vh] max-h-[80vh] rounded bg-white"
+                frameBorder={0}
+              />
+            ) : null}
           </div>
         </div>
       ) : null}
