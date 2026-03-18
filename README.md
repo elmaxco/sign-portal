@@ -81,6 +81,12 @@ SMS is optional and only sent when all conditions are met:
 - `TWILIO_AUTH_TOKEN`
 - `TWILIO_FROM_NUMBER` (E.164 format, e.g. `+46701234567`)
 
+## TIC Debug Logging
+
+- `TIC_DEBUG_LOGS`: Optional debug flag for TIC callback/collect diagnostics.
+- Default behavior is quiet logging in production.
+- Set to `true` (or `1`, `yes`, `on`) only when actively troubleshooting TIC integration.
+
 ## Agreement Attachments
 
 Attachments are stored privately in Firebase Storage and metadata is saved on each agreement document.
