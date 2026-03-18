@@ -7,16 +7,43 @@ export default function SignStartPage() {
   const [input, setInput] = useState("");
   const router = useRouter();
 
-  function resolveSignPath(value: string) {
-    const match = value.match(/\/(sign|signup)\/([\w-]+)/);
-    if (match) {
-      const mode = match[1];
-      const token = match[2];
-      return `/${mode}/${token}`;
+  function parseModeAndToken(value: string) {
+    const match = value.match(/^\/?(sign|signup)\/([\w-]+)\/?$/);
+    if (!match) {
+      return null;
     }
 
-    if (/^[\w-]{20,}$/.test(value)) {
-      return `/sign/${value}`;
+    return {
+      mode: match[1],
+      token: match[2],
+    };
+  }
+
+  function resolveSignPath(value: string) {
+    const trimmedValue = value.trim();
+
+    if (!trimmedValue) {
+      return null;
+    }
+
+    try {
+      const url = new URL(trimmedValue);
+      const parsedFromUrlPath = parseModeAndToken(url.pathname);
+
+      if (parsedFromUrlPath) {
+        return `/${parsedFromUrlPath.mode}/${parsedFromUrlPath.token}`;
+      }
+    } catch {
+      // Ignore non-URL values and continue with path/token parsing.
+    }
+
+    const parsedFromPath = parseModeAndToken(trimmedValue);
+    if (parsedFromPath) {
+      return `/${parsedFromPath.mode}/${parsedFromPath.token}`;
+    }
+
+    if (/^[\w-]{20,}$/.test(trimmedValue)) {
+      return `/sign/${trimmedValue}`;
     }
 
     return null;
