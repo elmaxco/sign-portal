@@ -360,7 +360,8 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
         };
       });
 
-      setStatus("Signeringen är återställd. Starta om med BankID.");
+      setStatus("Signeringen återställd. Startar om BankID-flödet...");
+      await handleStartSigning();
     } catch {
       setStatus("Kunde inte återställa signeringen just nu. Försök igen.");
     } finally {
