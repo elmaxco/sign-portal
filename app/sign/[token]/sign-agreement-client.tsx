@@ -142,23 +142,23 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
     const bankid = params.get("bankid");
 
     if (bankid === "success") {
-      setStatus("Signering registrerad.");
+      setStatus("Signering klar. Avtalet är nu signerat.");
       return;
     }
 
     if (bankid === "failed") {
-      setStatus("Signering avbröts eller misslyckades.");
+      setStatus("Signeringen avbröts eller misslyckades. Starta om signeringen för att försöka igen.");
       return;
     }
 
     if (bankid === "pending") {
-      setStatus("Signering pågår fortfarande. Vänta och prova att uppdatera sidan.");
+      setStatus("Signeringen väntar fortfarande på svar från BankID. Du kan vänta kvar eller starta om signeringen.");
       setPendingFromCallback(true);
       return;
     }
 
     if (bankid === "invalid_state") {
-      setStatus("Ogiltig callback-state. Starta signeringen igen.");
+      setStatus("Ogiltigt callback-svar. Starta om signeringen och försök igen.");
       return;
     }
 
@@ -241,7 +241,7 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
         });
 
         if (data.status === "signed") {
-          setStatus("Signering registrerad.");
+          setStatus("Signering klar. Avtalet är nu signerat.");
           setPendingFromCallback(false);
 
           const url = new URL(window.location.href);
@@ -283,7 +283,7 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
         }
 
         if (data.status === "draft") {
-          setStatus("Signering avbröts eller återställdes.");
+          setStatus("Signeringen avbröts eller återställdes. Starta om signeringen för att försöka igen.");
           setPendingFromCallback(false);
           stopPolling();
           return;
