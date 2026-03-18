@@ -72,6 +72,7 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
   const [status, setStatus] = useState("Laddar avtal...");
   const [startSigningError, setStartSigningError] = useState("");
   const [isRestartingSigning, setIsRestartingSigning] = useState(false);
+  const [restartSuggested, setRestartSuggested] = useState(false);
   const [pendingFromCallback, setPendingFromCallback] = useState(false);
   const [isPollingActive, setIsPollingActive] = useState(false);
   const [previewAttachment, setPreviewAttachment] = useState<AgreementAttachment | null>(null);
@@ -144,27 +145,32 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
 
     if (bankid === "success") {
       setStatus("Signering klar. Avtalet är nu signerat.");
+      setRestartSuggested(false);
       return;
     }
 
     if (bankid === "failed") {
       setStatus("Signeringen avbröts eller misslyckades. Starta om signeringen för att försöka igen.");
+      setRestartSuggested(true);
       return;
     }
 
     if (bankid === "pending") {
       setStatus("Signeringen väntar fortfarande på svar från BankID. Du kan vänta kvar eller starta om signeringen.");
       setPendingFromCallback(true);
+      setRestartSuggested(true);
       return;
     }
 
     if (bankid === "invalid_state") {
       setStatus("Ogiltigt callback-svar. Starta om signeringen och försök igen.");
+      setRestartSuggested(true);
       return;
     }
 
     if (bankid === "unknown") {
       setStatus("Callback mottagen men status kunde inte tolkas.");
+      setRestartSuggested(true);
     }
   }, []);
 
@@ -244,6 +250,7 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
         if (data.status === "signed") {
           setStatus("Signering klar. Avtalet är nu signerat.");
           setPendingFromCallback(false);
+          setRestartSuggested(false);
 
           const url = new URL(window.location.href);
 
@@ -279,6 +286,7 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
 
           setStatus("Tiden gick ut. Starta om signeringen för att försöka igen.");
           setPendingFromCallback(false);
+          setRestartSuggested(true);
           stopPolling();
           return;
         }
@@ -286,10 +294,12 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
         if (data.status === "draft") {
           setStatus("Signeringen avbröts eller återställdes. Starta om signeringen för att försöka igen.");
           setPendingFromCallback(false);
+          setRestartSuggested(true);
           stopPolling();
           return;
         }
 
+        setRestartSuggested(false);
         setStatus("Signering pågår. Status uppdateras automatiskt...");
       } catch {
         attempts += 1;
@@ -297,6 +307,7 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
         if (attempts >= maxAttempts && active) {
           setStatus("Kunde inte verifiera signering i tid. Uppdatera sidan och försök igen.");
           setPendingFromCallback(false);
+          setRestartSuggested(true);
         }
       } finally {
         inFlight = false;
@@ -328,6 +339,7 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
   async function handleRestartSigning() {
     setStartSigningError("");
     setIsRestartingSigning(true);
+    setRestartSuggested(false);
     clearBankIdQueryParam();
     setPendingFromCallback(false);
 
@@ -358,6 +370,7 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
 
   async function handleStartSigning() {
     setStartSigningError("");
+    setRestartSuggested(false);
 
     try {
       const response = await fetch("/api/tic/start", {
@@ -499,9 +512,16 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
               <button
                 type="button"
                 onClick={handleStartSigning}
-                className="inline-flex rounded-md bg-foreground px-4 py-2 text-background"
+                disabled={isPollingActive || isRestartingSigning}
+                className="inline-flex rounded-md bg-foreground px-4 py-2 text-background disabled:opacity-50"
               >
-                {entryMode === "signup" ? "Identifiera dig med BankID" : "Signera med BankID"}
+                {entryMode === "signup"
+                  ? restartSuggested
+                    ? "Identifiera dig igen med BankID"
+                    : "Identifiera dig med BankID"
+                  : restartSuggested
+                    ? "Signera igen med BankID"
+                    : "Signera med BankID"}
               </button>
 
               {isPollingActive ? (
@@ -519,6 +539,17 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
                   className="mt-2 inline-flex rounded-md border px-3 py-1 text-sm disabled:opacity-50"
                 >
                   {isRestartingSigning ? "Återställer..." : "Avbryt och starta om"}
+                </button>
+              ) : null}
+
+              {!isPollingActive && restartSuggested ? (
+                <button
+                  type="button"
+                  onClick={handleRestartSigning}
+                  disabled={isRestartingSigning}
+                  className="mt-2 inline-flex rounded-md border px-3 py-1 text-sm disabled:opacity-50"
+                >
+                  {isRestartingSigning ? "Återställer..." : "Starta om signering"}
                 </button>
               ) : null}
 
