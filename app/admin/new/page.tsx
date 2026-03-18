@@ -446,7 +446,7 @@ export default function AdminNewAgreementPage() {
           </div>
           {attachmentStatus && <p className="mt-2 text-xs text-red-600">{attachmentStatus}</p>}
         </div>
-          {attachmentStatus ? <p className="mt-2 text-sm">{attachmentStatus}</p> : null}
+          {/* Removed duplicate attachmentStatus rendering to fix build error */}
 
           <ul className="mt-3 space-y-2 text-sm">
             {attachments.map((attachment) => (
