@@ -76,6 +76,7 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
   const [pendingFromCallback, setPendingFromCallback] = useState(false);
   const [isPollingActive, setIsPollingActive] = useState(false);
   const [previewAttachment, setPreviewAttachment] = useState<AgreementAttachment | null>(null);
+  const isAgreementSigned = agreement?.status === "signed";
 
   useEffect(() => {
     let active = true;
@@ -402,12 +403,14 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-3xl flex-col gap-6 px-6 py-12">
       <h1 className="text-2xl font-semibold">
-        {entryMode === "signup" ? "Verifiera dig och signera" : "Signering"}
+        {isAgreementSigned ? "Avtalet är signerat" : entryMode === "signup" ? "Verifiera dig och signera" : "Signering"}
       </h1>
 
       {entryMode === "signup" ? (
         <p className="text-sm text-muted-foreground">
-          Du har fått en unik länk. Klicka på knappen nedan för att identifiera dig med BankID.
+          {isAgreementSigned
+            ? "Det här avtalet är redan signerat."
+            : "Du har fått en unik länk. Klicka på knappen nedan för att identifiera dig med BankID."}
         </p>
       ) : null}
 
