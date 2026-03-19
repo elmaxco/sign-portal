@@ -24,7 +24,7 @@ export default function StickyHeader() {
 					<div className="flex flex-wrap items-center gap-2 text-sm">
 						<Link
 							href="/offer"
-							className="rounded-full bg-cyan-500 px-5 py-2.5 font-semibold text-slate-950 shadow-lg shadow-cyan-500/35 ring-2 ring-white transition hover:bg-cyan-400 hover:shadow-xl hover:shadow-cyan-500/40"
+							className="rounded-full bg-[var(--brand)] px-5 py-2.5 font-semibold text-white transition hover:bg-[var(--brand-strong)]"
 						>
 							Begär offert
 						</Link>
