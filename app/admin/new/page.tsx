@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import Image from "next/image";
 import AdminNav from "../admin-nav";
 import AdminQuickLinks from "../admin-quick-links";
 import {
@@ -62,6 +63,7 @@ export default function AdminNewAgreementPage() {
   const [deletingAttachmentId, setDeletingAttachmentId] = useState<string | null>(null);
   const [attachmentStatus, setAttachmentStatus] = useState("");
   const [fileInputKey, setFileInputKey] = useState(0);
+  const [previewAttachment, setPreviewAttachment] = useState<AgreementAttachmentItem | null>(null);
   const isCreated = Boolean(token);
 
   const shareLink = useMemo(() => {
@@ -315,15 +317,20 @@ export default function AdminNewAgreementPage() {
 
   // Sort attachments: newest first, then by type
   const sortedAttachments = [...attachments].sort((a, b) => {
-    // Newest first
     const dateA = new Date(a.createdAt).getTime();
     const dateB = new Date(b.createdAt).getTime();
     if (dateA !== dateB) return dateB - dateA;
-    // By type
     if (a.contentType < b.contentType) return -1;
     if (a.contentType > b.contentType) return 1;
     return 0;
   });
+
+  // Group for display: images, PDFs, others
+  const imageAttachments = sortedAttachments.filter(isImageAttachment);
+  const pdfAttachments = sortedAttachments.filter(isPdfAttachment);
+  const otherAttachments = sortedAttachments.filter(
+    (a) => !isImageAttachment(a) && !isPdfAttachment(a),
+  );
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-3xl flex-col gap-6 px-6 py-12">
@@ -482,9 +489,18 @@ export default function AdminNewAgreementPage() {
           </div>
           <div className="mt-3 space-y-3">
             {sortedAttachments.map((attachment) => (
-              <div key={attachment.id} className="flex items-center gap-3">
+              <div key={attachment.id} className="flex flex-wrap items-center gap-3">
                 <span className="text-xs font-medium">{attachment.filename}</span>
                 <span className="text-xs text-muted-foreground">{attachment.contentType}</span>
+                {(isImageAttachment(attachment) || isPdfAttachment(attachment)) ? (
+                  <button
+                    type="button"
+                    className="rounded border px-2 py-1 text-xs"
+                    onClick={() => setPreviewAttachment(attachment)}
+                  >
+                    Förhandsvisa
+                  </button>
+                ) : null}
                 <button
                   type="button"
                   className="rounded border px-2 py-1 text-xs"
@@ -497,6 +513,40 @@ export default function AdminNewAgreementPage() {
             ))}
           </div>
           {attachmentStatus && <p className="mt-2 text-xs text-red-600">{attachmentStatus}</p>}
+        </div>
+      ) : null}
+
+      {previewAttachment && token ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+          <div className="w-full max-w-5xl rounded-md bg-black p-3">
+            <div className="mb-2 flex items-center justify-between text-white">
+              <p className="text-sm font-medium">{previewAttachment.filename}</p>
+              <button
+                type="button"
+                onClick={() => setPreviewAttachment(null)}
+                className="rounded border border-white/40 px-3 py-1 text-xs"
+              >
+                Stäng
+              </button>
+            </div>
+            {isImageAttachment(previewAttachment) ? (
+              <Image
+                src={attachmentDownloadHref(token, previewAttachment.id, "preview")}
+                alt={previewAttachment.filename}
+                className="max-h-[80vh] w-full rounded object-contain"
+                width={1600}
+                height={1200}
+                unoptimized
+              />
+            ) : isPdfAttachment(previewAttachment) ? (
+              <iframe
+                src={attachmentDownloadHref(token, previewAttachment.id, "preview")}
+                title={previewAttachment.filename}
+                className="w-full min-h-[60vh] max-h-[80vh] rounded bg-white"
+                frameBorder={0}
+              />
+            ) : null}
+          </div>
         </div>
       ) : null}
 
