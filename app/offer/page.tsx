@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
+import StickyHeader from "../sticky-header";
 
 type OfferPayload = {
   name: string;
@@ -79,7 +81,15 @@ export default function OfferPage() {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-3xl flex-col gap-6 px-6 py-12">
+    <div className="min-h-screen">
+      <StickyHeader />
+      <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-6 pt-28 pb-12 sm:pt-32">
+        <Link
+          href="/"
+          className="mb-2 inline-flex items-center gap-1.5 text-sm text-slate-600 hover:text-slate-900"
+        >
+          ← Tillbaka till startsidan
+        </Link>
       <h1 className="text-2xl font-semibold">Begär offert</h1>
       <p className="text-sm text-muted-foreground">
         Fyll i dina uppgifter så återkommer vi med offert och nästa steg.
@@ -185,6 +195,7 @@ export default function OfferPage() {
       </form>
 
       {status ? <p className="text-sm">{status}</p> : null}
-    </main>
+      </main>
+    </div>
   );
 }
