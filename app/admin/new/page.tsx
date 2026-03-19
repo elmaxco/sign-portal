@@ -1,9 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Image from "next/image";
 import AdminNav from "../admin-nav";
 import AdminQuickLinks from "../admin-quick-links";
+import {
+  formatAttachmentSize,
+  isAllowedAttachmentContentType,
+  MAX_ATTACHMENTS_PER_AGREEMENT,
+  MAX_ATTACHMENT_SIZE_BYTES,
+} from "@/lib/attachments";
 
 type AgreementLinkItem = {
   title: string;
@@ -22,6 +27,10 @@ type AgreementAttachmentItem = {
 
 function isImageAttachment(attachment: AgreementAttachmentItem) {
   return attachment.contentType === "image/png" || attachment.contentType === "image/jpeg";
+}
+
+function isPdfAttachment(attachment: AgreementAttachmentItem) {
+  return attachment.contentType === "application/pdf";
 }
 
 function attachmentDownloadHref(token: string, attachmentId: string, intent?: "download" | "preview") {
@@ -211,7 +220,15 @@ export default function AdminNewAgreementPage() {
       };
 
       if (!response.ok || !payload.ok || !payload.attachment) {
-        setAttachmentStatus(payload.error ?? "Kunde inte ladda upp bilaga.");
+        const apiError = payload.error ?? "";
+        const msg = apiError.includes("Unsupported file type")
+          ? "Ogiltig filtyp. Endast PDF, PNG och JPEG tillåts."
+          : apiError.includes("File size") || apiError.includes("size")
+            ? "Filen är för stor. Max 10 MB per bilaga."
+            : apiError.includes("Max") && apiError.includes("attachments")
+              ? "Max 10 bilagor per avtal."
+              : apiError || "Kunde inte ladda upp bilaga.";
+        setAttachmentStatus(msg);
         return;
       }
 
