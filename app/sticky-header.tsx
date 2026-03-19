@@ -4,7 +4,7 @@ import Link from "next/link";
 
 export default function StickyHeader() {
 	return (
-		<header className="fixed inset-x-0 top-0 z-50 border-b border-[#d7e0ea] bg-white/95 px-5 py-2 backdrop-blur supports-[backdrop-filter]:bg-white/85 sm:px-7">
+		<header className="fixed inset-x-0 top-0 z-50 border-b border-[#d7e0ea] bg-white px-5 py-2 shadow-md sm:px-7">
 			<div className="mx-auto w-full max-w-6xl">
 				<nav className="flex flex-wrap items-center justify-between gap-4 px-5 py-4 sm:px-7">
 					<div>
@@ -14,9 +14,9 @@ export default function StickyHeader() {
 					<div className="flex flex-wrap items-center gap-2 text-sm">
 						<Link
 							href="/offer"
-							className="rounded-full border border-[var(--border)] px-4 py-2 hover:bg-[var(--surface-soft)]"
+							className="rounded-full bg-cyan-500 px-5 py-2.5 font-semibold text-slate-950 shadow-lg shadow-cyan-500/35 ring-2 ring-white transition hover:bg-cyan-400 hover:shadow-xl hover:shadow-cyan-500/40"
 						>
-							  Begär offert
+							Begär offert
 						</Link>
 					</div>
 				</nav>
