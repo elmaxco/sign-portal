@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import AdminNav from "../admin-nav";
 import AdminQuickLinks from "../admin-quick-links";
 import {
@@ -61,6 +61,7 @@ export default function AdminNewAgreementPage() {
   const [uploadingAttachment, setUploadingAttachment] = useState(false);
   const [deletingAttachmentId, setDeletingAttachmentId] = useState<string | null>(null);
   const [attachmentStatus, setAttachmentStatus] = useState("");
+  const [fileInputKey, setFileInputKey] = useState(0);
   const isCreated = Boolean(token);
 
   const shareLink = useMemo(() => {
@@ -200,6 +201,21 @@ export default function AdminNewAgreementPage() {
       return;
     }
 
+    if (!isAllowedAttachmentContentType(attachmentFile.type || "")) {
+      setAttachmentStatus("Ogiltig filtyp. Endast PDF, PNG och JPEG tillåts.");
+      return;
+    }
+
+    if (attachmentFile.size <= 0 || attachmentFile.size > MAX_ATTACHMENT_SIZE_BYTES) {
+      setAttachmentStatus(`Filen får högst vara ${formatAttachmentSize(MAX_ATTACHMENT_SIZE_BYTES)}.`);
+      return;
+    }
+
+    if (attachments.length >= MAX_ATTACHMENTS_PER_AGREEMENT) {
+      setAttachmentStatus(`Max ${MAX_ATTACHMENTS_PER_AGREEMENT} bilagor per avtal.`);
+      return;
+    }
+
     setUploadingAttachment(true);
     setAttachmentStatus("");
 
@@ -233,6 +249,7 @@ export default function AdminNewAgreementPage() {
       }
 
       setAttachmentFile(null);
+      setFileInputKey((k) => k + 1);
       setAttachments((previous) => [...previous, payload.attachment as AgreementAttachmentItem]);
       setAttachmentStatus("Bilaga uppladdad.");
     } catch (error) {
@@ -445,6 +462,24 @@ export default function AdminNewAgreementPage() {
       {isCreated ? (
         <div className="rounded-md border p-4">
           <p className="text-sm font-medium">Bilagor (sorterat: nyast först, typ)</p>
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <input
+              key={fileInputKey}
+              type="file"
+              accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg"
+              onChange={(e) => setAttachmentFile(e.target.files?.[0] ?? null)}
+              disabled={uploadingAttachment || attachments.length >= MAX_ATTACHMENTS_PER_AGREEMENT}
+              className="text-sm"
+            />
+            <button
+              type="button"
+              onClick={handleUploadAttachment}
+              disabled={uploadingAttachment || !attachmentFile || attachments.length >= MAX_ATTACHMENTS_PER_AGREEMENT}
+              className="rounded border px-3 py-1 text-sm disabled:opacity-50"
+            >
+              {uploadingAttachment ? "Laddar upp..." : "Ladda upp bilaga"}
+            </button>
+          </div>
           <div className="mt-3 space-y-3">
             {sortedAttachments.map((attachment) => (
               <div key={attachment.id} className="flex items-center gap-3">
