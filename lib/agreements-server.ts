@@ -1,6 +1,6 @@
 import { getAdminDb } from "@/lib/firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
-import { randomBytes } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import {
   MAX_ATTACHMENTS_PER_AGREEMENT,
   type AttachmentItem,
@@ -528,6 +528,77 @@ function normalizeTimestamp(value: unknown) {
   return null;
 }
 
+function sanitizeTicPayload(value: unknown) {
+  if (!value || typeof value !== "object") {
+    return {};
+  }
+
+  const allowedKeys = [
+    "status",
+    "result",
+    "outcome",
+    "provider",
+    "session_id",
+    "sessionId",
+    "state",
+    "error",
+    "error_code",
+    "errorCode",
+    "message",
+    "hintCode",
+    "time",
+    "timestamp",
+    "orderRef",
+  ];
+
+  const record = value as Record<string, unknown>;
+  const sanitized: Record<string, string | number | boolean | null> = {};
+
+  for (const key of allowedKeys) {
+    const raw = record[key];
+
+    if (
+      raw === null ||
+      typeof raw === "string" ||
+      typeof raw === "number" ||
+      typeof raw === "boolean"
+    ) {
+      sanitized[key] = raw;
+    }
+  }
+
+  return sanitized;
+}
+
+function buildAgreementIntegrityHash(data: FirestoreAgreementDoc) {
+  const normalizedLinks = normalizeLinks(data.links).map((link) => ({
+    title: link.title,
+    url: link.url,
+  }));
+  const normalizedAttachments = normalizeAttachments(data.attachments).map((attachment) => ({
+    id: attachment.id,
+    filename: attachment.filename,
+    contentType: attachment.contentType,
+    size: attachment.size,
+    storagePath: attachment.storagePath,
+    createdAt: attachment.createdAt,
+    uploadedBy: attachment.uploadedBy,
+  }));
+  const snapshot = {
+    title: data.title ?? "",
+    content: data.content ?? "",
+    token: data.token ?? "",
+    recipientEmail: data.recipientEmail ?? "",
+    recipientPhone: data.recipientPhone ?? "",
+    recipientSmsConsent: data.recipientSmsConsent === true,
+    links: normalizedLinks.sort((a, b) => `${a.title}|${a.url}`.localeCompare(`${b.title}|${b.url}`)),
+    attachments: normalizedAttachments.sort((a, b) => a.id.localeCompare(b.id)),
+    attachmentCount: normalizeAttachmentCount(data),
+  };
+
+  return createHash("sha256").update(JSON.stringify(snapshot)).digest("hex");
+}
+
 async function getAgreementStatusByTokenAdmin(token: string): Promise<AgreementStatusPayload | null> {
   const db = getAdminDb();
   const snapshot = await db
@@ -628,6 +699,8 @@ export async function markAgreementSignedByTicStateServer(input: {
   signProvider?: string;
   sessionId?: string;
   result?: string;
+  callbackData?: unknown;
+  collectData?: unknown;
 }) {
   const db = getAdminDb();
   const snapshot = await db
@@ -640,16 +713,26 @@ export async function markAgreementSignedByTicStateServer(input: {
     return false;
   }
 
-  const minimalReceipt = {
+  const doc = snapshot.docs[0];
+  const data = doc.data() as FirestoreAgreementDoc;
+  const signedAtIso = new Date().toISOString();
+  const signProof = {
+    version: 2,
+    signedAtIso,
+    provider: input.signProvider ?? "id.tic.io",
     sessionId: input.sessionId ?? "",
     result: input.result ?? "",
+    agreementIntegrityHash: buildAgreementIntegrityHash(data),
+    callback: sanitizeTicPayload(input.callbackData),
+    collect: sanitizeTicPayload(input.collectData),
   };
 
-  await snapshot.docs[0].ref.update({
+  await doc.ref.update({
     status: "signed",
     signedAt: FieldValue.serverTimestamp(),
     signProvider: input.signProvider ?? "id.tic.io",
-    signProof: JSON.stringify(minimalReceipt),
+    signProof: JSON.stringify(signProof),
+    signProofVersion: 2,
   });
 
   return true;
