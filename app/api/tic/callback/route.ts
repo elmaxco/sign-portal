@@ -123,6 +123,8 @@ async function handleCallback(request: NextRequest, query: Record<string, string
       signProvider: parsed.provider,
       sessionId,
       result: collect.statusValue || callbackResult || "complete",
+      callbackData: parsed.data,
+      collectData: collect.raw,
     });
 
     if (!updated) {
