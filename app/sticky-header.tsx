@@ -1,13 +1,23 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 export default function StickyHeader() {
+	const pathname = usePathname();
+
+	function handleLogoClick(event: React.MouseEvent<HTMLAnchorElement>) {
+		if (pathname === "/") {
+			event.preventDefault();
+			window.scrollTo({ top: 0, behavior: "smooth" });
+		}
+	}
+
 	return (
 		<header className="fixed inset-x-0 top-0 z-50 border-b border-[#d7e0ea] bg-white px-5 py-2 shadow-md sm:px-7">
 			<div className="mx-auto w-full max-w-6xl">
 				<nav className="flex flex-wrap items-center justify-between gap-4 px-5 py-4 sm:px-7">
-					<Link href="/" className="hover:opacity-90 transition">
+					<Link href="/" onClick={handleLogoClick} className="hover:opacity-90 transition">
 						<p className="text-sm font-semibold tracking-[0.18em] text-[var(--brand)]">SIGNPORTAL</p>
 						<p className="mt-1 text-xs text-slate-600">Säker e-signering för nordiska team</p>
 					</Link>
