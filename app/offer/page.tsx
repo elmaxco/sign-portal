@@ -150,7 +150,7 @@ export default function OfferPage() {
             disabled={loading}
             className="mt-0.5"
           />
-          <span>Jag godkanner att ni kontaktar mig via SMS.</span>
+          <span>Jag godk{"\u00E4"}nner att ni kontaktar mig via SMS.</span>
         </label>
 
         <label className="flex flex-col gap-2">

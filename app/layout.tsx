@@ -11,13 +11,13 @@ import {
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   variable: "--font-plus-jakarta-sans",
-  subsets: ["latin"],
+  subsets: ["latin", "latin-ext"],
 });
 
 const spectral = Spectral({
   variable: "--font-spectral",
   weight: ["400", "500", "600", "700"],
-  subsets: ["latin"],
+  subsets: ["latin", "latin-ext"],
 });
 
 export const metadata: Metadata = {
@@ -42,7 +42,7 @@ export default async function RootLayout({
     consent === "accepted" || consent === "rejected" ? consent : null;
 
   return (
-    <html lang="en">
+    <html lang="sv">
       <body
         className={`${plusJakartaSans.variable} ${spectral.variable} antialiased`}
       >
