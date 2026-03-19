@@ -87,6 +87,23 @@ SMS is optional and only sent when all conditions are met:
 - Default behavior is quiet logging in production.
 - Set to `true` (or `1`, `yes`, `on`) only when actively troubleshooting TIC integration.
 
+## Sign Proof / Audit Trail
+
+When an agreement is marked as signed, the backend stores a structured `signProof` payload.
+
+### `signProof` fields
+
+- `version`: Current schema version (now `2`)
+- `signedAtIso`: Server-side signing timestamp in ISO format
+- `provider`: Identity/sign provider (`id.tic.io` by default)
+- `sessionId`: TIC session identifier
+- `result`: Normalized collect/callback result string
+- `agreementIntegrityHash`: SHA-256 hash over key agreement snapshot fields (content + links + attachments metadata)
+- `callback`: Whitelisted callback fields from TIC
+- `collect`: Whitelisted collect fields from TIC
+
+The payload intentionally uses a whitelist to avoid storing unbounded/raw external response bodies.
+
 ## Agreement Attachments
 
 Attachments are stored privately in Firebase Storage and metadata is saved on each agreement document.
