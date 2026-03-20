@@ -12,7 +12,9 @@ Modern e-signing for Swedish teams. Create, send, and sign agreements with BankI
 ## Usage
 - `/offer`: Customer offer form
 - `/admin`: Admin dashboard
-- `/sign/{token}`: Sign agreement
+- `/sign/{token}`: Sign agreement (direct link)
+- `/signup/{token}`: Sign agreement (link sent to recipient via email/SMS – same flow as `/sign`)
+- `/sign/start`: Paste sign/signup link to navigate
 
 ## Env vars
 See `.env.example` for config (Resend, base URL, etc).
