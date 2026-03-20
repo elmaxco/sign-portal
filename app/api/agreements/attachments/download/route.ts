@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Agreement not found." }, { status: 404 });
   }
 
-  const attachment = agreement.attachments.find((item) => item.id === attachmentId);
+  const attachment = agreement.attachments?.find((item) => item.id === attachmentId);
 
   if (!attachment) {
     return NextResponse.json({ error: "Attachment not found." }, { status: 404 });
