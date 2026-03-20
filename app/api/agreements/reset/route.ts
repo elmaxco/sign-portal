@@ -39,14 +39,10 @@ export async function POST(request: NextRequest) {
     typeof lifecycle.ticStartedAtMs === "number" &&
     Date.now() - lifecycle.ticStartedAtMs > SIGNING_TIMEOUT_MS;
 
-  if (!isTimedOut) {
-    return NextResponse.json({ ok: true, reset: false }, { headers: NO_STORE_HEADERS });
-  }
-
   await resetAgreementByTokenServer({
     token,
-    errorCode: "TIMEOUT",
-    errorMessage: "Tiden gick ut. Försök igen.",
+    errorCode: isTimedOut ? "TIMEOUT" : "USER_ABORT",
+    errorMessage: isTimedOut ? "Tiden gick ut. Försök igen." : "Signeringen avbröts.",
   });
 
   return NextResponse.json({ ok: true, reset: true }, { headers: NO_STORE_HEADERS });
