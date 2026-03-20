@@ -202,7 +202,15 @@ export default function OfferPage() {
         </button>
       </form>
 
-      {status ? <p className="text-sm" role="status" aria-live="polite">{status}</p> : null}
+      {status ? (
+        <p
+          className={`text-sm ${status.startsWith("Tack") ? "text-green-700" : status.startsWith("Kunde") ? "text-red-600" : ""}`}
+          role="status"
+          aria-live="polite"
+        >
+          {status}
+        </p>
+      ) : null}
       </main>
     </div>
   );
