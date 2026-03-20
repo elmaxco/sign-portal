@@ -169,6 +169,12 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
       return;
     }
 
+    if (bankid === "agreement_not_found") {
+      setStatus("Avtalet hittades inte. Kontrollera att länken är korrekt.");
+      setRestartSuggested(false);
+      return;
+    }
+
     if (bankid === "unknown") {
       setStatus("Callback mottagen men status kunde inte tolkas.");
       setRestartSuggested(true);
