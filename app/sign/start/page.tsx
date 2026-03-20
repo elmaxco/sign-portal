@@ -70,14 +70,14 @@ export default function SignStartPage() {
       <form className="flex flex-col gap-4 w-full max-w-md mx-auto items-center" onSubmit={handleSubmit}>
         <input
           type="text"
-          className="w-full rounded border px-3 py-2 text-base"
+          className="w-full rounded border px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-1"
           placeholder="Klistra in signerings- eller signup-länk, eller kod"
           value={input}
           onChange={e => setInput(e.target.value)}
         />
         <button
           type="submit"
-          className="rounded bg-cyan-600 px-5 py-2 text-white font-semibold hover:bg-cyan-700"
+          className="rounded bg-cyan-600 px-5 py-2 text-white font-semibold hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
         >
           Gå till signering
         </button>

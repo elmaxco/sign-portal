@@ -86,7 +86,7 @@ export default function OfferPage() {
       <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-6 pt-28 pb-12 sm:pt-32">
         <Link
           href="/"
-          className="mb-2 inline-flex items-center gap-1.5 text-sm text-slate-600 hover:text-slate-900"
+          className="mb-2 inline-flex items-center gap-1.5 text-sm text-slate-600 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-[var(--brand)] focus:ring-offset-2 rounded"
         >
           ← Tillbaka till startsidan
         </Link>
