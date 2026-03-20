@@ -137,6 +137,17 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
   }, [token]);
 
   useEffect(() => {
+    if (!previewAttachment) return;
+
+    function handleEscape(e: KeyboardEvent) {
+      if (e.key === "Escape") setPreviewAttachment(null);
+    }
+
+    window.addEventListener("keydown", handleEscape);
+    return () => window.removeEventListener("keydown", handleEscape);
+  }, [previewAttachment]);
+
+  useEffect(() => {
     if (typeof window === "undefined") {
       return;
     }
@@ -580,14 +591,20 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
       ) : null}
 
       {previewAttachment ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label={`Förhandsgranska ${previewAttachment.filename}`}
+        >
           <div className="w-full max-w-5xl rounded-md bg-black p-3">
             <div className="mb-2 flex items-center justify-between text-white">
               <p className="text-sm font-medium">{previewAttachment.filename}</p>
               <button
                 type="button"
                 onClick={() => setPreviewAttachment(null)}
-                className="rounded border border-white/40 px-3 py-1 text-xs"
+                className="rounded border border-white/40 px-3 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black"
+                aria-label="Stäng förhandsgranskning"
               >
                 Stäng
               </button>
