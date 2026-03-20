@@ -435,7 +435,7 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
         <div className="flex flex-col gap-4" aria-live="polite">
           <div className="h-8 w-48 animate-pulse rounded bg-slate-200" />
           <div className="h-4 w-full animate-pulse rounded bg-slate-100" />
-          <div className="h-4 w-3/4 animate-pulse rounded bg-slate-100" />
+          <div className="h-4 w-full max-w-sm animate-pulse rounded bg-slate-100" />
           <div className="h-32 w-full animate-pulse rounded bg-slate-100" />
           <p className="text-sm text-slate-500">Laddar avtal...</p>
         </div>
