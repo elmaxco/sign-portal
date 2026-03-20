@@ -338,7 +338,7 @@ export default function AdminNewAgreementPage() {
 
       <form onSubmit={handleCreateAgreement} className="flex flex-col gap-4">
         <label className="flex flex-col gap-2">
-          <span className="text-sm font-medium">Title</span>
+          <span className="text-sm font-medium">Titel</span>
           <input
             value={title}
             onChange={(event) => setTitle(event.target.value)}
@@ -349,7 +349,7 @@ export default function AdminNewAgreementPage() {
         </label>
 
         <label className="flex flex-col gap-2">
-          <span className="text-sm font-medium">Content</span>
+          <span className="text-sm font-medium">Innehåll</span>
           <textarea
             value={content}
             onChange={(event) => setContent(event.target.value)}
@@ -441,7 +441,7 @@ export default function AdminNewAgreementPage() {
           disabled={loading || isCreated}
           className="w-fit rounded-md bg-foreground px-4 py-2 text-background disabled:opacity-50"
         >
-          Create
+          Skapa
         </button>
 
         {isCreated ? (
