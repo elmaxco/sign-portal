@@ -56,27 +56,42 @@ export async function POST(request: NextRequest) {
       notes?: string;
     };
   } catch {
-    return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
+    return NextResponse.json({ error: "Ogiltig JSON-body." }, { status: 400 });
   }
 
   const name = body.name?.trim() || "";
   const email = body.email?.trim().toLowerCase() || "";
   const company = body.company?.trim() || "";
-  const orgNumber = body.orgNumber?.trim() || "";
-  const phone = body.phone?.trim() || "";
+  const orgNumber = body.orgNumber?.trim().replace(/\s/g, "") || "";
+  const phone = body.phone?.trim().replace(/\s/g, "") || "";
 
   if (!name || !email || !company || !orgNumber || !phone) {
     return NextResponse.json(
-      { error: "name, email, company, orgNumber and phone are required." },
+      { error: "Namn, e-post, företag, org.nr och telefon krävs." },
       { status: 400 },
     );
+  }
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return NextResponse.json({ error: "Ogiltig e-postadress." }, { status: 400 });
+  }
+
+  const orgNumberRegex = /^\d{6}-?\d{4}$/;
+  if (!orgNumberRegex.test(orgNumber)) {
+    return NextResponse.json({ error: "Ogiltigt org.nr. Använd formatet XXXXXX-XXXX." }, { status: 400 });
+  }
+
+  const phoneRegex = /^[\d\s\-+()]{7,20}$/;
+  if (!phoneRegex.test(phone)) {
+    return NextResponse.json({ error: "Ogiltigt telefonnummer." }, { status: 400 });
   }
 
   const created = await createOfferServer({
     name,
     email,
     company,
-    orgNumber,
+    orgNumber: orgNumber.includes("-") ? orgNumber : `${orgNumber.slice(0, 6)}-${orgNumber.slice(6)}`,
     phone,
     smsConsent: body.smsConsent === true,
     packageName: body.packageName?.trim() || "",
@@ -94,7 +109,7 @@ export async function POST(request: NextRequest) {
       offerId: created.id,
     });
   } catch (error) {
-    emailError = error instanceof Error ? error.message : "Failed to send confirmation email.";
+    emailError = error instanceof Error ? error.message : "Kunde inte skicka bekräftelsemejl.";
   }
 
   return NextResponse.json({
