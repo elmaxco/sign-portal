@@ -261,18 +261,17 @@ export default function Home() {
             <div>
               <p className="font-semibold text-slate-900">Resurser</p>
               <ul className="mt-3 space-y-2">
-                <li>Guides</li>
-                <li>Driftstatus</li>
-                <li>API-dokumentation</li>
-                <li>Kundcase</li>
+                <li><Link href="/offer">Begär offert</Link></li>
+                <li><Link href="/sign/start">Signera avtal</Link></li>
+                <li><Link href="/">Startsida</Link></li>
               </ul>
             </div>
             <div>
               <p className="font-semibold text-slate-900">Kontakt</p>
               <ul className="mt-3 space-y-2">
-                <li>sales@signportal.se</li>
-                <li>support@signportal.se</li>
-                <li>+46 8 123 45 67</li>
+                <li><a href="mailto:sales@signportal.se" className="hover:underline">sales@signportal.se</a></li>
+                <li><a href="mailto:support@signportal.se" className="hover:underline">support@signportal.se</a></li>
+                <li><a href="tel:+4681234567" className="hover:underline">+46 8 123 45 67</a></li>
               </ul>
             </div>
           </div>
