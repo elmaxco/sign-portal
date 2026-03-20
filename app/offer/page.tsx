@@ -96,90 +96,98 @@ export default function OfferPage() {
       </p>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <label className="flex flex-col gap-2">
+        <label className="flex flex-col gap-2" htmlFor="offer-name">
           <span className="text-sm font-medium">Namn</span>
           <input
+            id="offer-name"
             value={form.name}
             onChange={(event) => setField("name", event.target.value)}
-            className="rounded-md border px-3 py-2"
+            className="rounded-md border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--brand)] focus:ring-offset-1"
             placeholder="För- och efternamn"
             disabled={loading}
           />
         </label>
 
-        <label className="flex flex-col gap-2">
+        <label className="flex flex-col gap-2" htmlFor="offer-email">
           <span className="text-sm font-medium">E-post</span>
           <input
+            id="offer-email"
             type="email"
             value={form.email}
             onChange={(event) => setField("email", event.target.value)}
-            className="rounded-md border px-3 py-2"
+            className="rounded-md border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--brand)] focus:ring-offset-1"
             placeholder="namn@företag.se"
             disabled={loading}
           />
         </label>
 
-        <label className="flex flex-col gap-2">
+        <label className="flex flex-col gap-2" htmlFor="offer-company">
           <span className="text-sm font-medium">Företag</span>
           <input
+            id="offer-company"
             value={form.company}
             onChange={(event) => setField("company", event.target.value)}
-            className="rounded-md border px-3 py-2"
+            className="rounded-md border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--brand)] focus:ring-offset-1"
             placeholder="Företagsnamn"
             disabled={loading}
           />
         </label>
 
-        <label className="flex flex-col gap-2">
+        <label className="flex flex-col gap-2" htmlFor="offer-orgnumber">
           <span className="text-sm font-medium">Org.nr</span>
           <input
+            id="offer-orgnumber"
             value={form.orgNumber}
             onChange={(event) => setField("orgNumber", event.target.value)}
-            className="rounded-md border px-3 py-2"
+            className="rounded-md border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--brand)] focus:ring-offset-1"
             placeholder="556123-4567"
             disabled={loading}
           />
         </label>
 
-        <label className="flex flex-col gap-2">
+        <label className="flex flex-col gap-2" htmlFor="offer-phone">
           <span className="text-sm font-medium">Telefon</span>
           <input
+            id="offer-phone"
             value={form.phone}
             onChange={(event) => setField("phone", event.target.value)}
-            className="rounded-md border px-3 py-2"
+            className="rounded-md border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--brand)] focus:ring-offset-1"
             placeholder="070-123 45 67"
             disabled={loading}
           />
         </label>
 
-        <label className="flex items-start gap-2 rounded-md border p-3 text-sm">
+        <label className="flex items-start gap-2 rounded-md border p-3 text-sm" htmlFor="offer-sms-consent">
           <input
+            id="offer-sms-consent"
             type="checkbox"
             checked={form.smsConsent}
             onChange={(event) => setField("smsConsent", event.target.checked)}
             disabled={loading}
-            className="mt-0.5"
+            className="mt-0.5 focus:ring-2 focus:ring-[var(--brand)]"
           />
           <span>Jag godk{"\u00E4"}nner att ni kontaktar mig via SMS.</span>
         </label>
 
-        <label className="flex flex-col gap-2">
+        <label className="flex flex-col gap-2" htmlFor="offer-package">
           <span className="text-sm font-medium">Paket/produkt (valfritt)</span>
           <input
+            id="offer-package"
             value={form.packageName}
             onChange={(event) => setField("packageName", event.target.value)}
-            className="rounded-md border px-3 py-2"
+            className="rounded-md border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--brand)] focus:ring-offset-1"
             placeholder="Ex. Standardpaket"
             disabled={loading}
           />
         </label>
 
-        <label className="flex flex-col gap-2">
+        <label className="flex flex-col gap-2" htmlFor="offer-notes">
           <span className="text-sm font-medium">Kommentar (valfritt)</span>
           <textarea
+            id="offer-notes"
             value={form.notes}
             onChange={(event) => setField("notes", event.target.value)}
-            className="min-h-28 rounded-md border px-3 py-2"
+            className="min-h-28 rounded-md border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--brand)] focus:ring-offset-1"
             placeholder="Beskriv önskemål"
             disabled={loading}
           />
@@ -188,13 +196,13 @@ export default function OfferPage() {
         <button
           type="submit"
           disabled={loading}
-          className="w-fit rounded-md bg-foreground px-4 py-2 text-background disabled:opacity-50"
+          className="w-fit rounded-md bg-foreground px-4 py-2 text-background focus:outline-none focus:ring-2 focus:ring-[var(--brand)] focus:ring-offset-2 disabled:opacity-50"
         >
           {loading ? "Skickar..." : "Skicka offertförfrågan"}
         </button>
       </form>
 
-      {status ? <p className="text-sm">{status}</p> : null}
+      {status ? <p className="text-sm" role="status" aria-live="polite">{status}</p> : null}
       </main>
     </div>
   );
