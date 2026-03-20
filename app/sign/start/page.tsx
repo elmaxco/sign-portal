@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 export default function SignStartPage() {
   const [input, setInput] = useState("");
+  const [error, setError] = useState("");
   const router = useRouter();
 
   function parseModeAndToken(value: string) {
@@ -51,11 +52,12 @@ export default function SignStartPage() {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    setError("");
     const signPath = resolveSignPath(input.trim());
     if (signPath) {
       router.push(signPath);
     } else {
-      alert("Ogiltig länk eller kod. Kontrollera och försök igen.");
+      setError("Ogiltig länk eller kod. Kontrollera och försök igen.");
     }
   }
 
@@ -79,6 +81,7 @@ export default function SignStartPage() {
         >
           Gå till signering
         </button>
+        {error && <p className="text-sm text-red-600" role="alert">{error}</p>}
       </form>
       <div className="flex flex-col gap-4 w-full max-w-md mx-auto">
         <Link href="/" className="text-cyan-700 underline">Tillbaka till startsidan</Link>
