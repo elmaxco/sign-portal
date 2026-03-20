@@ -223,9 +223,9 @@ export default function Home() {
               </p>
               <div className="mt-6 flex flex-wrap gap-3">
                 <Link href="/offer" className="rounded-full bg-white px-5 py-3 text-sm font-semibold text-[#0a76d8] hover:bg-slate-100">
-                  Prata med sälj
+                  Begär offert
                 </Link>
-                <Link href="/signup/demo-token" className="rounded-full border border-white/45 px-5 py-3 text-sm font-semibold hover:bg-white/10">
+                <Link href="/sign/start" className="rounded-full border border-white/45 px-5 py-3 text-sm font-semibold hover:bg-white/10">
                   Testa gratis
                 </Link>
               </div>
