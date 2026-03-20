@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
 
   if (!rate.allowed) {
     return NextResponse.json(
-      { error: "Too many requests. Please try again soon." },
+      { error: "För många förfrågningar. Försök igen om en stund." },
       {
         status: 429,
         headers: {

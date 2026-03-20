@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
 
   if (!rate.allowed) {
     return NextResponse.json(
-      { error: "Too many download requests. Please wait." },
+      { error: "För många nedladdningar. Vänta en stund." },
       { status: 429, headers: { "Retry-After": String(rate.retryAfterSeconds) } },
     );
   }
