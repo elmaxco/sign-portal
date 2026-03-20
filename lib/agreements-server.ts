@@ -662,11 +662,14 @@ export async function getAgreementLifecycleByTokenServer(token: string) {
 
   const data = snapshot.docs[0].data() as FirestoreAgreementDoc;
   const ticStartedAt = data.ticStartedAt?.toDate?.();
+  const signedAt = normalizeTimestamp(data.signedAt);
 
   return {
     status: data.status ?? "draft",
     ticState: data.ticState ?? "",
     ticStartedAtMs: ticStartedAt ? ticStartedAt.getTime() : null,
+    signedAt: signedAt ?? null,
+    signProvider: data.signProvider ?? null,
   };
 }
 

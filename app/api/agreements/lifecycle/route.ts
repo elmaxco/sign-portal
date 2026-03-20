@@ -31,6 +31,8 @@ export async function GET(request: NextRequest) {
       status: lifecycle.status,
       ticStartedAtMs: lifecycle.ticStartedAtMs,
       ticState: lifecycle.ticState || null,
+      signedAt: lifecycle.signedAt ?? null,
+      signProvider: lifecycle.signProvider ?? null,
     },
     { headers: NO_STORE_HEADERS },
   );
