@@ -63,6 +63,8 @@ export default function AdminNewAgreementPage() {
   const [deletingAttachmentId, setDeletingAttachmentId] = useState<string | null>(null);
   const [attachmentStatus, setAttachmentStatus] = useState("");
   const [fileInputKey, setFileInputKey] = useState(0);
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const [pendingPickKey, setPendingPickKey] = useState(0);
   const [previewAttachment, setPreviewAttachment] = useState<AgreementAttachmentItem | null>(null);
   const isCreated = Boolean(token);
   const uploadSectionRef = useRef<HTMLDivElement>(null);
@@ -328,6 +330,47 @@ export default function AdminNewAgreementPage() {
       const next = previous.filter((_, i) => i !== index);
       return next.length ? next : [{ title: "", url: "" }];
     });
+  }
+
+  function addPendingFilesFromInput(fileList: FileList | null) {
+    if (!fileList?.length) {
+      return;
+    }
+
+    const next: File[] = [];
+    let message = "";
+
+    for (const file of Array.from(fileList)) {
+      const room = MAX_ATTACHMENTS_PER_AGREEMENT - pendingFiles.length - next.length;
+      if (room <= 0) {
+        message = `Max ${MAX_ATTACHMENTS_PER_AGREEMENT} bilagor per avtal.`;
+        break;
+      }
+
+      if (!isAllowedAttachmentContentType(file.type || "")) {
+        message = "Ogiltig filtyp. Endast PDF, PNG och JPEG tillåts.";
+        continue;
+      }
+
+      if (file.size <= 0 || file.size > MAX_ATTACHMENT_SIZE_BYTES) {
+        message = `Varje fil får högst vara ${formatAttachmentSize(MAX_ATTACHMENT_SIZE_BYTES)}.`;
+        continue;
+      }
+
+      next.push(file);
+    }
+
+    if (next.length) {
+      setPendingFiles((previous) => [...previous, ...next]);
+    }
+
+    if (message) {
+      setAttachmentStatus(message);
+    }
+  }
+
+  function removePendingFileAt(index: number) {
+    setPendingFiles((previous) => previous.filter((_, i) => i !== index));
   }
 
   // Sort attachments: newest first, then by type
