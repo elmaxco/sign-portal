@@ -71,6 +71,7 @@ export default function AdminNewAgreementPage() {
   const isCreated = Boolean(token);
   const uploadSectionRef = useRef<HTMLDivElement>(null);
   const pendingFileInputRef = useRef<HTMLInputElement>(null);
+  const postCreateFileInputRef = useRef<HTMLInputElement>(null);
 
   const shareLink = useMemo(() => {
     if (!token || typeof window === "undefined") {
@@ -748,20 +749,39 @@ export default function AdminNewAgreementPage() {
           <p className="mt-2 text-xs text-muted-foreground">Sortering: nyast först, grupperat efter typ (bilder, PDF, övrigt).</p>
           <div className="mt-3 flex flex-wrap items-center gap-3">
             <input
+              ref={postCreateFileInputRef}
               key={fileInputKey}
               type="file"
               accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg"
               onChange={(e) => setAttachmentFile(e.target.files?.[0] ?? null)}
               disabled={uploadingAttachment || attachments.length >= MAX_ATTACHMENTS_PER_AGREEMENT}
-              className="text-sm"
+              className="hidden"
+              aria-hidden
+              tabIndex={-1}
+              aria-label="Välj en bilaga att ladda upp"
             />
+            <button
+              type="button"
+              onClick={() => postCreateFileInputRef.current?.click()}
+              disabled={uploadingAttachment || attachments.length >= MAX_ATTACHMENTS_PER_AGREEMENT}
+              className="rounded-md bg-foreground px-4 py-2 text-sm font-medium text-background disabled:opacity-50"
+            >
+              Välj PDF eller bild
+            </button>
+            {attachmentFile ? (
+              <span className="max-w-[min(100%,20rem)] truncate text-sm text-slate-700" title={attachmentFile.name}>
+                Vald: <span className="font-medium">{attachmentFile.name}</span>
+              </span>
+            ) : (
+              <span className="text-sm text-muted-foreground">Ingen fil vald ännu.</span>
+            )}
             <button
               type="button"
               onClick={handleUploadAttachment}
               disabled={uploadingAttachment || !attachmentFile || attachments.length >= MAX_ATTACHMENTS_PER_AGREEMENT}
-              className="rounded border px-3 py-1 text-sm disabled:opacity-50"
+              className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium disabled:opacity-50"
             >
-              {uploadingAttachment ? "Laddar upp..." : "Ladda upp avtal eller bilaga"}
+              {uploadingAttachment ? "Laddar upp…" : "Ladda upp"}
             </button>
           </div>
           <div className="mt-3 space-y-3">
