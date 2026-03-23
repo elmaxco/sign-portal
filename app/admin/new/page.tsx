@@ -461,8 +461,19 @@ export default function AdminNewAgreementPage() {
         <p className="font-semibold text-slate-900">Så laddar du upp avtal (PDF)</p>
         <ol className="mt-2 list-decimal space-y-1 pl-5">
           <li>Fyll i titel, kort text i fältet &quot;Innehåll&quot; (t.ex. sammanfattning eller &quot;Se bifogade avtalsdokument&quot;) och mottagarens e-post.</li>
-          <li>Klicka <strong>Skapa</strong>.</li>
-          <li>Ladda upp ett eller flera PDF-avtal (och ev. bilder) i avsnittet <strong>Ladda upp avtal och bilagor</strong> som visas direkt under – max {MAX_ATTACHMENTS_PER_AGREEMENT} filer, {formatAttachmentSize(MAX_ATTACHMENT_SIZE_BYTES)} per fil.</li>
+          <li>
+            <strong>Valfritt:</strong> Lägg till PDF eller bilder i rutan <strong>Bilagor innan du skapar</strong> om du
+            vill att de laddas upp automatiskt när avtalet skapas.
+          </li>
+          <li>
+            Klicka <strong>Skapa</strong> (texten blir <strong>Skapa och ladda upp …</strong> om du har valt filer i
+            förväg).
+          </li>
+          <li>
+            Behöver du fler dokument laddar du upp dem under <strong>Ladda upp avtal och bilagor</strong> efter
+            skapande – max {MAX_ATTACHMENTS_PER_AGREEMENT} filer totalt, {formatAttachmentSize(MAX_ATTACHMENT_SIZE_BYTES)}{" "}
+            per fil.
+          </li>
         </ol>
       </div>
 
@@ -569,12 +580,66 @@ export default function AdminNewAgreementPage() {
           </button>
         </div>
 
+        {!isCreated ? (
+          <div className="rounded-md border border-dashed border-slate-300 bg-slate-50/80 p-4">
+            <p className="text-sm font-medium text-slate-900">Bilagor innan du skapar (valfritt)</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Välj PDF eller bilder som laddas upp automatiskt när du klickar Skapa. Du kan även lägga till fler filer
+              i avsnittet nedan efter att avtalet skapats.
+            </p>
+            <input
+              key={pendingPickKey}
+              type="file"
+              multiple
+              accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg"
+              onChange={(event) => {
+                addPendingFilesFromInput(event.target.files);
+                event.target.value = "";
+              }}
+              disabled={
+                loading ||
+                uploadingAttachment ||
+                pendingFiles.length >= MAX_ATTACHMENTS_PER_AGREEMENT
+              }
+              className="mt-3 block text-sm"
+              aria-label="Välj bilagor att ladda upp när avtalet skapas"
+            />
+            {pendingFiles.length ? (
+              <ul className="mt-3 space-y-2 text-sm" aria-label="Köade bilagor">
+                {pendingFiles.map((file, index) => (
+                  <li
+                    key={`${file.name}-${file.size}-${index}`}
+                    className="flex flex-wrap items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2"
+                  >
+                    <span className="font-medium text-slate-900">{file.name}</span>
+                    <span className="text-xs text-muted-foreground">{formatAttachmentSize(file.size)}</span>
+                    <button
+                      type="button"
+                      className="ml-auto rounded border px-2 py-1 text-xs"
+                      disabled={loading || uploadingAttachment}
+                      onClick={() => removePendingFileAt(index)}
+                    >
+                      Ta bort
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </div>
+        ) : null}
+
         <button
           type="submit"
-          disabled={loading || isCreated}
+          disabled={loading || uploadingAttachment || isCreated}
           className="w-fit rounded-md bg-foreground px-4 py-2 text-background disabled:opacity-50"
         >
-          Skapa
+          {loading
+            ? pendingFiles.length > 0
+              ? "Skapar och laddar upp…"
+              : "Skapar…"
+            : pendingFiles.length > 0
+              ? `Skapa och ladda upp ${pendingFiles.length} fil${pendingFiles.length === 1 ? "" : "er"}`
+              : "Skapa"}
         </button>
 
         {isCreated ? (
