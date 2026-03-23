@@ -231,11 +231,40 @@ export default function AdminNewAgreementPage() {
         return;
       }
 
-      setToken(result.token);
+      const newToken = result.token;
+      setToken(newToken);
       if (result.mailSent === false) {
         setStatus(`Avtalet skapades, men mejl kunde inte skickas: ${result.mailError || "okänt fel"}`);
       } else {
         setStatus("Avtalet skapades och mejl skickades.");
+      }
+
+      if (pendingFiles.length > 0) {
+        setUploadingAttachment(true);
+        setAttachmentStatus("");
+        try {
+          const queue = [...pendingFiles];
+          for (const file of queue) {
+            const uploadResult = await uploadSingleAttachment(newToken, file);
+            if (!uploadResult.ok) {
+              const apiError = uploadResult.error;
+              const msg = apiError.includes("Unsupported file type")
+                ? "Ogiltig filtyp. Endast PDF, PNG och JPEG tillåts."
+                : apiError.includes("File size") || apiError.includes("size")
+                  ? "Filen är för stor. Max 10 MB per bilaga."
+                  : apiError.includes("Max") && apiError.includes("attachments")
+                    ? "Max 10 bilagor per avtal."
+                    : apiError || "Kunde inte ladda upp bilaga.";
+              setAttachmentStatus(msg);
+              break;
+            }
+          }
+          await refreshAttachmentsFromServer(newToken);
+          setPendingFiles([]);
+          setPendingPickKey((key) => key + 1);
+        } finally {
+          setUploadingAttachment(false);
+        }
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
@@ -254,6 +283,8 @@ export default function AdminNewAgreementPage() {
     setLinks([{ title: "", url: "" }]);
     setAttachments([]);
     setAttachmentFile(null);
+    setPendingFiles([]);
+    setPendingPickKey((key) => key + 1);
     setAttachmentStatus("");
     setToken("");
     setStatus("");
