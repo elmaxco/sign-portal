@@ -672,7 +672,8 @@ export default function AdminNewAgreementPage() {
         >
           <p className="text-base font-semibold text-slate-900">Ladda upp avtal och bilagor</p>
           <p className="mt-1 text-sm text-slate-600">
-            Här laddar du upp riktiga avtalsdokument (PDF), t.ex. porträtt- eller bröllopsfotoavtal. Mottagaren ser dem på signeringssidan och kan förhandsgranska innan BankID.
+            Här kan du lägga till fler avtalsdokument (PDF) och bilder om du behöver – t.ex. om du inte laddade upp allt
+            innan du skapade avtalet. Mottagaren ser dem på signeringssidan och kan förhandsgranska innan BankID.
           </p>
           <p className="mt-2 text-xs text-muted-foreground">Sortering: nyast först, grupperat efter typ (bilder, PDF, övrigt).</p>
           <div className="mt-3 flex flex-wrap items-center gap-3">
