@@ -154,6 +154,38 @@ export default function AdminNewAgreementPage() {
     return { ok: true, attachment: payload.attachment };
   }
 
+  async function refreshAttachmentsFromServer(agreementToken: string) {
+    try {
+      const response = await fetch(
+        `/api/agreements/attachments/list?token=${encodeURIComponent(agreementToken)}`,
+        {
+          method: "GET",
+          cache: "no-store",
+        },
+      );
+
+      const payload = (await response.json()) as {
+        ok?: boolean;
+        attachments?: AgreementAttachmentItem[];
+        error?: string;
+      };
+
+      if (!response.ok || !payload.ok) {
+        setAttachmentStatus(
+          (previous) =>
+            previous ||
+            `Kunde inte läsa bilagor: ${payload.error ?? "okänt fel"}`,
+        );
+        return;
+      }
+
+      setAttachments(payload.attachments ?? []);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      setAttachmentStatus((previous) => previous || `Kunde inte läsa bilagor: ${message}`);
+    }
+  }
+
   async function handleCreateAgreement(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
