@@ -65,6 +65,7 @@ export default function AdminNewAgreementPage() {
   const [fileInputKey, setFileInputKey] = useState(0);
   const [previewAttachment, setPreviewAttachment] = useState<AgreementAttachmentItem | null>(null);
   const isCreated = Boolean(token);
+  const uploadSectionRef = useRef<HTMLDivElement>(null);
 
   const shareLink = useMemo(() => {
     if (!token || typeof window === "undefined") {
@@ -124,6 +125,11 @@ export default function AdminNewAgreementPage() {
     };
   }, [token]);
 
+  useEffect(() => {
+    if (!token) return;
+    uploadSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [token]);
+
   async function handleCreateAgreement(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -132,7 +138,7 @@ export default function AdminNewAgreementPage() {
     }
 
     if (!title.trim() || !content.trim() || !recipientEmail.trim()) {
-      setStatus("Title, content och mottagarens e-post måste fyllas i.");
+      setStatus("Titel, innehåll och mottagarens e-post måste fyllas i.");
       return;
     }
 
@@ -336,6 +342,15 @@ export default function AdminNewAgreementPage() {
     <main className="mx-auto flex min-h-screen w-full max-w-3xl flex-col gap-6 px-6 py-12">
       <AdminNav title="Admin - Skapa avtal" />
 
+      <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+        <p className="font-semibold text-slate-900">Så laddar du upp avtal (PDF)</p>
+        <ol className="mt-2 list-decimal space-y-1 pl-5">
+          <li>Fyll i titel, kort text i fältet &quot;Innehåll&quot; (t.ex. sammanfattning eller &quot;Se bifogade avtalsdokument&quot;) och mottagarens e-post.</li>
+          <li>Klicka <strong>Skapa</strong>.</li>
+          <li>Ladda upp ett eller flera PDF-avtal (och ev. bilder) i avsnittet <strong>Ladda upp avtal och bilagor</strong> som visas direkt under – max {MAX_ATTACHMENTS_PER_AGREEMENT} filer, {formatAttachmentSize(MAX_ATTACHMENT_SIZE_BYTES)} per fil.</li>
+        </ol>
+      </div>
+
       <form onSubmit={handleCreateAgreement} className="flex flex-col gap-4">
         <label className="flex flex-col gap-2">
           <span className="text-sm font-medium">Titel</span>
@@ -350,12 +365,15 @@ export default function AdminNewAgreementPage() {
 
         <label className="flex flex-col gap-2">
           <span className="text-sm font-medium">Innehåll</span>
+          <span className="text-xs text-muted-foreground">
+            Kort text som visas på signeringssidan. Om hela avtalet finns som PDF kan du skriva t.ex. &quot;Det fullständiga avtalet finns som bifogad PDF nedan.&quot;
+          </span>
           <textarea
             value={content}
             onChange={(event) => setContent(event.target.value)}
             disabled={loading || isCreated}
             className="min-h-40 rounded-md border px-3 py-2"
-            placeholder="Avtalstext"
+            placeholder="T.ex. sammanfattning eller hänvisning till bifogade PDF-avtal…"
           />
         </label>
 
@@ -467,8 +485,16 @@ export default function AdminNewAgreementPage() {
       ) : null}
 
       {isCreated ? (
-        <div className="rounded-md border p-4">
-          <p className="text-sm font-medium">Bilagor (sorterat: nyast först, typ)</p>
+        <div
+          ref={uploadSectionRef}
+          id="ladda-upp-avtal"
+          className="rounded-md border-2 border-[var(--brand)]/25 bg-[var(--surface-soft)] p-4"
+        >
+          <p className="text-base font-semibold text-slate-900">Ladda upp avtal och bilagor</p>
+          <p className="mt-1 text-sm text-slate-600">
+            Här laddar du upp riktiga avtalsdokument (PDF), t.ex. porträtt- eller bröllopsfotoavtal. Mottagaren ser dem på signeringssidan och kan förhandsgranska innan BankID.
+          </p>
+          <p className="mt-2 text-xs text-muted-foreground">Sortering: nyast först, grupperat efter typ (bilder, PDF, övrigt).</p>
           <div className="mt-3 flex flex-wrap items-center gap-3">
             <input
               key={fileInputKey}
@@ -484,7 +510,7 @@ export default function AdminNewAgreementPage() {
               disabled={uploadingAttachment || !attachmentFile || attachments.length >= MAX_ATTACHMENTS_PER_AGREEMENT}
               className="rounded border px-3 py-1 text-sm disabled:opacity-50"
             >
-              {uploadingAttachment ? "Laddar upp..." : "Ladda upp bilaga"}
+              {uploadingAttachment ? "Laddar upp..." : "Ladda upp avtal eller bilaga"}
             </button>
           </div>
           <div className="mt-3 space-y-3">
