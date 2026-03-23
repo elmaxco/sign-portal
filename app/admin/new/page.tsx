@@ -26,6 +26,8 @@ type AgreementAttachmentItem = {
   uploadedBy: "admin";
 };
 
+type AttachmentFeedback = { variant: "success" | "error"; message: string };
+
 function isImageAttachment(attachment: AgreementAttachmentItem) {
   return attachment.contentType === "image/png" || attachment.contentType === "image/jpeg";
 }
@@ -61,7 +63,7 @@ export default function AdminNewAgreementPage() {
   const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
   const [uploadingAttachment, setUploadingAttachment] = useState(false);
   const [deletingAttachmentId, setDeletingAttachmentId] = useState<string | null>(null);
-  const [attachmentStatus, setAttachmentStatus] = useState("");
+  const [attachmentFeedback, setAttachmentFeedback] = useState<AttachmentFeedback | null>(null);
   const [fileInputKey, setFileInputKey] = useState(0);
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [pendingPickKey, setPendingPickKey] = useState(0);
@@ -116,7 +118,7 @@ export default function AdminNewAgreementPage() {
         }
 
         const message = error instanceof Error ? error.message : "Unknown error";
-        setAttachmentStatus(`Kunde inte läsa bilagor: ${message}`);
+        setAttachmentFeedback({ variant: "error", message: `Kunde inte läsa bilagor: ${message}` });
       }
     }
 
@@ -154,7 +156,7 @@ export default function AdminNewAgreementPage() {
     return { ok: true, attachment: payload.attachment };
   }
 
-  async function refreshAttachmentsFromServer(agreementToken: string) {
+  async function refreshAttachmentsFromServer(agreementToken: string): Promise<boolean> {
     try {
       const response = await fetch(
         `/api/agreements/attachments/list?token=${encodeURIComponent(agreementToken)}`,
@@ -171,18 +173,25 @@ export default function AdminNewAgreementPage() {
       };
 
       if (!response.ok || !payload.ok) {
-        setAttachmentStatus(
-          (previous) =>
-            previous ||
-            `Kunde inte läsa bilagor: ${payload.error ?? "okänt fel"}`,
+        setAttachmentFeedback((previous) =>
+          previous
+            ? previous
+            : {
+                variant: "error",
+                message: `Kunde inte läsa bilagor: ${payload.error ?? "okänt fel"}`,
+              },
         );
-        return;
+        return false;
       }
 
       setAttachments(payload.attachments ?? []);
+      return true;
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
-      setAttachmentStatus((previous) => previous || `Kunde inte läsa bilagor: ${message}`);
+      setAttachmentFeedback((previous) =>
+        previous ? previous : { variant: "error", message: `Kunde inte läsa bilagor: ${message}` },
+      );
+      return false;
     }
   }
 
@@ -233,6 +242,9 @@ export default function AdminNewAgreementPage() {
 
       const newToken = result.token;
       setToken(newToken);
+      if (pendingFiles.length === 0) {
+        setAttachmentFeedback(null);
+      }
       if (result.mailSent === false) {
         setStatus(`Avtalet skapades, men mejl kunde inte skickas: ${result.mailError || "okänt fel"}`);
       } else {
@@ -241,12 +253,14 @@ export default function AdminNewAgreementPage() {
 
       if (pendingFiles.length > 0) {
         setUploadingAttachment(true);
-        setAttachmentStatus("");
+        setAttachmentFeedback(null);
         try {
           const queue = [...pendingFiles];
+          let uploadFailed = false;
           for (const file of queue) {
             const uploadResult = await uploadSingleAttachment(newToken, file);
             if (!uploadResult.ok) {
+              uploadFailed = true;
               const apiError = uploadResult.error;
               const msg = apiError.includes("Unsupported file type")
                 ? "Ogiltig filtyp. Endast PDF, PNG och JPEG tillåts."
@@ -255,13 +269,22 @@ export default function AdminNewAgreementPage() {
                   : apiError.includes("Max") && apiError.includes("attachments")
                     ? "Max 10 bilagor per avtal."
                     : apiError || "Kunde inte ladda upp bilaga.";
-              setAttachmentStatus(msg);
+              setAttachmentFeedback({ variant: "error", message: msg });
               break;
             }
           }
-          await refreshAttachmentsFromServer(newToken);
+          const listOk = await refreshAttachmentsFromServer(newToken);
           setPendingFiles([]);
           setPendingPickKey((key) => key + 1);
+          if (!uploadFailed && listOk) {
+            setAttachmentFeedback({
+              variant: "success",
+              message:
+                queue.length === 1
+                  ? "Bilagan laddades upp."
+                  : `Alla ${queue.length} bilagor laddades upp.`,
+            });
+          }
         } finally {
           setUploadingAttachment(false);
         }
@@ -285,34 +308,46 @@ export default function AdminNewAgreementPage() {
     setAttachmentFile(null);
     setPendingFiles([]);
     setPendingPickKey((key) => key + 1);
-    setAttachmentStatus("");
+    setAttachmentFeedback(null);
     setToken("");
     setStatus("");
   }
 
   async function handleUploadAttachment() {
     if (!token || !attachmentFile) {
-      setAttachmentStatus("Skapa avtalet först och välj en fil.");
+      setAttachmentFeedback({
+        variant: "error",
+        message: "Skapa avtalet först och välj en fil.",
+      });
       return;
     }
 
     if (!isAllowedAttachmentContentType(attachmentFile.type || "")) {
-      setAttachmentStatus("Ogiltig filtyp. Endast PDF, PNG och JPEG tillåts.");
+      setAttachmentFeedback({
+        variant: "error",
+        message: "Ogiltig filtyp. Endast PDF, PNG och JPEG tillåts.",
+      });
       return;
     }
 
     if (attachmentFile.size <= 0 || attachmentFile.size > MAX_ATTACHMENT_SIZE_BYTES) {
-      setAttachmentStatus(`Filen får högst vara ${formatAttachmentSize(MAX_ATTACHMENT_SIZE_BYTES)}.`);
+      setAttachmentFeedback({
+        variant: "error",
+        message: `Filen får högst vara ${formatAttachmentSize(MAX_ATTACHMENT_SIZE_BYTES)}.`,
+      });
       return;
     }
 
     if (attachments.length >= MAX_ATTACHMENTS_PER_AGREEMENT) {
-      setAttachmentStatus(`Max ${MAX_ATTACHMENTS_PER_AGREEMENT} bilagor per avtal.`);
+      setAttachmentFeedback({
+        variant: "error",
+        message: `Max ${MAX_ATTACHMENTS_PER_AGREEMENT} bilagor per avtal.`,
+      });
       return;
     }
 
     setUploadingAttachment(true);
-    setAttachmentStatus("");
+    setAttachmentFeedback(null);
 
     try {
       const result = await uploadSingleAttachment(token, attachmentFile);
@@ -326,17 +361,20 @@ export default function AdminNewAgreementPage() {
             : apiError.includes("Max") && apiError.includes("attachments")
               ? "Max 10 bilagor per avtal."
               : apiError || "Kunde inte ladda upp bilaga.";
-        setAttachmentStatus(msg);
+        setAttachmentFeedback({ variant: "error", message: msg });
         return;
       }
 
       setAttachmentFile(null);
       setFileInputKey((k) => k + 1);
       setAttachments((previous) => [...previous, result.attachment]);
-      setAttachmentStatus("Bilaga uppladdad.");
+      setAttachmentFeedback({ variant: "success", message: "Bilagan laddades upp." });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
-      setAttachmentStatus(`Kunde inte ladda upp bilaga: ${message}`);
+      setAttachmentFeedback({
+        variant: "error",
+        message: `Kunde inte ladda upp bilaga: ${message}`,
+      });
     } finally {
       setUploadingAttachment(false);
     }
@@ -352,7 +390,7 @@ export default function AdminNewAgreementPage() {
     }
 
     setDeletingAttachmentId(attachmentId);
-    setAttachmentStatus("");
+    setAttachmentFeedback(null);
 
     try {
       const response = await fetch("/api/admin/agreements/attachments/delete", {
@@ -366,15 +404,21 @@ export default function AdminNewAgreementPage() {
       const payload = (await response.json()) as { ok?: boolean; error?: string };
 
       if (!response.ok || !payload.ok) {
-        setAttachmentStatus(payload.error ?? "Kunde inte ta bort bilagan.");
+        setAttachmentFeedback({
+          variant: "error",
+          message: payload.error ?? "Kunde inte ta bort bilagan.",
+        });
         return;
       }
 
       setAttachments((previous) => previous.filter((item) => item.id !== attachmentId));
-      setAttachmentStatus("Bilaga borttagen.");
+      setAttachmentFeedback({ variant: "success", message: "Bilagan togs bort." });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
-      setAttachmentStatus(`Kunde inte ta bort bilagan: ${message}`);
+      setAttachmentFeedback({
+        variant: "error",
+        message: `Kunde inte ta bort bilagan: ${message}`,
+      });
     } finally {
       setDeletingAttachmentId(null);
     }
@@ -428,7 +472,7 @@ export default function AdminNewAgreementPage() {
     }
 
     if (message) {
-      setAttachmentStatus(message);
+      setAttachmentFeedback({ variant: "error", message });
     }
   }
 
@@ -625,6 +669,16 @@ export default function AdminNewAgreementPage() {
                 ))}
               </ul>
             ) : null}
+            {attachmentFeedback && !isCreated ? (
+              <p
+                role="status"
+                className={`mt-3 text-sm font-medium ${
+                  attachmentFeedback.variant === "error" ? "text-red-600" : "text-green-700"
+                }`}
+              >
+                {attachmentFeedback.message}
+              </p>
+            ) : null}
           </div>
         ) : null}
 
@@ -719,7 +773,16 @@ export default function AdminNewAgreementPage() {
               </div>
             ))}
           </div>
-          {attachmentStatus && <p className="mt-2 text-xs text-red-600">{attachmentStatus}</p>}
+          {attachmentFeedback && isCreated ? (
+            <p
+              role="status"
+              className={`mt-3 text-sm font-medium ${
+                attachmentFeedback.variant === "error" ? "text-red-600" : "text-green-700"
+              }`}
+            >
+              {attachmentFeedback.message}
+            </p>
+          ) : null}
         </div>
       ) : null}
 
