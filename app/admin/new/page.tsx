@@ -60,18 +60,15 @@ export default function AdminNewAgreementPage() {
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
   const [attachments, setAttachments] = useState<AgreementAttachmentItem[]>([]);
-  const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
   const [uploadingAttachment, setUploadingAttachment] = useState(false);
   const [deletingAttachmentId, setDeletingAttachmentId] = useState<string | null>(null);
   const [attachmentFeedback, setAttachmentFeedback] = useState<AttachmentFeedback | null>(null);
-  const [fileInputKey, setFileInputKey] = useState(0);
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [pendingPickKey, setPendingPickKey] = useState(0);
   const [previewAttachment, setPreviewAttachment] = useState<AgreementAttachmentItem | null>(null);
   const isCreated = Boolean(token);
-  const uploadSectionRef = useRef<HTMLDivElement>(null);
+  const attachmentsSectionRef = useRef<HTMLDivElement>(null);
   const pendingFileInputRef = useRef<HTMLInputElement>(null);
-  const postCreateFileInputRef = useRef<HTMLInputElement>(null);
 
   const shareLink = useMemo(() => {
     if (!token || typeof window === "undefined") {
@@ -133,7 +130,7 @@ export default function AdminNewAgreementPage() {
 
   useEffect(() => {
     if (!token) return;
-    uploadSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    attachmentsSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [token]);
 
   async function uploadSingleAttachment(
@@ -307,79 +304,11 @@ export default function AdminNewAgreementPage() {
     setRecipientSmsConsent(false);
     setLinks([{ title: "", url: "" }]);
     setAttachments([]);
-    setAttachmentFile(null);
     setPendingFiles([]);
     setPendingPickKey((key) => key + 1);
     setAttachmentFeedback(null);
     setToken("");
     setStatus("");
-  }
-
-  async function handleUploadAttachment() {
-    if (!token || !attachmentFile) {
-      setAttachmentFeedback({
-        variant: "error",
-        message: "Skapa avtalet först och välj en fil.",
-      });
-      return;
-    }
-
-    if (!isAllowedAttachmentContentType(attachmentFile.type || "")) {
-      setAttachmentFeedback({
-        variant: "error",
-        message: "Ogiltig filtyp. Endast PDF, PNG och JPEG tillåts.",
-      });
-      return;
-    }
-
-    if (attachmentFile.size <= 0 || attachmentFile.size > MAX_ATTACHMENT_SIZE_BYTES) {
-      setAttachmentFeedback({
-        variant: "error",
-        message: `Filen får högst vara ${formatAttachmentSize(MAX_ATTACHMENT_SIZE_BYTES)}.`,
-      });
-      return;
-    }
-
-    if (attachments.length >= MAX_ATTACHMENTS_PER_AGREEMENT) {
-      setAttachmentFeedback({
-        variant: "error",
-        message: `Max ${MAX_ATTACHMENTS_PER_AGREEMENT} bilagor per avtal.`,
-      });
-      return;
-    }
-
-    setUploadingAttachment(true);
-    setAttachmentFeedback(null);
-
-    try {
-      const result = await uploadSingleAttachment(token, attachmentFile);
-
-      if (!result.ok) {
-        const apiError = result.error;
-        const msg = apiError.includes("Unsupported file type")
-          ? "Ogiltig filtyp. Endast PDF, PNG och JPEG tillåts."
-          : apiError.includes("File size") || apiError.includes("size")
-            ? "Filen är för stor. Max 10 MB per bilaga."
-            : apiError.includes("Max") && apiError.includes("attachments")
-              ? "Max 10 bilagor per avtal."
-              : apiError || "Kunde inte ladda upp bilaga.";
-        setAttachmentFeedback({ variant: "error", message: msg });
-        return;
-      }
-
-      setAttachmentFile(null);
-      setFileInputKey((k) => k + 1);
-      setAttachments((previous) => [...previous, result.attachment]);
-      setAttachmentFeedback({ variant: "success", message: "Bilagan laddades upp." });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      setAttachmentFeedback({
-        variant: "error",
-        message: `Kunde inte ladda upp bilaga: ${message}`,
-      });
-    } finally {
-      setUploadingAttachment(false);
-    }
   }
 
   async function handleDeleteAttachment(attachmentId: string) {
@@ -737,54 +666,21 @@ export default function AdminNewAgreementPage() {
 
       {isCreated ? (
         <div
-          ref={uploadSectionRef}
-          id="ladda-upp-avtal"
-          className="rounded-md border-2 border-[var(--brand)]/25 bg-[var(--surface-soft)] p-4"
+          ref={attachmentsSectionRef}
+          id="bilagor-pa-avtalet"
+          className="rounded-md border border-slate-200 bg-slate-50/80 p-4"
         >
-          <p className="text-base font-semibold text-slate-900">Ladda upp avtal och bilagor</p>
+          <p className="text-base font-semibold text-slate-900">Bilagor på avtalet</p>
           <p className="mt-1 text-sm text-slate-600">
-            Här kan du lägga till fler avtalsdokument (PDF) och bilder om du behöver – t.ex. om du inte laddade upp allt
-            innan du skapade avtalet. Mottagaren ser dem på signeringssidan och kan förhandsgranska innan BankID.
+            Dessa filer följer med till signeringssidan. Nya bilagor läggs bara till innan du klickar{" "}
+            <strong>Skapa</strong> – här kan du bara kontrollera, förhandsvisa eller ta bort en felaktig bilaga innan
+            mottagaren signerar.
           </p>
-          <p className="mt-2 text-xs text-muted-foreground">Sortering: nyast först, grupperat efter typ (bilder, PDF, övrigt).</p>
-          <div className="mt-3 flex flex-wrap items-center gap-3">
-            <input
-              ref={postCreateFileInputRef}
-              key={fileInputKey}
-              type="file"
-              accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg"
-              onChange={(e) => setAttachmentFile(e.target.files?.[0] ?? null)}
-              disabled={uploadingAttachment || attachments.length >= MAX_ATTACHMENTS_PER_AGREEMENT}
-              className="hidden"
-              aria-hidden
-              tabIndex={-1}
-              aria-label="Välj en bilaga att ladda upp"
-            />
-            <button
-              type="button"
-              onClick={() => postCreateFileInputRef.current?.click()}
-              disabled={uploadingAttachment || attachments.length >= MAX_ATTACHMENTS_PER_AGREEMENT}
-              className="rounded-md bg-foreground px-4 py-2 text-sm font-medium text-background disabled:opacity-50"
-            >
-              Välj PDF eller bild
-            </button>
-            {attachmentFile ? (
-              <span className="max-w-[min(100%,20rem)] truncate text-sm text-slate-700" title={attachmentFile.name}>
-                Vald: <span className="font-medium">{attachmentFile.name}</span>
-              </span>
-            ) : (
-              <span className="text-sm text-muted-foreground">Ingen fil vald ännu.</span>
-            )}
-            <button
-              type="button"
-              onClick={handleUploadAttachment}
-              disabled={uploadingAttachment || !attachmentFile || attachments.length >= MAX_ATTACHMENTS_PER_AGREEMENT}
-              className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium disabled:opacity-50"
-            >
-              {uploadingAttachment ? "Laddar upp…" : "Ladda upp"}
-            </button>
-          </div>
+          <p className="mt-2 text-xs text-muted-foreground">Sortering: nyast först.</p>
           <div className="mt-3 space-y-3">
+            {sortedAttachments.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Inga bilagor bifogade.</p>
+            ) : null}
             {sortedAttachments.map((attachment) => (
               <div key={attachment.id} className="flex flex-wrap items-center gap-3">
                 <span className="text-xs font-medium">{attachment.filename}</span>
