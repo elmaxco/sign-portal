@@ -70,6 +70,7 @@ export default function AdminNewAgreementPage() {
   const [previewAttachment, setPreviewAttachment] = useState<AgreementAttachmentItem | null>(null);
   const isCreated = Boolean(token);
   const uploadSectionRef = useRef<HTMLDivElement>(null);
+  const pendingFileInputRef = useRef<HTMLInputElement>(null);
 
   const shareLink = useMemo(() => {
     if (!token || typeof window === "undefined") {
@@ -632,6 +633,7 @@ export default function AdminNewAgreementPage() {
               i avsnittet nedan efter att avtalet skapats.
             </p>
             <input
+              ref={pendingFileInputRef}
               key={pendingPickKey}
               type="file"
               multiple
@@ -645,9 +647,23 @@ export default function AdminNewAgreementPage() {
                 uploadingAttachment ||
                 pendingFiles.length >= MAX_ATTACHMENTS_PER_AGREEMENT
               }
-              className="mt-3 block text-sm"
+              className="hidden"
+              aria-hidden
+              tabIndex={-1}
               aria-label="Välj bilagor att ladda upp när avtalet skapas"
             />
+            <button
+              type="button"
+              onClick={() => pendingFileInputRef.current?.click()}
+              disabled={
+                loading ||
+                uploadingAttachment ||
+                pendingFiles.length >= MAX_ATTACHMENTS_PER_AGREEMENT
+              }
+              className="mt-3 w-fit rounded-md bg-foreground px-4 py-2 text-sm font-medium text-background disabled:opacity-50"
+            >
+              Välj PDF eller bilder
+            </button>
             {pendingFiles.length ? (
               <ul className="mt-3 space-y-2 text-sm" aria-label="Köade bilagor">
                 {pendingFiles.map((file, index) => (
