@@ -445,9 +445,9 @@ export default function AdminNewAgreementPage() {
             förväg).
           </li>
           <li>
-            Behöver du fler dokument laddar du upp dem under <strong>Ladda upp avtal och bilagor</strong> efter
-            skapande – max {MAX_ATTACHMENTS_PER_AGREEMENT} filer totalt, {formatAttachmentSize(MAX_ATTACHMENT_SIZE_BYTES)}{" "}
-            per fil.
+            <strong>Viktigt:</strong> Alla bilagor måste väljas i steget ovan innan du klickar <strong>Skapa</strong> – du
+            kan inte lägga till fler PDF:er eller bilder i det här flödet efter att avtalet skapats. Max{" "}
+            {MAX_ATTACHMENTS_PER_AGREEMENT} filer, {formatAttachmentSize(MAX_ATTACHMENT_SIZE_BYTES)} per fil.
           </li>
         </ol>
       </div>
@@ -559,8 +559,8 @@ export default function AdminNewAgreementPage() {
           <div className="rounded-md border border-dashed border-slate-300 bg-slate-50/80 p-4">
             <p className="text-sm font-medium text-slate-900">Bilagor innan du skapar (valfritt)</p>
             <p className="mt-1 text-xs text-muted-foreground">
-              Välj PDF eller bilder som laddas upp automatiskt när du klickar Skapa. Du kan även lägga till fler filer
-              i avsnittet nedan efter att avtalet skapats.
+              Välj PDF eller bilder som laddas upp automatiskt när du klickar Skapa. Glöm inte att lägga till alla bilagor
+              här – efter skapande kan du inte bifoga fler i detta steg.
             </p>
             <input
               ref={pendingFileInputRef}
