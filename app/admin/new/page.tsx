@@ -130,6 +130,28 @@ export default function AdminNewAgreementPage() {
     uploadSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [token]);
 
+  async function uploadSingleAttachment(
+    agreementToken: string,
+    file: File,
+  ): Promise<{ ok: true; attachment: AgreementAttachmentItem } | { ok: false; error: string }> {
+    const formData = new FormData();
+    formData.set("token", agreementToken);
+    formData.set("file", file);
+    const response = await fetch("/api/admin/agreements/attachments/upload", {
+      method: "POST",
+      body: formData,
+    });
+    const payload = (await response.json()) as {
+      ok?: boolean;
+      attachment?: AgreementAttachmentItem;
+      error?: string;
+    };
+    if (!response.ok || !payload.ok || !payload.attachment) {
+      return { ok: false, error: payload.error ?? "Kunde inte ladda upp." };
+    }
+    return { ok: true, attachment: payload.attachment };
+  }
+
   async function handleCreateAgreement(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -228,23 +250,10 @@ export default function AdminNewAgreementPage() {
     setAttachmentStatus("");
 
     try {
-      const formData = new FormData();
-      formData.set("token", token);
-      formData.set("file", attachmentFile);
+      const result = await uploadSingleAttachment(token, attachmentFile);
 
-      const response = await fetch("/api/admin/agreements/attachments/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      const payload = (await response.json()) as {
-        ok?: boolean;
-        attachment?: AgreementAttachmentItem;
-        error?: string;
-      };
-
-      if (!response.ok || !payload.ok || !payload.attachment) {
-        const apiError = payload.error ?? "";
+      if (!result.ok) {
+        const apiError = result.error;
         const msg = apiError.includes("Unsupported file type")
           ? "Ogiltig filtyp. Endast PDF, PNG och JPEG tillåts."
           : apiError.includes("File size") || apiError.includes("size")
@@ -258,7 +267,7 @@ export default function AdminNewAgreementPage() {
 
       setAttachmentFile(null);
       setFileInputKey((k) => k + 1);
-      setAttachments((previous) => [...previous, payload.attachment as AgreementAttachmentItem]);
+      setAttachments((previous) => [...previous, result.attachment]);
       setAttachmentStatus("Bilaga uppladdad.");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
