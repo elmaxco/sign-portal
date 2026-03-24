@@ -5,6 +5,7 @@ import {
   MAX_ATTACHMENTS_PER_AGREEMENT,
   type AttachmentItem,
 } from "@/lib/attachments";
+import { isSafeAbsoluteHttpUrl } from "@/lib/safe-href";
 
 type AgreementStatusPayload = {
   status: "draft" | "signing" | "signed";
@@ -422,7 +423,7 @@ function normalizeLinks(value: unknown): AgreementLinkItem[] {
       const title = typeof maybeObj.title === "string" ? maybeObj.title.trim() : "";
       const url = typeof maybeObj.url === "string" ? maybeObj.url.trim() : "";
 
-      if (!title || !url) {
+      if (!title || !url || !isSafeAbsoluteHttpUrl(url)) {
         return null;
       }
 

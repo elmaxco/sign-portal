@@ -5,6 +5,7 @@ import {
 } from "@/lib/agreements-server";
 import { sendAgreementLinkEmail } from "@/lib/mail";
 import type { AgreementLinkItem } from "@/lib/agreements-server";
+import { isSafeAbsoluteHttpUrl } from "@/lib/safe-href";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +26,11 @@ function normalizeAgreementLinks(input: unknown): AgreementLinkItem[] {
 
       try {
         const normalizedUrl = new URL(rawUrl).toString();
+
+        if (!isSafeAbsoluteHttpUrl(normalizedUrl)) {
+          return null;
+        }
+
         return { title, url: normalizedUrl };
       } catch {
         return null;

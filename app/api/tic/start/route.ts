@@ -85,8 +85,17 @@ export async function POST(request: NextRequest) {
 
   const callbackUrl = new URL("/api/tic/callback", appBaseUrl);
 
-  if (body.redirectUrl) {
-    callbackUrl.searchParams.set("next", body.redirectUrl);
+  if (body.redirectUrl?.trim()) {
+    try {
+      const nextParsed = new URL(body.redirectUrl);
+      const appParsed = new URL(appBaseUrl);
+
+      if (nextParsed.origin === appParsed.origin) {
+        callbackUrl.searchParams.set("next", body.redirectUrl);
+      }
+    } catch {
+      /* ignore invalid redirectUrl */
+    }
   }
 
   const hostedUrl = buildHostedModeUrlServer({
