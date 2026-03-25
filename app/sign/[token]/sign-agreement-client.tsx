@@ -73,6 +73,8 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
   const [startSigningError, setStartSigningError] = useState("");
   const [isRestartingSigning, setIsRestartingSigning] = useState(false);
   const [restartSuggested, setRestartSuggested] = useState(false);
+  /** BankID-sessionen löpte ut; servern är redan återställd – bara "Signera igen" behövs. */
+  const [signingTimedOut, setSigningTimedOut] = useState(false);
   const [pendingFromCallback, setPendingFromCallback] = useState(false);
   const [isPollingActive, setIsPollingActive] = useState(false);
   const [previewAttachment, setPreviewAttachment] = useState<AgreementAttachment | null>(null);
@@ -158,6 +160,7 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
     if (bankid === "success") {
       setStatus("Signering klar. Avtalet är nu signerat.");
       setRestartSuggested(false);
+      setSigningTimedOut(false);
       return;
     }
 
@@ -269,6 +272,7 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
           setStatus("Signering klar. Avtalet är nu signerat.");
           setPendingFromCallback(false);
           setRestartSuggested(false);
+          setSigningTimedOut(false);
 
           const url = new URL(window.location.href);
 
@@ -302,9 +306,10 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
             };
           });
 
-          setStatus("Tiden gick ut. Starta om signeringen för att försöka igen.");
+          setStatus("Tiden gick ut. Klicka på Signera igen med BankID för att försöka igen.");
           setPendingFromCallback(false);
           setRestartSuggested(true);
+          setSigningTimedOut(true);
           stopPolling();
           return;
         }
@@ -358,6 +363,7 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
     setStartSigningError("");
     setIsRestartingSigning(true);
     setRestartSuggested(false);
+    setSigningTimedOut(false);
     clearBankIdQueryParam();
     setPendingFromCallback(false);
 
@@ -390,6 +396,7 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
   async function handleStartSigning() {
     setStartSigningError("");
     setRestartSuggested(false);
+    setSigningTimedOut(false);
 
     try {
       const response = await fetch("/api/tic/start", {
@@ -573,7 +580,7 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
                 </button>
               ) : null}
 
-              {!isPollingActive && restartSuggested ? (
+              {!isPollingActive && restartSuggested && !signingTimedOut ? (
                 <button
                   type="button"
                   onClick={handleRestartSigning}
