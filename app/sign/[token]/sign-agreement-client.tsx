@@ -465,8 +465,7 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
         };
       });
 
-      setStatus("Signeringen återställd. Startar om BankID-flödet...");
-      await handleStartSigning();
+      setStatus("Signeringen återställd. Klicka på Signera med BankID för att fortsätta.");
     } catch {
       setStatus("Kunde inte återställa signeringen just nu. Försök igen.");
     } finally {
@@ -544,12 +543,8 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
           className="inline-flex rounded-md bg-foreground px-4 py-2 text-background disabled:opacity-50"
         >
           {entryMode === "signup"
-            ? restartSuggested
-              ? "Identifiera dig igen med BankID"
-              : "Identifiera dig med BankID"
-            : restartSuggested
-              ? "Signera igen med BankID"
-              : showSignerGate
+            ? "Identifiera dig med BankID"
+            : showSignerGate
                 ? "Fortsätt med BankID för att läsa och signera"
                 : "Signera med BankID"}
         </button>
