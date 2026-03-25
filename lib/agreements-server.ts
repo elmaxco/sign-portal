@@ -223,11 +223,24 @@ export async function getAgreementByTokenForSignViewServer(
     return null;
   }
 
+  const status = full.status;
+
   if (options.signerView === "full") {
+    // Klienten får inte kringgå gate i utkast; full vy gäller först när signering påbörjats eller är klar.
+    if (status === "draft") {
+      return {
+        agreement: {
+          ...full,
+          content: "",
+          links: [],
+          attachments: [],
+        },
+        redactedForSigner: true,
+      };
+    }
+
     return { agreement: full, redactedForSigner: false };
   }
-
-  const status = full.status;
 
   if (status === "signed" || status === "signing") {
     return { agreement: full, redactedForSigner: false };
