@@ -392,7 +392,7 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
         }
 
         if (data.status === "draft") {
-          setStatus("Signeringen avbröts eller återställdes. Starta om signeringen för att försöka igen.");
+          setStatus("Signeringen avbröts eller återställdes. Klicka på Signera med BankID för att försöka igen.");
           setPendingFromCallback(false);
           setRestartSuggested(true);
           stopPolling();
