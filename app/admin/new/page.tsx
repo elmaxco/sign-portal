@@ -623,8 +623,9 @@ export default function AdminNewAgreementPage() {
           <div className="rounded-md border border-dashed border-slate-300 bg-slate-50/80 p-4">
             <p className="text-sm font-medium text-slate-900">Bilagor innan du skapar (valfritt)</p>
             <p className="mt-1 text-xs text-muted-foreground">
-              Välj PDF eller bilder som laddas upp automatiskt när du klickar Skapa. Glöm inte att lägga till alla bilagor
-              här – efter skapande kan du inte bifoga fler i detta steg.
+              Välj PDF eller bilder som laddas upp automatiskt när du klickar Skapa. Använd <strong>Förhandsvisa</strong>{" "}
+              för att öppna samma visning som efter skapande och säkerställa att det är rätt dokument. Glöm inte att lägga
+              till alla bilagor här – efter skapande kan du inte bifoga fler i detta steg.
             </p>
             <input
               ref={pendingFileInputRef}
