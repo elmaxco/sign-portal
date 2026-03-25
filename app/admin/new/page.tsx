@@ -36,6 +36,14 @@ function isPdfAttachment(attachment: AgreementAttachmentItem) {
   return attachment.contentType === "application/pdf";
 }
 
+function isPendingPdfFile(file: File) {
+  return file.type === "application/pdf";
+}
+
+function isPendingImageFile(file: File) {
+  return file.type === "image/png" || file.type === "image/jpeg";
+}
+
 function attachmentDownloadHref(token: string, attachmentId: string, intent?: "download" | "preview") {
   const query = new URLSearchParams({
     token,
