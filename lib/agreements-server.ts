@@ -209,6 +209,41 @@ export async function getAgreementByTokenServer(token: string): Promise<Agreemen
   };
 }
 
+/**
+ * Signeringsvyn: i utkast (draft) skickas inte avtalstext eller bilagor förrän användaren påbörjat BankID
+ * (status signing) eller avtalet är signerat — motsvarar ordningen identifiera → läsa → signera i ett flöde.
+ */
+export async function getAgreementByTokenForSignViewServer(
+  token: string,
+  options: { signerView: "gate" | "full" },
+): Promise<{ agreement: AgreementByTokenServer; redactedForSigner: boolean } | null> {
+  const full = await getAgreementByTokenServer(token);
+
+  if (!full) {
+    return null;
+  }
+
+  if (options.signerView === "full") {
+    return { agreement: full, redactedForSigner: false };
+  }
+
+  const status = full.status;
+
+  if (status === "signed" || status === "signing") {
+    return { agreement: full, redactedForSigner: false };
+  }
+
+  return {
+    agreement: {
+      ...full,
+      content: "",
+      links: [],
+      attachments: [],
+    },
+    redactedForSigner: true,
+  };
+}
+
 export async function deleteAgreementByTokenServer(
   token: string,
 ): Promise<DeleteAgreementByTokenServerResult> {
