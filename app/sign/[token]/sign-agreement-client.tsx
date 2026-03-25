@@ -25,6 +25,8 @@ type Agreement = {
   createdAt: string;
   signedAt?: string;
   signProvider?: string;
+  /** True när API döljer innehåll tills användaren påbörjat BankID. */
+  redactedForSigner?: boolean;
 };
 
 type SignAgreementClientProps = {
@@ -54,6 +56,10 @@ function isPdfAttachment(attachment: AgreementAttachment) {
   return attachment.contentType === "application/pdf";
 }
 
+function signDiscloseStorageKey(token: string) {
+  return `sign_disclose_${token}`;
+}
+
 function attachmentDownloadHref(token: string, attachmentId: string, intent?: "download" | "preview") {
   const query = new URLSearchParams({
     token,
@@ -78,20 +84,30 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
   const [pendingFromCallback, setPendingFromCallback] = useState(false);
   const [isPollingActive, setIsPollingActive] = useState(false);
   const [previewAttachment, setPreviewAttachment] = useState<AgreementAttachment | null>(null);
+  const [downloadingAttachmentId, setDownloadingAttachmentId] = useState<string | null>(null);
   const isAgreementSigned = agreement?.status === "signed";
+
+  const showSignerGate =
+    Boolean(agreement?.redactedForSigner) && agreement?.status === "draft" && !isAgreementSigned;
 
   useEffect(() => {
     let active = true;
 
-    async function loadAgreement() {
+    async function loadAgreement(forceFull: boolean) {
       try {
-        const response = await fetch(`/api/agreements/by-token?token=${encodeURIComponent(token)}`, {
+        const params = new URLSearchParams({ token });
+        if (forceFull) {
+          params.set("signerView", "full");
+        }
+
+        const response = await fetch(`/api/agreements/by-token?${params.toString()}`, {
           method: "GET",
           cache: "no-store",
         });
 
         const payload = (await response.json()) as {
           agreement?: Agreement;
+          redactedForSigner?: boolean;
           error?: string;
         };
 
@@ -105,20 +121,29 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
           return;
         }
 
-        const result = payload.agreement ?? null;
+        const base = payload.agreement ?? null;
 
         if (!active) {
           return;
         }
 
-        if (!result) {
+        if (!base) {
           setAgreement(null);
           setStatus("Avtal hittades inte.");
           return;
         }
 
-        setAgreement(result);
+        const merged: Agreement = {
+          ...base,
+          redactedForSigner: payload.redactedForSigner === true,
+        };
+
+        setAgreement(merged);
         setStatus("");
+
+        if (typeof window !== "undefined" && !merged.redactedForSigner) {
+          sessionStorage.setItem(signDiscloseStorageKey(token), "1");
+        }
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown error";
 
@@ -131,12 +156,64 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
       }
     }
 
-    loadAgreement();
+    const forceFull =
+      typeof window !== "undefined" &&
+      (sessionStorage.getItem(signDiscloseStorageKey(token)) === "1" ||
+        new URLSearchParams(window.location.search).has("bankid"));
+
+    loadAgreement(forceFull);
 
     return () => {
       active = false;
     };
   }, [token]);
+
+  useEffect(() => {
+    if (!agreement?.redactedForSigner || agreement.status !== "signing") {
+      return;
+    }
+
+    let cancelled = false;
+
+    async function revealAfterSigningStarted() {
+      try {
+        const params = new URLSearchParams({ token, signerView: "full" });
+        const response = await fetch(`/api/agreements/by-token?${params.toString()}`, {
+          method: "GET",
+          cache: "no-store",
+        });
+
+        const payload = (await response.json()) as {
+          agreement?: Agreement;
+          redactedForSigner?: boolean;
+          error?: string;
+        };
+
+        if (!response.ok || !payload.agreement || cancelled) {
+          return;
+        }
+
+        const merged: Agreement = {
+          ...payload.agreement,
+          redactedForSigner: payload.redactedForSigner === true,
+        };
+
+        setAgreement(merged);
+
+        if (typeof window !== "undefined" && !merged.redactedForSigner) {
+          sessionStorage.setItem(signDiscloseStorageKey(token), "1");
+        }
+      } catch {
+        /* ignore */
+      }
+    }
+
+    void revealAfterSigningStarted();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [agreement?.redactedForSigner, agreement?.status, token]);
 
   useEffect(() => {
     if (!previewAttachment) return;
@@ -373,6 +450,10 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
         cache: "no-store",
       });
 
+      if (typeof window !== "undefined") {
+        sessionStorage.removeItem(signDiscloseStorageKey(token));
+      }
+
       setAgreement((previous) => {
         if (!previous) {
           return previous;
@@ -424,13 +505,95 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
     }
   }
 
+  async function downloadAttachment(attachment: AgreementAttachment) {
+    setStartSigningError("");
+    setDownloadingAttachmentId(attachment.id);
+
+    try {
+      const href = attachmentDownloadHref(token, attachment.id, "download");
+      const response = await fetch(href);
+
+      if (!response.ok) {
+        throw new Error("Download failed");
+      }
+
+      const blob = await response.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = objectUrl;
+      anchor.download = attachment.filename;
+      anchor.rel = "noopener";
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(objectUrl);
+    } catch {
+      setStartSigningError("Kunde inte hämta bilagan. Försök igen.");
+    } finally {
+      setDownloadingAttachmentId(null);
+    }
+  }
+
+  const sharedSigningControls =
+    agreement && agreement.status !== "signed" ? (
+      <div className="mt-4">
+        <button
+          type="button"
+          onClick={handleStartSigning}
+          disabled={isPollingActive || isRestartingSigning}
+          className="inline-flex rounded-md bg-foreground px-4 py-2 text-background disabled:opacity-50"
+        >
+          {entryMode === "signup"
+            ? restartSuggested
+              ? "Identifiera dig igen med BankID"
+              : "Identifiera dig med BankID"
+            : restartSuggested
+              ? "Signera igen med BankID"
+              : showSignerGate
+                ? "Fortsätt med BankID för att läsa och signera"
+                : "Signera med BankID"}
+        </button>
+
+        {isPollingActive ? (
+          <div className="mt-3 flex items-center gap-2 text-sm">
+            <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-foreground" />
+            <span>Väntar på BankID...</span>
+          </div>
+        ) : null}
+
+        {isPollingActive ? (
+          <button
+            type="button"
+            onClick={handleRestartSigning}
+            disabled={isRestartingSigning}
+            className="mt-2 inline-flex rounded-md border px-3 py-1 text-sm disabled:opacity-50"
+          >
+            {isRestartingSigning ? "Återställer..." : "Avbryt och starta om"}
+          </button>
+        ) : null}
+
+        {!isPollingActive && restartSuggested && !signingTimedOut ? (
+          <button
+            type="button"
+            onClick={handleRestartSigning}
+            disabled={isRestartingSigning}
+            className="mt-2 inline-flex rounded-md border px-3 py-1 text-sm disabled:opacity-50"
+          >
+            {isRestartingSigning ? "Återställer..." : "Starta om signering"}
+          </button>
+        ) : null}
+
+        {startSigningError ? <p className="mt-2 text-sm">{startSigningError}</p> : null}
+      </div>
+    ) : null;
+
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-3xl flex-col gap-6 px-6 py-12">
       <h1 className="text-2xl font-semibold">
         {isAgreementSigned ? "Avtalet är signerat" : entryMode === "signup" ? "Verifiera dig och signera" : "Signering"}
       </h1>
 
-      {entryMode === "signup" ? (
+      {entryMode === "signup" && !showSignerGate ? (
         <p className="text-sm text-muted-foreground">
           {isAgreementSigned
             ? "Det här avtalet är redan signerat."
@@ -451,150 +614,138 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
       {status && status !== "Laddar avtal..." ? <p className="text-sm">{status}</p> : null}
 
       {agreement ? (
-        <article className="rounded-md border p-4">
-          <h2 className="text-xl font-semibold">{agreement.title}</h2>
-          <p className="mt-3 whitespace-pre-wrap">{agreement.content}</p>
-
-          {agreement.links?.length ? (
-            <section className="mt-4 rounded-md border p-3">
-              <h3 className="text-sm font-medium">Bilagor / länkat innehåll</h3>
-              <ul className="mt-2 space-y-1 text-sm">
-                {agreement.links.map((link, index) => (
-                  <li key={`${link.url}-${index}`}>
-                    <a
-                      href={link.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="underline"
-                    >
-                      {link.title}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          ) : null}
-
-          {agreement.attachments?.length ? (
-            <section className="mt-4 rounded-md border p-3">
-              <h3 className="text-sm font-medium">Bilagor</h3>
-
-              {agreement.attachments.filter(isImageAttachment).length ? (
-                <div className="mt-3">
-                  <p className="text-xs font-medium text-muted-foreground">Bildgalleri</p>
-                  <ul className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
-                    {agreement.attachments.filter(isImageAttachment).map((attachment) => (
-                      <li key={`thumb-${attachment.id}`} className="rounded-md border p-1">
-                        <button
-                          type="button"
-                          className="block w-full"
-                          onClick={() => setPreviewAttachment(attachment)}
-                        >
-                          <Image
-                            src={attachmentDownloadHref(token, attachment.id, "preview")}
-                            alt={attachment.filename}
-                            className="h-28 w-full rounded object-cover"
-                            width={320}
-                            height={180}
-                            unoptimized
-                          />
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+        showSignerGate ? (
+          <article className="rounded-md border p-4">
+            <h2 className="text-xl font-semibold">{agreement.title}</h2>
+            <div className="mt-3 space-y-2 text-sm text-slate-700">
+              <p>
+                Avtalstext och bilagor visas när du har påbörjat BankID. Signering sker i samma steg som när du godkänner
+                i BankID-appen eller på din enhet.
+              </p>
+              {entryMode === "signup" ? (
+                <p className="text-muted-foreground">
+                  Du har fått en personlig länk. Nästa steg är att öppna BankID – därefter kan du läsa allt och slutföra
+                  signeringen.
+                </p>
               ) : null}
-
-              <ul className="mt-2 space-y-2 text-sm">
-                {agreement.attachments.map((attachment) => (
-                  <li key={attachment.id} className="flex flex-wrap items-center justify-between gap-2">
-                    <div>
-                      <p className="font-medium">{attachment.filename}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {attachment.contentType} - {formatAttachmentSize(attachment.size)}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {(isImageAttachment(attachment) || isPdfAttachment(attachment)) ? (
-                        <button
-                          type="button"
-                          className="rounded-md border px-3 py-1 text-xs"
-                          onClick={() => setPreviewAttachment(attachment)}
-                        >
-                          Förhandsvisa
-                        </button>
-                      ) : null}
-                      <a
-                        href={attachmentDownloadHref(token, attachment.id, "download")}
-                        className="rounded-md border px-3 py-1 text-xs"
-                      >
-                        Ladda ner
-                      </a>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          ) : null}
-
-          <p className="mt-4 text-sm">
-            Status:{" "}
-            {agreement.status === "signed"
-              ? "Signerad"
-              : agreement.status === "signing"
-                ? "Signering pågår"
-                : "Ej signerad"}
-          </p>
-          {agreement.status !== "signed" ? (
-            <div className="mt-4">
-              <button
-                type="button"
-                onClick={handleStartSigning}
-                disabled={isPollingActive || isRestartingSigning}
-                className="inline-flex rounded-md bg-foreground px-4 py-2 text-background disabled:opacity-50"
-              >
-                {entryMode === "signup"
-                  ? restartSuggested
-                    ? "Identifiera dig igen med BankID"
-                    : "Identifiera dig med BankID"
-                  : restartSuggested
-                    ? "Signera igen med BankID"
-                    : "Signera med BankID"}
-              </button>
-
-              {isPollingActive ? (
-                <div className="mt-3 flex items-center gap-2 text-sm">
-                  <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-foreground" />
-                  <span>Väntar på BankID...</span>
-                </div>
+              {(agreement.attachmentCount ?? 0) > 0 ? (
+                <p className="text-muted-foreground">
+                  Det här avtalet har {agreement.attachmentCount}{" "}
+                  {agreement.attachmentCount === 1 ? "bilaga" : "bilagor"} som du kan öppna och läsa här på sidan efter
+                  BankID.
+                </p>
               ) : null}
-
-              {isPollingActive ? (
-                <button
-                  type="button"
-                  onClick={handleRestartSigning}
-                  disabled={isRestartingSigning}
-                  className="mt-2 inline-flex rounded-md border px-3 py-1 text-sm disabled:opacity-50"
-                >
-                  {isRestartingSigning ? "Återställer..." : "Avbryt och starta om"}
-                </button>
-              ) : null}
-
-              {!isPollingActive && restartSuggested && !signingTimedOut ? (
-                <button
-                  type="button"
-                  onClick={handleRestartSigning}
-                  disabled={isRestartingSigning}
-                  className="mt-2 inline-flex rounded-md border px-3 py-1 text-sm disabled:opacity-50"
-                >
-                  {isRestartingSigning ? "Återställer..." : "Starta om signering"}
-                </button>
-              ) : null}
-
-              {startSigningError ? <p className="mt-2 text-sm">{startSigningError}</p> : null}
             </div>
-          ) : null}
-        </article>
+            <p className="mt-4 text-sm">
+              Status:{" "}
+              {agreement.status === "signed"
+                ? "Signerad"
+                : agreement.status === "signing"
+                  ? "Signering pågår"
+                  : "Ej signerad"}
+            </p>
+            {sharedSigningControls}
+          </article>
+        ) : (
+          <article className="rounded-md border p-4">
+            <h2 className="text-xl font-semibold">{agreement.title}</h2>
+            <p className="mt-3 whitespace-pre-wrap">{agreement.content}</p>
+
+            {agreement.links?.length ? (
+              <section className="mt-4 rounded-md border p-3">
+                <h3 className="text-sm font-medium">Bilagor / länkat innehåll</h3>
+                <ul className="mt-2 space-y-1 text-sm">
+                  {agreement.links.map((link, index) => (
+                    <li key={`${link.url}-${index}`}>
+                      <a
+                        href={link.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="underline"
+                      >
+                        {link.title}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ) : null}
+
+            {agreement.attachments?.length ? (
+              <section className="mt-4 rounded-md border p-3">
+                <h3 className="text-sm font-medium">Bilagor</h3>
+
+                {agreement.attachments.filter(isImageAttachment).length ? (
+                  <div className="mt-3">
+                    <p className="text-xs font-medium text-muted-foreground">Bildgalleri</p>
+                    <ul className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
+                      {agreement.attachments.filter(isImageAttachment).map((attachment) => (
+                        <li key={`thumb-${attachment.id}`} className="rounded-md border p-1">
+                          <button
+                            type="button"
+                            className="block w-full"
+                            onClick={() => setPreviewAttachment(attachment)}
+                          >
+                            <Image
+                              src={attachmentDownloadHref(token, attachment.id, "preview")}
+                              alt={attachment.filename}
+                              className="h-28 w-full rounded object-cover"
+                              width={320}
+                              height={180}
+                              unoptimized
+                            />
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+
+                <ul className="mt-2 space-y-2 text-sm">
+                  {agreement.attachments.map((attachment) => (
+                    <li key={attachment.id} className="flex flex-wrap items-center justify-between gap-2">
+                      <div>
+                        <p className="font-medium">{attachment.filename}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {attachment.contentType} - {formatAttachmentSize(attachment.size)}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {(isImageAttachment(attachment) || isPdfAttachment(attachment)) ? (
+                          <button
+                            type="button"
+                            className="rounded-md border px-3 py-1 text-xs"
+                            onClick={() => setPreviewAttachment(attachment)}
+                          >
+                            Visa bilaga
+                          </button>
+                        ) : null}
+                        <button
+                          type="button"
+                          className="rounded-md border px-3 py-1 text-xs disabled:opacity-50"
+                          disabled={downloadingAttachmentId === attachment.id}
+                          onClick={() => downloadAttachment(attachment)}
+                        >
+                          {downloadingAttachmentId === attachment.id ? "Hämtar…" : "Ladda ner"}
+                        </button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ) : null}
+
+            <p className="mt-4 text-sm">
+              Status:{" "}
+              {agreement.status === "signed"
+                ? "Signerad"
+                : agreement.status === "signing"
+                  ? "Signering pågår"
+                  : "Ej signerad"}
+            </p>
+            {sharedSigningControls}
+          </article>
+        )
       ) : null}
 
       {previewAttachment ? (
