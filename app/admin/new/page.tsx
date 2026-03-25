@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import AdminNav from "../admin-nav";
 import AdminQuickLinks from "../admin-quick-links";
@@ -27,6 +27,13 @@ type AgreementAttachmentItem = {
 };
 
 type AttachmentFeedback = { variant: "success" | "error"; message: string };
+
+type PendingPreviewState = {
+  url: string;
+  name: string;
+  size: number;
+  kind: "pdf" | "image";
+};
 
 function isImageAttachment(attachment: AgreementAttachmentItem) {
   return attachment.contentType === "image/png" || attachment.contentType === "image/jpeg";
@@ -74,9 +81,35 @@ export default function AdminNewAgreementPage() {
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [pendingPickKey, setPendingPickKey] = useState(0);
   const [previewAttachment, setPreviewAttachment] = useState<AgreementAttachmentItem | null>(null);
+  const [pendingPreview, setPendingPreview] = useState<PendingPreviewState | null>(null);
+  const pendingPreviewObjectUrlRef = useRef<string | null>(null);
   const isCreated = Boolean(token);
   const attachmentsSectionRef = useRef<HTMLDivElement>(null);
   const pendingFileInputRef = useRef<HTMLInputElement>(null);
+
+  const dismissPendingPreview = useCallback(() => {
+    const previousUrl = pendingPreviewObjectUrlRef.current;
+    if (previousUrl) {
+      URL.revokeObjectURL(previousUrl);
+      pendingPreviewObjectUrlRef.current = null;
+    }
+    setPendingPreview(null);
+  }, []);
+
+  function showPendingFilePreview(file: File) {
+    if (!isPendingPdfFile(file) && !isPendingImageFile(file)) {
+      return;
+    }
+    dismissPendingPreview();
+    const url = URL.createObjectURL(file);
+    pendingPreviewObjectUrlRef.current = url;
+    setPendingPreview({
+      url,
+      name: file.name,
+      size: file.size,
+      kind: isPendingPdfFile(file) ? "pdf" : "image",
+    });
+  }
 
   const shareLink = useMemo(() => {
     if (!token || typeof window === "undefined") {
@@ -135,6 +168,27 @@ export default function AdminNewAgreementPage() {
       active = false;
     };
   }, [token]);
+
+  useEffect(() => {
+    return () => {
+      const url = pendingPreviewObjectUrlRef.current;
+      if (url) {
+        URL.revokeObjectURL(url);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!pendingPreview) {
+      return;
+    }
+    const stillQueued = pendingFiles.some(
+      (file) => file.name === pendingPreview.name && file.size === pendingPreview.size,
+    );
+    if (!stillQueued) {
+      dismissPendingPreview();
+    }
+  }, [pendingFiles, pendingPreview, dismissPendingPreview]);
 
   useEffect(() => {
     if (!token) return;
@@ -281,6 +335,7 @@ export default function AdminNewAgreementPage() {
             }
           }
           const listOk = await refreshAttachmentsFromServer(newToken);
+          dismissPendingPreview();
           setPendingFiles([]);
           setPendingPickKey((key) => key + 1);
           if (!uploadFailed && listOk) {
@@ -305,6 +360,7 @@ export default function AdminNewAgreementPage() {
   }
 
   function handleCreateAnother() {
+    dismissPendingPreview();
     setTitle("");
     setContent("");
     setRecipientEmail("");
@@ -611,6 +667,16 @@ export default function AdminNewAgreementPage() {
                   >
                     <span className="font-medium text-slate-900">{file.name}</span>
                     <span className="text-xs text-muted-foreground">{formatAttachmentSize(file.size)}</span>
+                    {isPendingPdfFile(file) || isPendingImageFile(file) ? (
+                      <button
+                        type="button"
+                        className="rounded border px-2 py-1 text-xs"
+                        disabled={loading || uploadingAttachment}
+                        onClick={() => showPendingFilePreview(file)}
+                      >
+                        Förhandsvisa
+                      </button>
+                    ) : null}
                     <button
                       type="button"
                       className="ml-auto rounded border px-2 py-1 text-xs"
@@ -756,6 +822,38 @@ export default function AdminNewAgreementPage() {
                 frameBorder={0}
               />
             ) : null}
+          </div>
+        </div>
+      ) : null}
+
+      {pendingPreview ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+          <div className="w-full max-w-5xl rounded-md bg-black p-3">
+            <div className="mb-2 flex items-center justify-between text-white">
+              <p className="text-sm font-medium">{pendingPreview.name}</p>
+              <button
+                type="button"
+                onClick={dismissPendingPreview}
+                className="rounded border border-white/40 px-3 py-1 text-xs"
+              >
+                Stäng
+              </button>
+            </div>
+            {pendingPreview.kind === "image" ? (
+              /* eslint-disable-next-line @next/next/no-img-element -- blob: URL, lokal köad fil */
+              <img
+                src={pendingPreview.url}
+                alt={pendingPreview.name}
+                className="max-h-[80vh] w-full rounded object-contain"
+              />
+            ) : (
+              <iframe
+                src={pendingPreview.url}
+                title={pendingPreview.name}
+                className="w-full min-h-[60vh] max-h-[80vh] rounded bg-white"
+                frameBorder={0}
+              />
+            )}
           </div>
         </div>
       ) : null}
