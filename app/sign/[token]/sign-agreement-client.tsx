@@ -56,10 +56,6 @@ function isPdfAttachment(attachment: AgreementAttachment) {
   return attachment.contentType === "application/pdf";
 }
 
-function signDiscloseStorageKey(token: string) {
-  return `sign_disclose_${token}`;
-}
-
 function attachmentDownloadHref(token: string, attachmentId: string, intent?: "download" | "preview") {
   const query = new URLSearchParams({
     token,
@@ -93,12 +89,9 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
   useEffect(() => {
     let active = true;
 
-    async function loadAgreement(forceFull: boolean) {
+    async function loadAgreement() {
       try {
         const params = new URLSearchParams({ token });
-        if (forceFull) {
-          params.set("signerView", "full");
-        }
 
         const response = await fetch(`/api/agreements/by-token?${params.toString()}`, {
           method: "GET",
@@ -140,10 +133,6 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
 
         setAgreement(merged);
         setStatus("");
-
-        if (typeof window !== "undefined" && !merged.redactedForSigner) {
-          sessionStorage.setItem(signDiscloseStorageKey(token), "1");
-        }
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown error";
 
@@ -156,64 +145,12 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
       }
     }
 
-    const forceFull =
-      typeof window !== "undefined" &&
-      (sessionStorage.getItem(signDiscloseStorageKey(token)) === "1" ||
-        new URLSearchParams(window.location.search).has("bankid"));
-
-    loadAgreement(forceFull);
+    loadAgreement();
 
     return () => {
       active = false;
     };
   }, [token]);
-
-  useEffect(() => {
-    if (!agreement?.redactedForSigner || agreement.status !== "signing") {
-      return;
-    }
-
-    let cancelled = false;
-
-    async function revealAfterSigningStarted() {
-      try {
-        const params = new URLSearchParams({ token, signerView: "full" });
-        const response = await fetch(`/api/agreements/by-token?${params.toString()}`, {
-          method: "GET",
-          cache: "no-store",
-        });
-
-        const payload = (await response.json()) as {
-          agreement?: Agreement;
-          redactedForSigner?: boolean;
-          error?: string;
-        };
-
-        if (!response.ok || !payload.agreement || cancelled) {
-          return;
-        }
-
-        const merged: Agreement = {
-          ...payload.agreement,
-          redactedForSigner: payload.redactedForSigner === true,
-        };
-
-        setAgreement(merged);
-
-        if (typeof window !== "undefined" && !merged.redactedForSigner) {
-          sessionStorage.setItem(signDiscloseStorageKey(token), "1");
-        }
-      } catch {
-        /* ignore */
-      }
-    }
-
-    void revealAfterSigningStarted();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [agreement?.redactedForSigner, agreement?.status, token]);
 
   useEffect(() => {
     if (!previewAttachment) return;
@@ -449,10 +386,6 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
         method: "POST",
         cache: "no-store",
       });
-
-      if (typeof window !== "undefined") {
-        sessionStorage.removeItem(signDiscloseStorageKey(token));
-      }
 
       setAgreement((previous) => {
         if (!previous) {
