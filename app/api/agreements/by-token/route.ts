@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAgreementByTokenServer } from "@/lib/agreements-server";
+import { getAgreementByTokenForSignViewServer } from "@/lib/agreements-server";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -17,14 +17,20 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Missing token." }, { status: 400, headers: NO_STORE_HEADERS });
   }
 
-  const agreement = await getAgreementByTokenServer(token);
+  const signerViewParam = request.nextUrl.searchParams.get("signerView")?.trim().toLowerCase();
+  const signerView = signerViewParam === "full" ? "full" : "gate";
 
-  if (!agreement) {
+  const result = await getAgreementByTokenForSignViewServer(token, { signerView });
+
+  if (!result) {
     return NextResponse.json(
       { error: "Agreement not found." },
       { status: 404, headers: NO_STORE_HEADERS },
     );
   }
 
-  return NextResponse.json({ agreement }, { headers: NO_STORE_HEADERS });
+  return NextResponse.json(
+    { agreement: result.agreement, redactedForSigner: result.redactedForSigner },
+    { headers: NO_STORE_HEADERS },
+  );
 }
