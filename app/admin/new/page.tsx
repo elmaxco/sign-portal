@@ -701,7 +701,61 @@ export default function AdminNewAgreementPage() {
               </p>
             ) : null}
           </div>
-        ) : null}
+        ) : (
+          <div
+            ref={attachmentsSectionRef}
+            id="bilagor-pa-avtalet"
+            className="rounded-md border border-slate-200 bg-slate-50/80 p-4"
+          >
+            <p className="text-base font-semibold text-slate-900">Bilagor på avtalet</p>
+            <p className="mt-1 text-sm text-slate-600">
+              Dessa filer följer med till signeringssidan. Nya bilagor läggs bara till innan du klickar{" "}
+              <strong>Skapa</strong> – här kan du bara kontrollera, förhandsvisa eller ta bort en felaktig bilaga innan
+              mottagaren signerar.
+            </p>
+            <p className="mt-2 text-xs text-muted-foreground">Sortering: nyast först.</p>
+            <div className="mt-3 space-y-3">
+              {sortedAttachments.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Inga bilagor bifogade.</p>
+              ) : null}
+              {sortedAttachments.map((attachment) => (
+                <div key={attachment.id} className="flex flex-wrap items-center gap-3">
+                  <span className="text-xs font-medium">{attachment.filename}</span>
+                  <span className="text-xs text-muted-foreground">{attachment.contentType}</span>
+                  {(
+                    isImageAttachment(attachment) || isPdfAttachment(attachment)
+                  ) ? (
+                    <button
+                      type="button"
+                      className="rounded border px-2 py-1 text-xs"
+                      onClick={() => setPreviewAttachment(attachment)}
+                    >
+                      Förhandsvisa
+                    </button>
+                  ) : null}
+                  <button
+                    type="button"
+                    className="rounded border px-2 py-1 text-xs"
+                    disabled={deletingAttachmentId === attachment.id}
+                    onClick={() => handleDeleteAttachment(attachment.id)}
+                  >
+                    {deletingAttachmentId === attachment.id ? "Tar bort..." : "Ta bort"}
+                  </button>
+                </div>
+              ))}
+            </div>
+            {attachmentFeedback ? (
+              <p
+                role="status"
+                className={`mt-3 text-sm font-medium ${
+                  attachmentFeedback.variant === "error" ? "text-red-600" : "text-green-700"
+                }`}
+              >
+                {attachmentFeedback.message}
+              </p>
+            ) : null}
+          </div>
+        )}
 
         <button
           type="submit"
@@ -739,59 +793,7 @@ export default function AdminNewAgreementPage() {
         </div>
       ) : null}
 
-      {isCreated ? (
-        <div
-          ref={attachmentsSectionRef}
-          id="bilagor-pa-avtalet"
-          className="rounded-md border border-slate-200 bg-slate-50/80 p-4"
-        >
-          <p className="text-base font-semibold text-slate-900">Bilagor på avtalet</p>
-          <p className="mt-1 text-sm text-slate-600">
-            Dessa filer följer med till signeringssidan. Nya bilagor läggs bara till innan du klickar{" "}
-            <strong>Skapa</strong> – här kan du bara kontrollera, förhandsvisa eller ta bort en felaktig bilaga innan
-            mottagaren signerar.
-          </p>
-          <p className="mt-2 text-xs text-muted-foreground">Sortering: nyast först.</p>
-          <div className="mt-3 space-y-3">
-            {sortedAttachments.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Inga bilagor bifogade.</p>
-            ) : null}
-            {sortedAttachments.map((attachment) => (
-              <div key={attachment.id} className="flex flex-wrap items-center gap-3">
-                <span className="text-xs font-medium">{attachment.filename}</span>
-                <span className="text-xs text-muted-foreground">{attachment.contentType}</span>
-                {(isImageAttachment(attachment) || isPdfAttachment(attachment)) ? (
-                  <button
-                    type="button"
-                    className="rounded border px-2 py-1 text-xs"
-                    onClick={() => setPreviewAttachment(attachment)}
-                  >
-                    Förhandsvisa
-                  </button>
-                ) : null}
-                <button
-                  type="button"
-                  className="rounded border px-2 py-1 text-xs"
-                  disabled={deletingAttachmentId === attachment.id}
-                  onClick={() => handleDeleteAttachment(attachment.id)}
-                >
-                  {deletingAttachmentId === attachment.id ? "Tar bort..." : "Ta bort"}
-                </button>
-              </div>
-            ))}
-          </div>
-          {attachmentFeedback && isCreated ? (
-            <p
-              role="status"
-              className={`mt-3 text-sm font-medium ${
-                attachmentFeedback.variant === "error" ? "text-red-600" : "text-green-700"
-              }`}
-            >
-              {attachmentFeedback.message}
-            </p>
-          ) : null}
-        </div>
-      ) : null}
+      {/* Bilagor på avtalet renderas nu direkt i formuläret för att behålla layouten */}
 
       {previewAttachment && token ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
