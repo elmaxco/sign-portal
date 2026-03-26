@@ -210,12 +210,12 @@ export async function getAgreementByTokenServer(token: string): Promise<Agreemen
 }
 
 /**
- * Signeringsvyn: i utkast (draft) skickas inte avtalstext eller bilagor förrän användaren påbörjat BankID
- * (status signing) eller avtalet är signerat — motsvarar ordningen identifiera → läsa → signera i ett flöde.
+ * Signeringsvyn: avtalstext, länkat innehåll och bilagor skickas inte förrän avtalet är signerat.
+ * Detta förhindrar att mottagaren backar från BankID/TIC-flödet och ändå ser bilagor innan signering är klar.
  */
 export async function getAgreementByTokenForSignViewServer(
   token: string,
-  options: { signerView: "gate" | "full" },
+  _options: { signerView: "gate" | "full" },
 ): Promise<{ agreement: AgreementByTokenServer; redactedForSigner: boolean } | null> {
   const full = await getAgreementByTokenServer(token);
 
@@ -223,26 +223,8 @@ export async function getAgreementByTokenForSignViewServer(
     return null;
   }
 
-  const status = full.status;
-
-  if (options.signerView === "full") {
-    // Klienten får inte kringgå gate i utkast; full vy gäller först när signering påbörjats eller är klar.
-    if (status === "draft") {
-      return {
-        agreement: {
-          ...full,
-          content: "",
-          links: [],
-          attachments: [],
-        },
-        redactedForSigner: true,
-      };
-    }
-
-    return { agreement: full, redactedForSigner: false };
-  }
-
-  if (status === "signed" || status === "signing") {
+  // Only reveal agreement details after the signature is completed.
+  if (full.status === "signed") {
     return { agreement: full, redactedForSigner: false };
   }
 

@@ -25,7 +25,7 @@ type Agreement = {
   createdAt: string;
   signedAt?: string;
   signProvider?: string;
-  /** True när API döljer innehåll tills användaren påbörjat BankID. */
+  /** True när API döljer innehåll tills avtalet är signerat. */
   redactedForSigner?: boolean;
 };
 
@@ -84,7 +84,7 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
   const isAgreementSigned = agreement?.status === "signed";
 
   const showSignerGate =
-    Boolean(agreement?.redactedForSigner) && agreement?.status === "draft" && !isAgreementSigned;
+    Boolean(agreement?.redactedForSigner) && !isAgreementSigned;
 
   useEffect(() => {
     let active = true;
@@ -478,7 +478,7 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
           {entryMode === "signup"
             ? "Identifiera dig med BankID"
             : showSignerGate
-                ? "Fortsätt med BankID för att läsa och signera"
+                ? "Fortsätt med BankID"
                 : "Signera med BankID"}
         </button>
 
@@ -547,20 +547,18 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
             <h2 className="text-xl font-semibold">{agreement.title}</h2>
             <div className="mt-3 space-y-2 text-sm text-slate-700">
               <p>
-                Avtalstext och bilagor visas när du har påbörjat BankID. Signering sker i samma steg som när du godkänner
-                i BankID-appen eller på din enhet.
+                Avtalstext, länkat innehåll och bilagor blir tillgängliga först när du har signerat. Signering sker i samma
+                steg som när du godkänner i BankID-appen eller på din enhet.
               </p>
               {entryMode === "signup" ? (
                 <p className="text-muted-foreground">
-                  Du har fått en personlig länk. Nästa steg är att öppna BankID – därefter kan du läsa allt och slutföra
-                  signeringen.
+                  Du har fått en personlig länk. Nästa steg är att öppna BankID och slutföra signeringen.
                 </p>
               ) : null}
               {(agreement.attachmentCount ?? 0) > 0 ? (
                 <p className="text-muted-foreground">
                   Det här avtalet har {agreement.attachmentCount}{" "}
-                  {agreement.attachmentCount === 1 ? "bilaga" : "bilagor"} som du kan öppna och läsa här på sidan efter
-                  BankID.
+                  {agreement.attachmentCount === 1 ? "bilaga" : "bilagor"} blir synliga här när du är klar med signeringen.
                 </p>
               ) : null}
             </div>
