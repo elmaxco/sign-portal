@@ -223,6 +223,10 @@ export async function getAgreementByTokenForSignViewServer(
     return null;
   }
 
+  // signerView används idag inte för att avslöja innehåll före `signed`.
+  // Vi behåller parametern för kompatibilitet med API:t (signerView=full).
+  void _options.signerView;
+
   // Only reveal agreement details after the signature is completed.
   if (full.status === "signed") {
     return { agreement: full, redactedForSigner: false };
