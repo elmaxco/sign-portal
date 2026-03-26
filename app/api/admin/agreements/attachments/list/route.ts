@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAgreementByTokenServer } from "@/lib/agreements-server";
+import { requireAdminAuth } from "@/lib/admin-auth";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 const NO_STORE_HEADERS = {
   "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
@@ -10,6 +12,11 @@ const NO_STORE_HEADERS = {
 };
 
 export async function GET(request: NextRequest) {
+  const authError = requireAdminAuth(request);
+  if (authError) {
+    return authError;
+  }
+
   const token = request.nextUrl.searchParams.get("token")?.trim() || "";
 
   if (!token) {
@@ -22,17 +29,13 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Agreement not found." }, { status: 404, headers: NO_STORE_HEADERS });
   }
 
-  // Recipients must not be able to list/inspect attachments before the agreement is signed.
-  if (agreement.status !== "signed") {
-    return NextResponse.json(
-      { error: "Agreement is not signed yet." },
-      { status: 403, headers: NO_STORE_HEADERS },
-    );
-  }
-
-  return NextResponse.json({
-    ok: true,
-    attachments: agreement.attachments,
-    attachmentCount: agreement.attachmentCount,
-  }, { headers: NO_STORE_HEADERS });
+  return NextResponse.json(
+    {
+      ok: true,
+      attachments: agreement.attachments,
+      attachmentCount: agreement.attachmentCount,
+    },
+    { headers: NO_STORE_HEADERS },
+  );
 }
+

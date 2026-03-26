@@ -61,7 +61,7 @@ function attachmentDownloadHref(token: string, attachmentId: string, intent?: "d
     query.set("intent", "preview");
   }
 
-  return `/api/agreements/attachments/download?${query.toString()}`;
+  return `/api/admin/agreements/attachments/download?${query.toString()}`;
 }
 
 export default function AdminNewAgreementPage() {
@@ -130,7 +130,7 @@ export default function AdminNewAgreementPage() {
     async function loadAttachments() {
       try {
         const response = await fetch(
-          `/api/agreements/attachments/list?token=${encodeURIComponent(token)}`,
+          `/api/admin/agreements/attachments/list?token=${encodeURIComponent(token)}`,
           {
             method: "GET",
             cache: "no-store",
@@ -220,7 +220,7 @@ export default function AdminNewAgreementPage() {
   async function refreshAttachmentsFromServer(agreementToken: string): Promise<boolean> {
     try {
       const response = await fetch(
-        `/api/agreements/attachments/list?token=${encodeURIComponent(agreementToken)}`,
+          `/api/admin/agreements/attachments/list?token=${encodeURIComponent(agreementToken)}`,
         {
           method: "GET",
           cache: "no-store",
