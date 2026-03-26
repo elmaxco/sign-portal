@@ -744,7 +744,7 @@ export default function AdminNewAgreementPage() {
                 </div>
               ))}
             </div>
-            {attachmentFeedback ? (
+            {attachmentFeedback && isCreated ? (
               <p
                 role="status"
                 className={`mt-3 text-sm font-medium ${
@@ -792,8 +792,6 @@ export default function AdminNewAgreementPage() {
           </a>
         </div>
       ) : null}
-
-      {/* Bilagor på avtalet renderas nu direkt i formuläret för att behålla layouten */}
 
       {previewAttachment && token ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
