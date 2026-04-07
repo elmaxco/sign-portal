@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import StickyHeader from "../sticky-header";
 
@@ -30,6 +30,8 @@ export default function OfferPage() {
   const [form, setForm] = useState<OfferPayload>(INITIAL_FORM);
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState("");
+  const [website, setWebsite] = useState("");
+  const formStartedAtMsRef = useRef(Date.now());
 
   function setField<K extends keyof OfferPayload>(field: K, value: OfferPayload[K]) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -47,12 +49,18 @@ export default function OfferPage() {
     setStatus("");
 
     try {
+      const requestPayload = {
+        ...form,
+        website,
+        startedAtMs: formStartedAtMsRef.current,
+      };
+
       const response = await fetch("/api/offers/create", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(form),
+        body: JSON.stringify(requestPayload),
       });
 
       const payload = (await response.json()) as {
@@ -67,6 +75,8 @@ export default function OfferPage() {
       }
 
       setForm(INITIAL_FORM);
+      setWebsite("");
+      formStartedAtMsRef.current = Date.now();
       setStatus(
         payload.confirmationEmailSent === false
           ? "Tack! Din offertförfrågan är inskickad, men bekräftelsemejlet kunde inte skickas just nu."
@@ -96,6 +106,18 @@ export default function OfferPage() {
       </p>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <div className="hidden" aria-hidden="true">
+          <label htmlFor="offer-website">Website</label>
+          <input
+            id="offer-website"
+            name="website"
+            value={website}
+            onChange={(event) => setWebsite(event.target.value)}
+            autoComplete="off"
+            tabIndex={-1}
+          />
+        </div>
+
         <label className="flex flex-col gap-2" htmlFor="offer-name">
           <span className="text-sm font-medium">Namn</span>
           <input
