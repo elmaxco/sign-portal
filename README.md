@@ -16,6 +16,16 @@ Modern e-signing for Swedish teams. Create, send, and sign agreements with BankI
 - `/signup/{token}`: Sign agreement (link sent to recipient via email/SMS – same flow as `/sign`)
 - `/sign/start`: Paste sign/signup link to navigate
 
+## Public Offer Form Anti-Spam
+
+The offer form is intentionally public (no login required), but it includes server-side anti-spam protections:
+
+- IP-based rate limiting on `POST /api/offers/create`.
+- Additional rate limiting for repeated submissions using the same email, org number, and phone number.
+- Honeypot field detection (silent drop for bot-like submissions).
+- Form-age verification to reject unrealistic submit timing.
+- Payload length validation for free-text fields.
+
 ## Env vars
 See `.env.example` for config (Resend, base URL, etc).
 
