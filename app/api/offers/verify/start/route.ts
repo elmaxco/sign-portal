@@ -42,7 +42,8 @@ export async function POST(request: NextRequest) {
   }
 
   const appBaseUrl = getAppBaseUrl(request.nextUrl.origin);
-  const callbackUrl = new URL("/api/offers/verify/callback", appBaseUrl);
+  const callbackUrl = new URL("/api/tic/callback", appBaseUrl);
+  callbackUrl.searchParams.set("flow", "offer");
 
   if (body.redirectUrl?.trim()) {
     try {
