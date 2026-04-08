@@ -39,26 +39,74 @@ function safeNextUrl(request: NextRequest) {
   }
 }
 
+async function collectWithRetry(sessionId: string) {
+  const maxAttempts = 8;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    const collect = await collectTicAuthSession({ sessionId });
+
+    if (!collect.ok || collect.outcome === "success" || collect.outcome === "failed") {
+      return collect;
+    }
+
+    if (attempt < maxAttempts) {
+      await new Promise((resolve) => setTimeout(resolve, 800));
+    }
+  }
+
+  return collectTicAuthSession({ sessionId });
+}
+
 export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
-  const parsed = parseIdTicCallback(toQueryObject(request.nextUrl.searchParams));
+  return handleCallback(request, toQueryObject(request.nextUrl.searchParams));
+}
+
+export async function POST(request: NextRequest) {
+  let body: Record<string, string> = {};
+
+  try {
+    const json = (await request.json()) as Record<string, unknown>;
+
+    body = Object.fromEntries(
+      Object.entries(json).map(([key, value]) => [key, String(value ?? "")]),
+    );
+  } catch {
+    body = {};
+  }
+
+  const query = {
+    ...toQueryObject(request.nextUrl.searchParams),
+    ...body,
+  };
+
+  return handleCallback(request, query);
+}
+
+async function handleCallback(request: NextRequest, query: Record<string, string>) {
+  const parsed = parseIdTicCallback(query);
   const redirectTarget = safeNextUrl(request);
   const state = parsed.data.state ?? "";
+  const verifiedSessionFromState = verifySignedState(state);
 
-  if (!verifySignedState(state)) {
+  if (!verifiedSessionFromState) {
     redirectTarget.searchParams.set("bankid", "invalid_state");
     return NextResponse.redirect(redirectTarget);
   }
 
-  const sessionId = parsed.data.session_id || parsed.data.sessionId || "";
+  const sessionId =
+    parsed.data.session_id ||
+    parsed.data.sessionId ||
+    verifiedSessionFromState ||
+    "";
 
   if (!sessionId) {
     redirectTarget.searchParams.set("bankid", parsed.isFailure ? "failed" : "pending");
     return NextResponse.redirect(redirectTarget);
   }
 
-  const collect = await collectTicAuthSession({ sessionId });
+  const collect = await collectWithRetry(sessionId);
 
   ticDebugLog("Offer collect result", {
     ok: collect.ok,
