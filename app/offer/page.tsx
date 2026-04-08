@@ -275,6 +275,11 @@ export default function OfferPage() {
           )}
         </div>
 
+        <div className="rounded-md border border-slate-200 bg-white p-3">
+          <p className="text-sm font-medium text-slate-900">Steg 2: Fyll i uppgifterna och skicka</p>
+          <p className="mt-1 text-xs text-slate-600">Fälten nedan blir tillgängliga efter BankID-verifiering.</p>
+        </div>
+
         <label className="flex flex-col gap-2" htmlFor="offer-name">
           <span className="text-sm font-medium">Namn<RequiredMark /></span>
           <input
