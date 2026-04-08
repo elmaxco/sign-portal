@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import StickyHeader from "../sticky-header";
 
@@ -29,6 +29,9 @@ const INITIAL_FORM: OfferPayload = {
 export default function OfferPage() {
   const [form, setForm] = useState<OfferPayload>(INITIAL_FORM);
   const [loading, setLoading] = useState(false);
+  const [startingBankId, setStartingBankId] = useState(false);
+  const [bankIdVerified, setBankIdVerified] = useState(false);
+  const [bankIdIdentityText, setBankIdIdentityText] = useState("");
   const [status, setStatus] = useState("");
   const [website, setWebsite] = useState("");
   const formStartedAtMsRef = useRef(Date.now());
@@ -37,11 +40,126 @@ export default function OfferPage() {
     setForm((prev) => ({ ...prev, [field]: value }));
   }
 
+  useEffect(() => {
+    let active = true;
+
+    async function loadVerificationStatus() {
+      try {
+        const response = await fetch("/api/offers/verify/status", {
+          method: "GET",
+          cache: "no-store",
+        });
+
+        if (!response.ok) {
+          return;
+        }
+
+        const payload = (await response.json()) as {
+          verified?: boolean;
+          identity?: {
+            fullName?: string;
+            personalNumberMasked?: string;
+          };
+        };
+
+        if (!active) {
+          return;
+        }
+
+        if (payload.verified) {
+          setBankIdVerified(true);
+
+          const identityBits = [
+            payload.identity?.fullName?.trim(),
+            payload.identity?.personalNumberMasked?.trim(),
+          ].filter(Boolean);
+
+          setBankIdIdentityText(identityBits.join(" • "));
+        } else {
+          setBankIdVerified(false);
+          setBankIdIdentityText("");
+        }
+      } catch {
+        if (!active) {
+          return;
+        }
+
+        setBankIdVerified(false);
+        setBankIdIdentityText("");
+      }
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    const bankid = params.get("bankid");
+
+    if (bankid === "success") {
+      setStatus("Identifiering med BankID klar. Du kan nu skicka offertförfrågan.");
+    } else if (bankid === "failed") {
+      setStatus("BankID identifiering avbröts eller misslyckades. Försök igen.");
+    } else if (bankid === "pending") {
+      setStatus("BankID identifiering väntar fortfarande på svar. Försök igen om det behövs.");
+    } else if (bankid === "invalid_state") {
+      setStatus("Ogiltigt callback-svar från BankID. Starta identifieringen igen.");
+    }
+
+    if (bankid) {
+      params.delete("bankid");
+      const nextQuery = params.toString();
+      const nextUrl = nextQuery ? `${window.location.pathname}?${nextQuery}` : window.location.pathname;
+      window.history.replaceState({}, "", nextUrl);
+    }
+
+    loadVerificationStatus();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  async function handleStartBankId() {
+    setStartingBankId(true);
+    setStatus("");
+
+    try {
+      const response = await fetch("/api/offers/verify/start", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          redirectUrl: window.location.href,
+        }),
+      });
+
+      const payload = (await response.json()) as {
+        redirectUrl?: string;
+        error?: string;
+      };
+
+      if (!response.ok || !payload.redirectUrl) {
+        setStatus(payload.error ?? "Kunde inte starta BankID identifiering.");
+        return;
+      }
+
+      window.location.assign(payload.redirectUrl);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      setStatus(`Kunde inte starta BankID identifiering: ${message}`);
+    } finally {
+      setStartingBankId(false);
+    }
+  }
+
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     if (!form.name.trim() || !form.email.trim() || !form.company.trim() || !form.orgNumber.trim() || !form.phone.trim()) {
       setStatus("Fyll i namn, e-post, företag, org.nr och telefon.");
+      return;
+    }
+
+    if (!bankIdVerified) {
+      setStatus("Identifiera dig med BankID innan du skickar offertförfrågan.");
       return;
     }
 
@@ -77,6 +195,8 @@ export default function OfferPage() {
       setForm(INITIAL_FORM);
       setWebsite("");
       formStartedAtMsRef.current = Date.now();
+      setBankIdVerified(false);
+      setBankIdIdentityText("");
       setStatus(
         payload.confirmationEmailSent === false
           ? "Tack! Din offertförfrågan är inskickad, men bekräftelsemejlet kunde inte skickas just nu."
@@ -96,7 +216,7 @@ export default function OfferPage() {
       <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-6 pt-28 pb-12 sm:pt-32">
         <Link
           href="/"
-          className="mb-2 inline-flex items-center gap-1.5 text-sm text-slate-600 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-[var(--brand)] focus:ring-offset-2 rounded"
+          className="mb-2 inline-flex items-center gap-1.5 text-sm text-slate-600 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-(--brand) focus:ring-offset-2 rounded"
         >
           ← Tillbaka till startsidan
         </Link>
@@ -124,7 +244,7 @@ export default function OfferPage() {
             id="offer-name"
             value={form.name}
             onChange={(event) => setField("name", event.target.value)}
-            className="rounded-md border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--brand)] focus:ring-offset-1"
+            className="rounded-md border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-(--brand) focus:ring-offset-1"
             placeholder="För- och efternamn"
             disabled={loading}
           />
@@ -137,7 +257,7 @@ export default function OfferPage() {
             type="email"
             value={form.email}
             onChange={(event) => setField("email", event.target.value)}
-            className="rounded-md border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--brand)] focus:ring-offset-1"
+            className="rounded-md border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-(--brand) focus:ring-offset-1"
             placeholder="namn@företag.se"
             disabled={loading}
           />
@@ -149,7 +269,7 @@ export default function OfferPage() {
             id="offer-company"
             value={form.company}
             onChange={(event) => setField("company", event.target.value)}
-            className="rounded-md border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--brand)] focus:ring-offset-1"
+            className="rounded-md border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-(--brand) focus:ring-offset-1"
             placeholder="Företagsnamn"
             disabled={loading}
           />
@@ -161,7 +281,7 @@ export default function OfferPage() {
             id="offer-orgnumber"
             value={form.orgNumber}
             onChange={(event) => setField("orgNumber", event.target.value)}
-            className="rounded-md border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--brand)] focus:ring-offset-1"
+            className="rounded-md border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-(--brand) focus:ring-offset-1"
             placeholder="556123-4567"
             disabled={loading}
           />
@@ -173,7 +293,7 @@ export default function OfferPage() {
             id="offer-phone"
             value={form.phone}
             onChange={(event) => setField("phone", event.target.value)}
-            className="rounded-md border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--brand)] focus:ring-offset-1"
+            className="rounded-md border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-(--brand) focus:ring-offset-1"
             placeholder="070-123 45 67"
             disabled={loading}
           />
@@ -186,7 +306,7 @@ export default function OfferPage() {
             checked={form.smsConsent}
             onChange={(event) => setField("smsConsent", event.target.checked)}
             disabled={loading}
-            className="mt-0.5 focus:ring-2 focus:ring-[var(--brand)]"
+            className="mt-0.5 focus:ring-2 focus:ring-(--brand)"
           />
           <span>Jag godk{"\u00E4"}nner att ni kontaktar mig via SMS.</span>
         </label>
@@ -197,7 +317,7 @@ export default function OfferPage() {
             id="offer-package"
             value={form.packageName}
             onChange={(event) => setField("packageName", event.target.value)}
-            className="rounded-md border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--brand)] focus:ring-offset-1"
+            className="rounded-md border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-(--brand) focus:ring-offset-1"
             placeholder="Ex. Standardpaket"
             disabled={loading}
           />
@@ -209,18 +329,41 @@ export default function OfferPage() {
             id="offer-notes"
             value={form.notes}
             onChange={(event) => setField("notes", event.target.value)}
-            className="min-h-28 rounded-md border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--brand)] focus:ring-offset-1"
+            className="min-h-28 rounded-md border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-(--brand) focus:ring-offset-1"
             placeholder="Beskriv önskemål"
             disabled={loading}
           />
         </label>
 
+        <div className="rounded-md border border-slate-300 bg-slate-50 p-4">
+          <p className="text-sm font-medium">Steg 1: Identifiera dig med BankID</p>
+          <p className="mt-1 text-sm text-slate-700">
+            Vi skickar inte offertförfrågan vidare förrän din identitet är verifierad.
+          </p>
+          <button
+            type="button"
+            onClick={handleStartBankId}
+            disabled={loading || startingBankId}
+            className="mt-3 inline-flex rounded-md border border-slate-300 px-4 py-2 text-sm disabled:opacity-50"
+          >
+            {startingBankId ? "Startar..." : bankIdVerified ? "Identifiera igen med BankID" : "Identifiera med BankID"}
+          </button>
+
+          {bankIdVerified ? (
+            <p className="mt-2 text-sm text-green-700">
+              Verifierad med BankID{bankIdIdentityText ? `: ${bankIdIdentityText}` : "."}
+            </p>
+          ) : (
+            <p className="mt-2 text-sm text-slate-700">Ingen aktiv verifiering.</p>
+          )}
+        </div>
+
         <button
           type="submit"
-          disabled={loading}
-          className="w-fit rounded-md bg-foreground px-4 py-2 text-background focus:outline-none focus:ring-2 focus:ring-[var(--brand)] focus:ring-offset-2 disabled:opacity-50"
+          disabled={loading || !bankIdVerified}
+          className="w-fit rounded-md bg-foreground px-4 py-2 text-background focus:outline-none focus:ring-2 focus:ring-(--brand) focus:ring-offset-2 disabled:opacity-50"
         >
-          {loading ? "Skickar..." : "Skicka offertförfrågan"}
+          {loading ? "Skickar..." : "Steg 2: Skicka offertförfrågan"}
         </button>
       </form>
 
