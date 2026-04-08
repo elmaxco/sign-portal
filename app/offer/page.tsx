@@ -48,6 +48,7 @@ export default function OfferPage() {
   const [status, setStatus] = useState("");
   const [website, setWebsite] = useState("");
   const formStartedAtMsRef = useRef(Date.now());
+  const formLocked = loading || !bankIdVerified;
 
   function setField<K extends keyof OfferPayload>(field: K, value: OfferPayload[K]) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -259,7 +260,7 @@ export default function OfferPage() {
             onChange={(event) => setField("name", event.target.value)}
             className="rounded-md border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-(--brand) focus:ring-offset-1"
             placeholder="För- och efternamn"
-            disabled={loading}
+            disabled={formLocked}
             required
           />
         </label>
@@ -273,7 +274,7 @@ export default function OfferPage() {
             onChange={(event) => setField("email", event.target.value)}
             className="rounded-md border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-(--brand) focus:ring-offset-1"
             placeholder="namn@företag.se"
-            disabled={loading}
+            disabled={formLocked}
             required
           />
         </label>
@@ -286,7 +287,7 @@ export default function OfferPage() {
             onChange={(event) => setField("company", event.target.value)}
             className="rounded-md border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-(--brand) focus:ring-offset-1"
             placeholder="Företagsnamn"
-            disabled={loading}
+            disabled={formLocked}
             required
           />
         </label>
@@ -299,7 +300,7 @@ export default function OfferPage() {
             onChange={(event) => setField("orgNumber", event.target.value)}
             className="rounded-md border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-(--brand) focus:ring-offset-1"
             placeholder="556123-4567"
-            disabled={loading}
+            disabled={formLocked}
             required
           />
         </label>
@@ -312,7 +313,7 @@ export default function OfferPage() {
             onChange={(event) => setField("phone", event.target.value)}
             className="rounded-md border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-(--brand) focus:ring-offset-1"
             placeholder="070-123 45 67"
-            disabled={loading}
+            disabled={formLocked}
             required
           />
         </label>
@@ -323,7 +324,7 @@ export default function OfferPage() {
             type="checkbox"
             checked={form.smsConsent}
             onChange={(event) => setField("smsConsent", event.target.checked)}
-            disabled={loading}
+            disabled={formLocked}
             className="mt-0.5 focus:ring-2 focus:ring-(--brand)"
           />
           <span>Jag godk{"\u00E4"}nner att ni kontaktar mig via SMS.</span>
@@ -337,7 +338,7 @@ export default function OfferPage() {
             onChange={(event) => setField("packageName", event.target.value)}
             className="rounded-md border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-(--brand) focus:ring-offset-1"
             placeholder="Ex. Standardpaket"
-            disabled={loading}
+            disabled={formLocked}
           />
         </label>
 
@@ -349,7 +350,7 @@ export default function OfferPage() {
             onChange={(event) => setField("notes", event.target.value)}
             className="min-h-28 rounded-md border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-(--brand) focus:ring-offset-1"
             placeholder="Beskriv önskemål"
-            disabled={loading}
+            disabled={formLocked}
           />
         </label>
 
@@ -378,7 +379,7 @@ export default function OfferPage() {
 
         <button
           type="submit"
-          disabled={loading || !bankIdVerified}
+          disabled={formLocked}
           className="w-fit rounded-md bg-foreground px-4 py-2 text-background focus:outline-none focus:ring-2 focus:ring-(--brand) focus:ring-offset-2 disabled:opacity-50"
         >
           {loading ? "Skickar..." : "Steg 2: Skicka offertförfrågan"}
