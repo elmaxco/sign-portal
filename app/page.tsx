@@ -62,7 +62,7 @@ export default function Home() {
               </p>
               <div className="mt-6 flex flex-wrap gap-3">
                 <Link href="/offer" className="rounded-full bg-cyan-500 px-5 py-3 text-sm font-semibold text-slate-950 hover:bg-cyan-400">
-                  Starta gratisdemo
+                  Begär offert
                 </Link>
                 <Link href="/sign/start" className="rounded-full bg-white px-5 py-3 text-sm font-semibold text-cyan-700 border border-cyan-200 hover:bg-cyan-50">
                   Signera avtal
@@ -225,9 +225,14 @@ export default function Home() {
                 <Link href="/offer" className="rounded-full bg-white px-5 py-3 text-sm font-semibold text-[#0a76d8] hover:bg-slate-100">
                   Begär offert
                 </Link>
-                <Link href="/sign/start" className="rounded-full border border-white/45 px-5 py-3 text-sm font-semibold hover:bg-white/10">
+                <button
+                  type="button"
+                  className="rounded-full border border-white/45 px-5 py-3 text-sm font-semibold opacity-80 cursor-not-allowed"
+                  disabled
+                  aria-disabled="true"
+                >
                   Testa gratis
-                </Link>
+                </button>
               </div>
             </article>
             <article className="rounded-2xl border border-white/25 bg-white/10 p-5 text-sm">
