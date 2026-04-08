@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createOfferServer } from "@/lib/offers-server";
-import { sendOfferReceivedConfirmationEmail } from "@/lib/mail";
+import {
+  sendAdminOfferRequestNoticeEmail,
+  sendOfferReceivedConfirmationEmail,
+} from "@/lib/mail";
 import { consumeRateLimit } from "@/lib/rate-limit";
+import {
+  OFFER_VERIFICATION_COOKIE_NAME,
+  verifyOfferVerificationToken,
+} from "@/lib/offer-verification";
 
 export const dynamic = "force-dynamic";
 const MIN_FORM_AGE_MS = 3_000;
@@ -38,6 +45,16 @@ async function enforceRateLimit(input: {
 }
 
 export async function POST(request: NextRequest) {
+  const verificationCookie = request.cookies.get(OFFER_VERIFICATION_COOKIE_NAME)?.value || "";
+  const verifiedIdentity = verifyOfferVerificationToken(verificationCookie);
+
+  if (!verifiedIdentity) {
+    return NextResponse.json(
+      { error: "Identifiera dig med BankID innan du skickar offertförfrågan." },
+      { status: 403 },
+    );
+  }
+
   const ip = getClientIp(request);
   const ipRateLimitResponse = await enforceRateLimit({
     namespace: "offers_create_ip",
@@ -172,6 +189,11 @@ export async function POST(request: NextRequest) {
     smsConsent: body.smsConsent === true,
     packageName,
     notes,
+    bankIdSessionId: verifiedIdentity.sessionId,
+    bankIdProvider: verifiedIdentity.provider,
+    bankIdVerifiedAtMs: verifiedIdentity.verifiedAtMs,
+    bankIdFullName: verifiedIdentity.fullName,
+    bankIdPersonalNumber: verifiedIdentity.personalNumber,
   });
 
   let emailError: string | null = null;
@@ -188,10 +210,38 @@ export async function POST(request: NextRequest) {
     emailError = error instanceof Error ? error.message : "Kunde inte skicka bekräftelsemejl.";
   }
 
-  return NextResponse.json({
+  const adminNotifyEmail = process.env.ADMIN_NOTIFY_EMAIL || process.env.MAIL_ADMIN_NOTIFY_TO || "";
+
+  if (adminNotifyEmail.trim()) {
+    try {
+      await sendAdminOfferRequestNoticeEmail({
+        to: adminNotifyEmail.trim(),
+        offerId: created.id,
+        customerName: name,
+        customerEmail: email,
+        company,
+        orgNumber: orgNumber.includes("-") ? orgNumber : `${orgNumber.slice(0, 6)}-${orgNumber.slice(6)}`,
+        phone,
+        packageName,
+        notes,
+        bankIdFullName: verifiedIdentity.fullName,
+        bankIdPersonalNumber: verifiedIdentity.personalNumber,
+        bankIdProvider: verifiedIdentity.provider,
+        bankIdVerifiedAtIso: new Date(verifiedIdentity.verifiedAtMs).toISOString(),
+      });
+    } catch (error) {
+      console.error("Failed to send admin offer email:", error);
+    }
+  }
+
+  const response = NextResponse.json({
     ok: true,
     id: created.id,
     confirmationEmailSent: !emailError,
     ...(emailError ? { confirmationEmailError: emailError } : {}),
   });
+
+  response.cookies.delete(OFFER_VERIFICATION_COOKIE_NAME);
+
+  return response;
 }

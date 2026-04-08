@@ -16,6 +16,12 @@ type FirestoreOffer = {
   convertedToAgreementAt?: { toDate?: () => Date };
   agreementId?: string;
   agreementToken?: string;
+  bankIdVerified?: boolean;
+  bankIdVerifiedAt?: { toDate?: () => Date };
+  bankIdSessionId?: string;
+  bankIdProvider?: string;
+  bankIdFullName?: string;
+  bankIdPersonalNumber?: string;
 };
 
 export type OfferListItem = {
@@ -33,6 +39,12 @@ export type OfferListItem = {
   convertedToAgreementAt: string | null;
   agreementId: string | null;
   agreementToken: string | null;
+  bankIdVerified: boolean;
+  bankIdVerifiedAt: string | null;
+  bankIdSessionId: string;
+  bankIdProvider: string;
+  bankIdFullName: string;
+  bankIdPersonalNumber: string;
 };
 
 export type DeleteOfferByIdServerResult =
@@ -42,6 +54,7 @@ export type DeleteOfferByIdServerResult =
 function mapOffer(id: string, data: FirestoreOffer): OfferListItem {
   const createdAt = data.createdAt?.toDate?.();
   const convertedAt = data.convertedToAgreementAt?.toDate?.();
+  const bankIdVerifiedAt = data.bankIdVerifiedAt?.toDate?.();
 
   return {
     id,
@@ -58,6 +71,12 @@ function mapOffer(id: string, data: FirestoreOffer): OfferListItem {
     convertedToAgreementAt: convertedAt ? convertedAt.toISOString() : null,
     agreementId: data.agreementId ?? null,
     agreementToken: data.agreementToken ?? null,
+    bankIdVerified: data.bankIdVerified === true,
+    bankIdVerifiedAt: bankIdVerifiedAt ? bankIdVerifiedAt.toISOString() : null,
+    bankIdSessionId: data.bankIdSessionId ?? "",
+    bankIdProvider: data.bankIdProvider ?? "",
+    bankIdFullName: data.bankIdFullName ?? "",
+    bankIdPersonalNumber: data.bankIdPersonalNumber ?? "",
   };
 }
 
@@ -70,6 +89,11 @@ export async function createOfferServer(input: {
   smsConsent?: boolean;
   packageName?: string;
   notes?: string;
+  bankIdSessionId: string;
+  bankIdProvider: string;
+  bankIdVerifiedAtMs: number;
+  bankIdFullName?: string;
+  bankIdPersonalNumber?: string;
 }) {
   const db = getAdminDb();
 
@@ -82,6 +106,12 @@ export async function createOfferServer(input: {
     smsConsent: input.smsConsent === true,
     packageName: input.packageName ?? "",
     notes: input.notes ?? "",
+    bankIdVerified: true,
+    bankIdVerifiedAt: new Date(input.bankIdVerifiedAtMs),
+    bankIdSessionId: input.bankIdSessionId,
+    bankIdProvider: input.bankIdProvider,
+    bankIdFullName: input.bankIdFullName ?? "",
+    bankIdPersonalNumber: input.bankIdPersonalNumber ?? "",
     status: "new",
     createdAt: FieldValue.serverTimestamp(),
   });

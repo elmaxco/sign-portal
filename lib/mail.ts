@@ -26,6 +26,22 @@ type OfferReceivedConfirmationInput = {
   offerId: string;
 };
 
+type AdminOfferNoticeInput = {
+  to: string;
+  offerId: string;
+  customerName: string;
+  customerEmail: string;
+  company: string;
+  orgNumber: string;
+  phone: string;
+  packageName?: string;
+  notes?: string;
+  bankIdFullName?: string;
+  bankIdPersonalNumber?: string;
+  bankIdProvider?: string;
+  bankIdVerifiedAtIso?: string;
+};
+
 const DEFAULT_MAIL_FROM = "info@signportal.starring.se";
 const DEFAULT_VERIFIED_DOMAIN = "signportal.starring.se";
 
@@ -226,6 +242,67 @@ export async function sendOfferReceivedConfirmationEmail(input: OfferReceivedCon
     "<p><strong>Sammanfattning</strong></p>",
     `<p><strong>Företag:</strong> ${safeCompany}<br/><strong>Paket:</strong> ${safePackage}</p>`,
     `<p><strong>Referens-ID:</strong> ${safeOfferId}</p>`,
+    "</div>",
+  ].join("");
+
+  return sendEmail({
+    to: input.to,
+    subject,
+    text,
+    html,
+  });
+}
+
+export async function sendAdminOfferRequestNoticeEmail(input: AdminOfferNoticeInput) {
+  const subject = `[Admin] Ny verifierad offertförfrågan (${input.company || input.customerName})`;
+  const safeOfferId = escapeHtml(input.offerId);
+  const safeCustomerName = escapeHtml(input.customerName || "-");
+  const safeEmail = escapeHtml(input.customerEmail || "-");
+  const safeCompany = escapeHtml(input.company || "-");
+  const safeOrgNumber = escapeHtml(input.orgNumber || "-");
+  const safePhone = escapeHtml(input.phone || "-");
+  const safePackage = escapeHtml(input.packageName || "-");
+  const safeNotes = escapeHtml(input.notes || "-");
+  const safeBankIdName = escapeHtml(input.bankIdFullName || "-");
+  const safeBankIdPersonalNumber = escapeHtml(input.bankIdPersonalNumber || "-");
+  const safeBankIdProvider = escapeHtml(input.bankIdProvider || "id.tic.io");
+  const safeBankIdVerifiedAt = escapeHtml(input.bankIdVerifiedAtIso || "-");
+
+  const text = [
+    "Ny verifierad offertförfrågan.",
+    `Referens-ID: ${input.offerId}`,
+    "",
+    `Namn: ${input.customerName || "-"}`,
+    `E-post: ${input.customerEmail || "-"}`,
+    `Företag: ${input.company || "-"}`,
+    `Org.nr: ${input.orgNumber || "-"}`,
+    `Telefon: ${input.phone || "-"}`,
+    `Paket: ${input.packageName || "-"}`,
+    `Kommentar: ${input.notes || "-"}`,
+    "",
+    `BankID namn: ${input.bankIdFullName || "-"}`,
+    `BankID personnummer: ${input.bankIdPersonalNumber || "-"}`,
+    `BankID provider: ${input.bankIdProvider || "id.tic.io"}`,
+    `BankID verifierad: ${input.bankIdVerifiedAtIso || "-"}`,
+  ].join("\n");
+
+  const html = [
+    '<div style="font-family:Arial,sans-serif;line-height:1.5;color:#111">',
+    "<p>Ny verifierad offertförfrågan.</p>",
+    `<p><strong>Referens-ID:</strong> ${safeOfferId}</p>`,
+    "<p><strong>Kunduppgifter</strong></p>",
+    `<p><strong>Namn:</strong> ${safeCustomerName}<br/>`,
+    `<strong>E-post:</strong> ${safeEmail}<br/>`,
+    `<strong>Företag:</strong> ${safeCompany}<br/>`,
+    `<strong>Org.nr:</strong> ${safeOrgNumber}<br/>`,
+    `<strong>Telefon:</strong> ${safePhone}<br/>`,
+    `<strong>Paket:</strong> ${safePackage}<br/>`,
+    `<strong>Kommentar:</strong> ${safeNotes}</p>`,
+    "<p><strong>BankID verifiering</strong></p>",
+    `<p><strong>Namn:</strong> ${safeBankIdName}<br/>`,
+    `<strong>Personnummer:</strong> ${safeBankIdPersonalNumber}<br/>`,
+    `<strong>Provider:</strong> ${safeBankIdProvider}<br/>`,
+    `<strong>Tid:</strong> ${safeBankIdVerifiedAt}</p>`,
     "</div>",
   ].join("");
 
