@@ -498,6 +498,7 @@ export default function AdminNewAgreementPage() {
 
       <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
         <p className="font-semibold text-slate-900">Så laddar du upp avtal (PDF)</p>
+        <p className="mt-1 text-xs text-slate-600">* = obligatoriskt</p>
         <ol className="mt-2 list-decimal space-y-1 pl-5">
           <li>Fyll i titel, kort text i fältet &quot;Innehåll&quot; (t.ex. sammanfattning eller &quot;Se bifogade avtalsdokument&quot;) och mottagarens e-post.</li>
           <li>
@@ -518,18 +519,19 @@ export default function AdminNewAgreementPage() {
 
       <form onSubmit={handleCreateAgreement} className="flex flex-col gap-4">
         <label className="flex flex-col gap-2">
-          <span className="text-sm font-medium">Titel</span>
+          <span className="text-sm font-medium">Titel *</span>
           <input
             value={title}
             onChange={(event) => setTitle(event.target.value)}
             disabled={loading || isCreated}
             className="rounded-md border px-3 py-2"
             placeholder="Avtalstitel"
+            required
           />
         </label>
 
         <label className="flex flex-col gap-2">
-          <span className="text-sm font-medium">Innehåll</span>
+          <span className="text-sm font-medium">Innehåll *</span>
           <span className="text-xs text-muted-foreground">
             Kort text som visas på signeringssidan. Om hela avtalet finns som PDF kan du skriva t.ex. &quot;Det fullständiga avtalet finns som bifogad PDF nedan.&quot;
           </span>
@@ -539,11 +541,12 @@ export default function AdminNewAgreementPage() {
             disabled={loading || isCreated}
             className="min-h-40 rounded-md border px-3 py-2"
             placeholder="T.ex. sammanfattning eller hänvisning till bifogade PDF-avtal…"
+            required
           />
         </label>
 
         <label className="flex flex-col gap-2">
-          <span className="text-sm font-medium">Mottagarens e-post</span>
+          <span className="text-sm font-medium">Mottagarens e-post *</span>
           <input
             type="email"
             value={recipientEmail}
@@ -551,6 +554,7 @@ export default function AdminNewAgreementPage() {
             disabled={loading || isCreated}
             className="rounded-md border px-3 py-2"
             placeholder="namn@domän.se"
+            required
           />
         </label>
 
