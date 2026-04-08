@@ -252,6 +252,29 @@ export default function OfferPage() {
           />
         </div>
 
+        <div className="rounded-md border border-slate-300 bg-slate-50 p-4">
+          <p className="text-sm font-medium">Steg 1: Identifiera dig med BankID<RequiredMark /></p>
+          <p className="mt-1 text-sm text-slate-700">
+            Du måste identifiera dig innan du kan fylla i formuläret och skicka offertförfrågan.
+          </p>
+          <button
+            type="button"
+            onClick={handleStartBankId}
+            disabled={loading || startingBankId}
+            className="mt-3 inline-flex rounded-md border border-slate-300 px-4 py-2 text-sm disabled:opacity-50"
+          >
+            {startingBankId ? "Startar..." : bankIdVerified ? "Identifiera igen med BankID" : "Identifiera med BankID"}
+          </button>
+
+          {bankIdVerified ? (
+            <p className="mt-2 text-sm text-green-700">
+              Verifierad med BankID{bankIdIdentityText ? `: ${bankIdIdentityText}` : "."}
+            </p>
+          ) : (
+            <p className="mt-2 text-sm text-slate-700">Formuläret är låst tills identifiering är klar.</p>
+          )}
+        </div>
+
         <label className="flex flex-col gap-2" htmlFor="offer-name">
           <span className="text-sm font-medium">Namn<RequiredMark /></span>
           <input
@@ -353,29 +376,6 @@ export default function OfferPage() {
             disabled={formLocked}
           />
         </label>
-
-        <div className="rounded-md border border-slate-300 bg-slate-50 p-4">
-          <p className="text-sm font-medium">Steg 1: Identifiera dig med BankID<RequiredMark /></p>
-          <p className="mt-1 text-sm text-slate-700">
-            Vi skickar inte offertförfrågan vidare förrän din identitet är verifierad.
-          </p>
-          <button
-            type="button"
-            onClick={handleStartBankId}
-            disabled={loading || startingBankId}
-            className="mt-3 inline-flex rounded-md border border-slate-300 px-4 py-2 text-sm disabled:opacity-50"
-          >
-            {startingBankId ? "Startar..." : bankIdVerified ? "Identifiera igen med BankID" : "Identifiera med BankID"}
-          </button>
-
-          {bankIdVerified ? (
-            <p className="mt-2 text-sm text-green-700">
-              Verifierad med BankID{bankIdIdentityText ? `: ${bankIdIdentityText}` : "."}
-            </p>
-          ) : (
-            <p className="mt-2 text-sm text-slate-700">Ingen aktiv verifiering.</p>
-          )}
-        </div>
 
         <button
           type="submit"
