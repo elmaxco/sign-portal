@@ -15,6 +15,19 @@ type OfferPayload = {
   notes: string;
 };
 
+function RequiredMark() {
+  return (
+    <abbr
+      title="Obligatoriskt"
+      aria-label="Obligatoriskt"
+      className="ml-1 cursor-help text-red-600 no-underline"
+      tabIndex={0}
+    >
+      *
+    </abbr>
+  );
+}
+
 const INITIAL_FORM: OfferPayload = {
   name: "",
   email: "",
@@ -224,7 +237,6 @@ export default function OfferPage() {
       <p className="text-sm text-muted-foreground">
         Fyll i dina uppgifter så återkommer vi med offert och nästa steg.
       </p>
-      <p className="text-xs text-slate-600">* = obligatoriskt</p>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div className="hidden" aria-hidden="true">
@@ -240,7 +252,7 @@ export default function OfferPage() {
         </div>
 
         <label className="flex flex-col gap-2" htmlFor="offer-name">
-          <span className="text-sm font-medium">Namn *</span>
+          <span className="text-sm font-medium">Namn<RequiredMark /></span>
           <input
             id="offer-name"
             value={form.name}
@@ -253,7 +265,7 @@ export default function OfferPage() {
         </label>
 
         <label className="flex flex-col gap-2" htmlFor="offer-email">
-          <span className="text-sm font-medium">E-post *</span>
+          <span className="text-sm font-medium">E-post<RequiredMark /></span>
           <input
             id="offer-email"
             type="email"
@@ -267,7 +279,7 @@ export default function OfferPage() {
         </label>
 
         <label className="flex flex-col gap-2" htmlFor="offer-company">
-          <span className="text-sm font-medium">Företag *</span>
+          <span className="text-sm font-medium">Företag<RequiredMark /></span>
           <input
             id="offer-company"
             value={form.company}
@@ -280,7 +292,7 @@ export default function OfferPage() {
         </label>
 
         <label className="flex flex-col gap-2" htmlFor="offer-orgnumber">
-          <span className="text-sm font-medium">Org.nr *</span>
+          <span className="text-sm font-medium">Org.nr<RequiredMark /></span>
           <input
             id="offer-orgnumber"
             value={form.orgNumber}
@@ -293,7 +305,7 @@ export default function OfferPage() {
         </label>
 
         <label className="flex flex-col gap-2" htmlFor="offer-phone">
-          <span className="text-sm font-medium">Telefon *</span>
+          <span className="text-sm font-medium">Telefon<RequiredMark /></span>
           <input
             id="offer-phone"
             value={form.phone}
@@ -342,7 +354,7 @@ export default function OfferPage() {
         </label>
 
         <div className="rounded-md border border-slate-300 bg-slate-50 p-4">
-          <p className="text-sm font-medium">Steg 1: Identifiera dig med BankID *</p>
+          <p className="text-sm font-medium">Steg 1: Identifiera dig med BankID<RequiredMark /></p>
           <p className="mt-1 text-sm text-slate-700">
             Vi skickar inte offertförfrågan vidare förrän din identitet är verifierad.
           </p>
