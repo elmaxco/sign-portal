@@ -20,6 +20,12 @@ type OfferItem = {
   convertedToAgreementAt: string | null;
   agreementId: string | null;
   agreementToken: string | null;
+  bankIdVerified: boolean;
+  bankIdVerifiedAt: string | null;
+  bankIdSessionId: string;
+  bankIdProvider: string;
+  bankIdFullName: string;
+  bankIdPersonalNumber: string;
 };
 
 function formatDateTime(value?: string | null) {
@@ -227,6 +233,21 @@ export default function AdminOffersPage() {
               </p>
               <p>
                 <span className="font-medium">Status:</span> {offer.status}
+              </p>
+              <p>
+                <span className="font-medium">BankID verifierad:</span> {offer.bankIdVerified ? "Ja" : "Nej"}
+              </p>
+              <p>
+                <span className="font-medium">BankID namn:</span> {offer.bankIdFullName || "-"}
+              </p>
+              <p>
+                <span className="font-medium">BankID personnummer:</span> {offer.bankIdPersonalNumber || "-"}
+              </p>
+              <p>
+                <span className="font-medium">BankID verifierad tid:</span> {formatDateTime(offer.bankIdVerifiedAt)}
+              </p>
+              <p>
+                <span className="font-medium">BankID session:</span> {offer.bankIdSessionId || "-"}
               </p>
               <p>
                 <span className="font-medium">Kommentar:</span> {offer.notes || "-"}
