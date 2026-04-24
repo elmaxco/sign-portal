@@ -519,14 +519,26 @@ export default function AdminNewAgreementPage() {
         body: formData,
       });
 
-      const payload = (await response.json()) as {
-        ok?: boolean;
-        summary?: string;
-        error?: string;
-      };
+      const rawBody = await response.text();
+      const contentType = response.headers.get("content-type") || "";
+      const payload = contentType.includes("application/json")
+        ? (JSON.parse(rawBody) as {
+            ok?: boolean;
+            summary?: string;
+            error?: string;
+          })
+        : null;
 
-      if (!response.ok || !payload.ok || !payload.summary?.trim()) {
-        throw new Error(payload.error ?? "Kunde inte skapa sammanfattning.");
+      if (!response.ok) {
+        const apiError = payload?.error?.trim();
+        const fallbackError = rawBody.trim().startsWith("<")
+          ? `Servern svarade med HTML (${response.status}). Kontrollera deploy/loggar och att /api/admin/agreements/attachments/summarize finns i aktuell release.`
+          : rawBody.trim();
+        throw new Error(apiError || fallbackError || `Kunde inte skapa sammanfattning (${response.status}).`);
+      }
+
+      if (!payload?.ok || !payload.summary?.trim()) {
+        throw new Error(payload?.error ?? "Kunde inte skapa sammanfattning.");
       }
 
       setContent(payload.summary.trim());
