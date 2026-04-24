@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Could not summarize PDF.";
-    const status = message.includes("OPENAI_API_KEY") ? 503 : 400;
+    const status = message.includes("GEMINI_API_KEY") ? 503 : 400;
 
     return NextResponse.json({ error: message }, { status });
   }

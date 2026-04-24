@@ -42,12 +42,12 @@ The app uses server-side email sending (Resend) and scheduled reminders.
 
 ### AI summary for agreement PDF (admin)
 
-- `OPENAI_API_KEY`: API key used to summarize PDF draft agreements into a short content text.
+- `GEMINI_API_KEY`: API key used to summarize PDF draft agreements into a short content text.
 
 Optional:
 
-- `OPENAI_SUMMARY_MODEL`: OpenAI model name used for summary generation. Default: `gpt-4o-mini`.
-- `OPENAI_SUMMARY_MAX_INPUT_CHARS`: Max extracted PDF characters sent to AI. Default: `18000`.
+- `GEMINI_SUMMARY_MODEL`: Gemini model name used for summary generation. Default: `gemini-2.0-flash`.
+- `GEMINI_SUMMARY_MAX_INPUT_CHARS`: Max extracted PDF characters sent to AI. Default: `18000`.
 
 ### Optional email config
 

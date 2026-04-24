@@ -1,24 +1,24 @@
 import pdfParse from "pdf-parse";
 
-const DEFAULT_SUMMARY_MODEL = "gpt-4o-mini";
+const DEFAULT_SUMMARY_MODEL = "gemini-2.0-flash";
 const DEFAULT_MAX_INPUT_CHARS = 18_000;
 
-function getOpenAiApiKey() {
-  const apiKey = process.env.OPENAI_API_KEY?.trim() || "";
+function getGeminiApiKey() {
+  const apiKey = process.env.GEMINI_API_KEY?.trim() || "";
 
   if (!apiKey) {
-    throw new Error("OPENAI_API_KEY is not configured.");
+    throw new Error("GEMINI_API_KEY is not configured.");
   }
 
   return apiKey;
 }
 
 function getSummaryModel() {
-  return process.env.OPENAI_SUMMARY_MODEL?.trim() || DEFAULT_SUMMARY_MODEL;
+  return process.env.GEMINI_SUMMARY_MODEL?.trim() || DEFAULT_SUMMARY_MODEL;
 }
 
 function getMaxInputChars() {
-  const raw = Number(process.env.OPENAI_SUMMARY_MAX_INPUT_CHARS || DEFAULT_MAX_INPUT_CHARS);
+  const raw = Number(process.env.GEMINI_SUMMARY_MAX_INPUT_CHARS || DEFAULT_MAX_INPUT_CHARS);
 
   if (!Number.isFinite(raw) || raw < 1_000) {
     return DEFAULT_MAX_INPUT_CHARS;
@@ -47,31 +47,42 @@ export async function generateAgreementSummaryFromText(text: string) {
   const maxChars = getMaxInputChars();
   const clipped = normalized.length > maxChars ? normalized.slice(0, maxChars) : normalized;
 
-  const response = await fetch("https://api.openai.com/v1/chat/completions", {
+  const model = encodeURIComponent(getSummaryModel());
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(getGeminiApiKey())}`,
+    {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${getOpenAiApiKey()}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: getSummaryModel(),
-      temperature: 0.2,
-      messages: [
-        {
-          role: "system",
-          content:
-            "Du sammanfattar osignerade avtalstexter på svenska. Skriv en saklig och kort beskrivning av vad avtalet handlar om. Returnera endast sammanfattningen i 3-5 meningar utan punktlista.",
-        },
+      generationConfig: {
+        temperature: 0.2,
+      },
+      contents: [
         {
           role: "user",
-          content: `Skapa en kort innehållstext baserat på detta avtalsutkast:\n\n${clipped}`,
+          parts: [
+            {
+              text:
+                "Du sammanfattar osignerade avtalstexter på svenska. Skriv en saklig och kort beskrivning av vad avtalet handlar om. Returnera endast sammanfattningen i 3-5 meningar utan punktlista.",
+            },
+            {
+              text: `Skapa en kort innehållstext baserat på detta avtalsutkast:\n\n${clipped}`,
+            },
+          ],
         },
       ],
     }),
-  });
+  },
+  );
 
   const payload = (await response.json()) as {
-    choices?: Array<{ message?: { content?: string } }>;
+    candidates?: Array<{
+      content?: {
+        parts?: Array<{ text?: string }>;
+      };
+    }>;
     error?: { message?: string };
   };
 
@@ -79,7 +90,11 @@ export async function generateAgreementSummaryFromText(text: string) {
     throw new Error(payload.error?.message || "Failed to generate summary.");
   }
 
-  const summary = payload.choices?.[0]?.message?.content?.trim() || "";
+  const summary =
+    payload.candidates?.[0]?.content?.parts
+      ?.map((part) => part.text || "")
+      .join("\n")
+      .trim() || "";
 
   if (!summary) {
     throw new Error("AI returned an empty summary.");
