@@ -649,7 +649,8 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
                             key={`${attachment.id}-${pdfPageByAttachmentId[attachment.id] ?? 1}`}
                             src={attachmentPdfPageSrc(token, attachment.id, pdfPageByAttachmentId[attachment.id] ?? 1)}
                             title={attachment.filename}
-                            className="pointer-events-none h-[85vh] w-full rounded bg-white"
+                            className="pointer-events-none h-[85vh] rounded bg-white"
+                            style={{ width: "calc(100% + 18px)", marginRight: "-18px" }}
                             frameBorder={0}
                           />
                         </div>
