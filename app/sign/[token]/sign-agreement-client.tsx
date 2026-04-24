@@ -79,7 +79,6 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
   const [signingTimedOut, setSigningTimedOut] = useState(false);
   const [pendingFromCallback, setPendingFromCallback] = useState(false);
   const [isPollingActive, setIsPollingActive] = useState(false);
-  const [previewAttachment, setPreviewAttachment] = useState<AgreementAttachment | null>(null);
   const [downloadingAttachmentId, setDownloadingAttachmentId] = useState<string | null>(null);
   const isAgreementSigned = agreement?.status === "signed";
 
@@ -148,17 +147,6 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
       active = false;
     };
   }, [token]);
-
-  useEffect(() => {
-    if (!previewAttachment) return;
-
-    function handleEscape(e: KeyboardEvent) {
-      if (e.key === "Escape") setPreviewAttachment(null);
-    }
-
-    window.addEventListener("keydown", handleEscape);
-    return () => window.removeEventListener("keydown", handleEscape);
-  }, [previewAttachment]);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -564,52 +552,41 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
             {agreement.attachments?.length ? (
               <section className="mt-4 rounded-md border p-3">
                 <h3 className="text-sm font-medium">Bilagor</h3>
-
-                {agreement.attachments.filter(isImageAttachment).length ? (
-                  <div className="mt-3">
-                    <p className="text-xs font-medium text-muted-foreground">Bildgalleri</p>
-                    <ul className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
-                      {agreement.attachments.filter(isImageAttachment).map((attachment) => (
-                        <li key={`thumb-${attachment.id}`} className="rounded-md border p-1">
-                          <button
-                            type="button"
-                            className="block w-full"
-                            onClick={() => setPreviewAttachment(attachment)}
-                          >
-                            <Image
-                              src={attachmentDownloadHref(token, attachment.id, "preview")}
-                              alt={attachment.filename}
-                              className="h-28 w-full rounded object-cover"
-                              width={320}
-                              height={180}
-                              unoptimized
-                            />
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ) : null}
-
-                <ul className="mt-2 space-y-2 text-sm">
+                <ul className="mt-2 space-y-4 text-sm">
                   {agreement.attachments.map((attachment) => (
-                    <li key={attachment.id} className="flex flex-wrap items-center justify-between gap-2">
-                      <div>
+                    <li key={attachment.id} className="rounded-md border p-3">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
                         <p className="font-medium">{attachment.filename}</p>
                         <p className="text-xs text-muted-foreground">
                           {attachment.contentType} - {formatAttachmentSize(attachment.size)}
                         </p>
                       </div>
-                      <div className="flex items-center gap-2">
-                        {(isImageAttachment(attachment) || isPdfAttachment(attachment)) ? (
-                          <button
-                            type="button"
-                            className="rounded-md border px-3 py-1 text-xs"
-                            onClick={() => setPreviewAttachment(attachment)}
-                          >
-                            Visa bilaga
-                          </button>
-                        ) : null}
+
+                      {isImageAttachment(attachment) ? (
+                        <div className="mt-3 rounded border bg-slate-50 p-2">
+                          <Image
+                            src={attachmentDownloadHref(token, attachment.id, "preview")}
+                            alt={attachment.filename}
+                            className="max-h-128 w-full rounded object-contain"
+                            width={1600}
+                            height={1200}
+                            unoptimized
+                          />
+                        </div>
+                      ) : null}
+
+                      {isPdfAttachment(attachment) ? (
+                        <div className="mt-3 rounded border bg-slate-50 p-2">
+                          <iframe
+                            src={attachmentDownloadHref(token, attachment.id, "preview")}
+                            title={attachment.filename}
+                            className="w-full min-h-96 rounded bg-white"
+                            frameBorder={0}
+                          />
+                        </div>
+                      ) : null}
+
+                      <div className="mt-3 flex items-center gap-2">
                         <button
                           type="button"
                           className="rounded-md border px-3 py-1 text-xs disabled:opacity-50"
@@ -637,45 +614,6 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
           </article>
       ) : null}
 
-      {previewAttachment ? (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
-          role="dialog"
-          aria-modal="true"
-          aria-label={`Förhandsgranska ${previewAttachment.filename}`}
-        >
-          <div className="w-full max-w-5xl rounded-md bg-black p-3">
-            <div className="mb-2 flex items-center justify-between text-white">
-              <p className="text-sm font-medium">{previewAttachment.filename}</p>
-              <button
-                type="button"
-                onClick={() => setPreviewAttachment(null)}
-                className="rounded border border-white/40 px-3 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black"
-                aria-label="Stäng förhandsgranskning"
-              >
-                Stäng
-              </button>
-            </div>
-            {isImageAttachment(previewAttachment) ? (
-              <Image
-                src={attachmentDownloadHref(token, previewAttachment.id, "preview")}
-                alt={previewAttachment.filename}
-                className="max-h-[80vh] w-full rounded object-contain"
-                width={1600}
-                height={1200}
-                unoptimized
-              />
-            ) : isPdfAttachment(previewAttachment) ? (
-              <iframe
-                src={attachmentDownloadHref(token, previewAttachment.id, "preview")}
-                title={previewAttachment.filename}
-                className="w-full min-h-[60vh] max-h-[80vh] rounded bg-white"
-                frameBorder={0}
-              />
-            ) : null}
-          </div>
-        </div>
-      ) : null}
     </main>
   );
 }
