@@ -83,9 +83,6 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
   const [downloadingAttachmentId, setDownloadingAttachmentId] = useState<string | null>(null);
   const isAgreementSigned = agreement?.status === "signed";
 
-  const showSignerGate =
-    Boolean(agreement?.redactedForSigner) && !isAgreementSigned;
-
   useEffect(() => {
     let active = true;
 
@@ -476,10 +473,8 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
           className="inline-flex rounded-md bg-foreground px-4 py-2 text-background disabled:opacity-50"
         >
           {entryMode === "signup"
-            ? "Identifiera dig med BankID"
-            : showSignerGate
-                ? "Fortsätt med BankID"
-                : "Signera med BankID"}
+            ? "Identifiera dig och signera med BankID"
+            : "Signera med BankID"}
         </button>
 
         {isPollingActive ? (
@@ -521,11 +516,11 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
         {isAgreementSigned ? "Avtalet är signerat" : entryMode === "signup" ? "Verifiera dig och signera" : "Signering"}
       </h1>
 
-      {entryMode === "signup" && !showSignerGate ? (
+      {entryMode === "signup" ? (
         <p className="text-sm text-muted-foreground">
           {isAgreementSigned
             ? "Det här avtalet är redan signerat."
-            : "Du har fått en unik länk. Klicka på knappen nedan för att identifiera dig med BankID."}
+            : "Du har fått en unik länk. Läs avtalet nedan och signera när du är redo."}
         </p>
       ) : null}
 
@@ -542,38 +537,7 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
       {status && status !== "Laddar avtal..." ? <p className="text-sm">{status}</p> : null}
 
       {agreement ? (
-        showSignerGate ? (
-          <article className="rounded-md border p-4">
-            <h2 className="text-xl font-semibold">{agreement.title}</h2>
-            <div className="mt-3 space-y-2 text-sm text-slate-700">
-              <p>
-                Avtalstext, länkat innehåll och bilagor blir tillgängliga först när du har signerat. Signering sker i samma
-                steg som när du godkänner i BankID-appen eller på din enhet.
-              </p>
-              {entryMode === "signup" ? (
-                <p className="text-muted-foreground">
-                  Du har fått en personlig länk. Nästa steg är att öppna BankID och slutföra signeringen.
-                </p>
-              ) : null}
-              {(agreement.attachmentCount ?? 0) > 0 ? (
-                <p className="text-muted-foreground">
-                  Det här avtalet har {agreement.attachmentCount}{" "}
-                  {agreement.attachmentCount === 1 ? "bilaga" : "bilagor"} blir synliga här när du är klar med signeringen.
-                </p>
-              ) : null}
-            </div>
-            <p className="mt-4 text-sm">
-              Status:{" "}
-              {agreement.status === "signed"
-                ? "Signerad"
-                : agreement.status === "signing"
-                  ? "Signering pågår"
-                  : "Ej signerad"}
-            </p>
-            {sharedSigningControls}
-          </article>
-        ) : (
-          <article className="rounded-md border p-4">
+        <article className="rounded-md border p-4">
             <h2 className="text-xl font-semibold">{agreement.title}</h2>
             <p className="mt-3 whitespace-pre-wrap">{agreement.content}</p>
 
@@ -671,7 +635,6 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
             </p>
             {sharedSigningControls}
           </article>
-        )
       ) : null}
 
       {previewAttachment ? (
