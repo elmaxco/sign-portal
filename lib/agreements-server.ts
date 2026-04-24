@@ -210,8 +210,8 @@ export async function getAgreementByTokenServer(token: string): Promise<Agreemen
 }
 
 /**
- * Signeringsvyn: avtalstext, länkat innehåll och bilagor skickas inte förrän avtalet är signerat.
- * Detta förhindrar att mottagaren backar från BankID/TIC-flödet och ändå ser bilagor innan signering är klar.
+ * Signeringsvyn: mottagaren ska kunna läsa hela avtalet och se bilagor innan signering.
+ * Parametern signerView finns kvar för bakåtkompatibilitet i API:t.
  */
 export async function getAgreementByTokenForSignViewServer(
   token: string,
@@ -223,24 +223,10 @@ export async function getAgreementByTokenForSignViewServer(
     return null;
   }
 
-  // signerView används idag inte för att avslöja innehåll före `signed`.
-  // Vi behåller parametern för kompatibilitet med API:t (signerView=full).
+  // signerView används inte längre för åtkomststyrning.
   void _options.signerView;
 
-  // Only reveal agreement details after the signature is completed.
-  if (full.status === "signed") {
-    return { agreement: full, redactedForSigner: false };
-  }
-
-  return {
-    agreement: {
-      ...full,
-      content: "",
-      links: [],
-      attachments: [],
-    },
-    redactedForSigner: true,
-  };
+  return { agreement: full, redactedForSigner: false };
 }
 
 export async function deleteAgreementByTokenServer(
