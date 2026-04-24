@@ -43,10 +43,3 @@ export async function createAttachmentDownloadUrl(input: {
 
   return url;
 }
-
-export async function readAttachmentFromStorage(storagePath: string) {
-  const bucket = getAdminBucket();
-  const file = bucket.file(storagePath);
-  const [content] = await file.download();
-  return content;
-}

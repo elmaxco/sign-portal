@@ -17,7 +17,6 @@ export async function GET(request: NextRequest) {
   const token = request.nextUrl.searchParams.get("token")?.trim() || "";
   const attachmentId = request.nextUrl.searchParams.get("attachmentId")?.trim() || "";
   const intent = request.nextUrl.searchParams.get("intent")?.trim() || "download";
-  const pageParam = request.nextUrl.searchParams.get("page")?.trim() || "";
 
   if (!token || !attachmentId) {
     return NextResponse.json({ error: "Missing token or attachmentId." }, { status: 400 });
@@ -68,11 +67,7 @@ export async function GET(request: NextRequest) {
   }
 
   if (intent === "preview") {
-    const parsedPage = Number.parseInt(pageParam, 10);
-    const hasValidPage = Number.isFinite(parsedPage) && parsedPage > 0;
-    const previewUrl = hasValidPage
-      ? `${signedUrl}#page=${parsedPage}&toolbar=0&navpanes=0&scrollbar=0&view=FitH`
-      : `${signedUrl}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`;
+    const previewUrl = `${signedUrl}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`;
 
     return NextResponse.redirect(previewUrl, { status: 302 });
   }

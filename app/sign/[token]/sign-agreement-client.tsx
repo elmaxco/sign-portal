@@ -74,18 +74,6 @@ function attachmentPreviewSrc(token: string, attachmentId: string) {
   return `${attachmentDownloadHref(token, attachmentId, "preview")}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`;
 }
 
-function attachmentPdfPageSrc(token: string, attachmentId: string, page: number) {
-  const safePage = Number.isFinite(page) ? Math.max(1, Math.floor(page)) : 1;
-  const query = new URLSearchParams({
-    token,
-    attachmentId,
-    intent: "preview",
-    page: String(safePage),
-  });
-
-  return `/api/agreements/attachments/download?${query.toString()}`;
-}
-
 export default function SignAgreementClient({ token, entryMode = "sign" }: SignAgreementClientProps) {
   const [agreement, setAgreement] = useState<Agreement | null>(null);
   const [status, setStatus] = useState("Laddar avtal...");
@@ -97,8 +85,6 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
   const [pendingFromCallback, setPendingFromCallback] = useState(false);
   const [isPollingActive, setIsPollingActive] = useState(false);
   const [downloadingAttachmentId, setDownloadingAttachmentId] = useState<string | null>(null);
-  const [pdfPageByAttachmentId, setPdfPageByAttachmentId] = useState<Record<string, number>>({});
-  const [pdfTotalPagesByAttachmentId, setPdfTotalPagesByAttachmentId] = useState<Record<string, number>>({});
   const isAgreementSigned = agreement?.status === "signed";
   const agreementStatusLabel =
     agreement?.status === "signed"
@@ -376,76 +362,6 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
     };
   }, [agreement?.status, pendingFromCallback, token]);
 
-  useEffect(() => {
-    const pdfAttachments = agreement?.attachments?.filter(isPdfAttachment) ?? [];
-
-    if (!pdfAttachments.length) {
-      return;
-    }
-
-    let active = true;
-
-    async function loadPdfPageCounts() {
-      await Promise.all(
-        pdfAttachments.map(async (attachment) => {
-          if (pdfTotalPagesByAttachmentId[attachment.id]) {
-            return;
-          }
-
-          try {
-            const params = new URLSearchParams({
-              token,
-              attachmentId: attachment.id,
-            });
-            const response = await fetch(`/api/agreements/attachments/page-count?${params.toString()}`, {
-              method: "GET",
-              cache: "no-store",
-            });
-
-            if (!response.ok || !active) {
-              return;
-            }
-
-            const payload = (await response.json()) as {
-              totalPages?: number;
-            };
-            const totalPages = Math.max(1, Number(payload.totalPages ?? 1));
-
-            if (!active) {
-              return;
-            }
-
-            setPdfTotalPagesByAttachmentId((previous) => ({
-              ...previous,
-              [attachment.id]: totalPages,
-            }));
-
-            setPdfPageByAttachmentId((previous) => {
-              const current = previous[attachment.id] ?? 1;
-
-              if (current <= totalPages) {
-                return previous;
-              }
-
-              return {
-                ...previous,
-                [attachment.id]: totalPages,
-              };
-            });
-          } catch {
-            // Ignore page count errors and keep fallback behaviour with page 1.
-          }
-        }),
-      );
-    }
-
-    loadPdfPageCounts();
-
-    return () => {
-      active = false;
-    };
-  }, [agreement?.attachments, pdfTotalPagesByAttachmentId, token]);
-
   function clearBankIdQueryParam() {
     if (typeof window === "undefined") {
       return;
@@ -550,17 +466,6 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
     } finally {
       setDownloadingAttachmentId(null);
     }
-  }
-
-  function setPdfPage(attachmentId: string, page: number) {
-    const totalPages = pdfTotalPagesByAttachmentId[attachmentId] ?? Number.MAX_SAFE_INTEGER;
-    const safePage = Number.isFinite(page)
-      ? Math.min(totalPages, Math.max(1, Math.floor(page)))
-      : 1;
-    setPdfPageByAttachmentId((previous) => ({
-      ...previous,
-      [attachmentId]: safePage,
-    }));
   }
 
   const sharedSigningControls =
@@ -697,48 +602,12 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
 
                       {isPdfAttachment(attachment) ? (
                         <div className="mt-3 overflow-hidden rounded-lg bg-slate-100 p-1">
-                          {(() => {
-                            const currentPage = pdfPageByAttachmentId[attachment.id] ?? 1;
-                            const totalPages = pdfTotalPagesByAttachmentId[attachment.id];
-                            const canGoPrevious = currentPage > 1;
-                            const canGoNext = typeof totalPages === "number" ? currentPage < totalPages : true;
-
-                            return (
-                              <>
-                                <div className="mb-2 flex items-center justify-between gap-2 px-1">
-                                  <div className="flex items-center gap-2">
-                                    <button
-                                      type="button"
-                                      className="rounded-full border border-slate-300 bg-white px-3 py-1 text-xs font-medium text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 disabled:opacity-50"
-                                      onClick={() => setPdfPage(attachment.id, currentPage - 1)}
-                                      disabled={!canGoPrevious}
-                                    >
-                                      Föregående
-                                    </button>
-                                    <button
-                                      type="button"
-                                      className="rounded-full border border-slate-300 bg-white px-3 py-1 text-xs font-medium text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 disabled:opacity-50"
-                                      onClick={() => setPdfPage(attachment.id, currentPage + 1)}
-                                      disabled={!canGoNext}
-                                    >
-                                      Nästa
-                                    </button>
-                                  </div>
-                                  <p className="text-xs font-medium text-slate-600">
-                                    Sida {currentPage}{typeof totalPages === "number" ? ` av ${totalPages}` : ""}
-                                  </p>
-                                </div>
-                                <iframe
-                                  key={`${attachment.id}-${currentPage}`}
-                                  src={attachmentPdfPageSrc(token, attachment.id, currentPage)}
-                                  title={attachment.filename}
-                                  className="pointer-events-none h-[85vh] rounded bg-white"
-                                  style={{ width: "calc(100% + 18px)", marginRight: "-18px" }}
-                                  frameBorder={0}
-                                />
-                              </>
-                            );
-                          })()}
+                          <iframe
+                            src={attachmentPreviewSrc(token, attachment.id)}
+                            title={attachment.filename}
+                            className="h-[85vh] w-full rounded bg-white"
+                            frameBorder={0}
+                          />
                         </div>
                       ) : null}
 
