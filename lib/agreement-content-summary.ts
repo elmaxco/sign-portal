@@ -1,4 +1,4 @@
-import pdfParse from "pdf-parse";
+import { PDFParse } from "pdf-parse";
 
 const DEFAULT_SUMMARY_MODEL = "gemini-2.0-flash";
 const DEFAULT_MAX_INPUT_CHARS = 18_000;
@@ -28,13 +28,19 @@ function getMaxInputChars() {
 }
 
 export async function extractPdfTextForSummary(pdfBuffer: Buffer) {
-  const parsed = await pdfParse(pdfBuffer);
-  const normalized = (parsed.text || "")
-    .replace(/\r/g, "\n")
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
+  const parser = new PDFParse({ data: pdfBuffer });
 
-  return normalized;
+  try {
+    const parsed = await parser.getText();
+    const normalized = (parsed.text || "")
+      .replace(/\r/g, "\n")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim();
+
+    return normalized;
+  } finally {
+    await parser.destroy();
+  }
 }
 
 export async function generateAgreementSummaryFromText(text: string) {
