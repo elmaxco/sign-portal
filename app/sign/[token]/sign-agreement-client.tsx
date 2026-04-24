@@ -81,6 +81,12 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
   const [isPollingActive, setIsPollingActive] = useState(false);
   const [downloadingAttachmentId, setDownloadingAttachmentId] = useState<string | null>(null);
   const isAgreementSigned = agreement?.status === "signed";
+  const agreementStatusLabel =
+    agreement?.status === "signed"
+      ? "Signerad"
+      : agreement?.status === "signing"
+        ? "Signering pågår"
+        : "Ej signerad";
 
   useEffect(() => {
     let active = true;
@@ -453,12 +459,12 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
 
   const sharedSigningControls =
     agreement && agreement.status !== "signed" ? (
-      <div className="mt-4">
+      <div className="mt-8 rounded-xl bg-slate-50 p-4 ring-1 ring-slate-200">
         <button
           type="button"
           onClick={handleStartSigning}
           disabled={isPollingActive || isRestartingSigning}
-          className="inline-flex rounded-md bg-foreground px-4 py-2 text-background disabled:opacity-50"
+          className="inline-flex items-center rounded-full bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {entryMode === "signup"
             ? "Identifiera dig och signera med BankID"
@@ -477,7 +483,7 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
             type="button"
             onClick={handleRestartSigning}
             disabled={isRestartingSigning}
-            className="mt-2 inline-flex rounded-md border px-3 py-1 text-sm disabled:opacity-50"
+            className="mt-3 inline-flex rounded-full border border-slate-300 px-4 py-1.5 text-sm text-slate-700 transition hover:bg-white disabled:opacity-50"
           >
             {isRestartingSigning ? "Återställer..." : "Avbryt och starta om"}
           </button>
@@ -488,19 +494,19 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
             type="button"
             onClick={handleRestartSigning}
             disabled={isRestartingSigning}
-            className="mt-2 inline-flex rounded-md border px-3 py-1 text-sm disabled:opacity-50"
+            className="mt-3 inline-flex rounded-full border border-slate-300 px-4 py-1.5 text-sm text-slate-700 transition hover:bg-white disabled:opacity-50"
           >
             {isRestartingSigning ? "Återställer..." : "Starta om signering"}
           </button>
         ) : null}
 
-        {startSigningError ? <p className="mt-2 text-sm">{startSigningError}</p> : null}
+        {startSigningError ? <p className="mt-3 text-sm text-red-700">{startSigningError}</p> : null}
       </div>
     ) : null;
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-3xl flex-col gap-6 px-6 py-12">
-      <h1 className="text-2xl font-semibold">
+    <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-6 px-4 py-10 sm:px-6 sm:py-12">
+      <h1 className="text-3xl font-semibold tracking-tight text-slate-900">
         {isAgreementSigned ? "Avtalet är signerat" : entryMode === "signup" ? "Verifiera dig och signera" : "Signering"}
       </h1>
 
@@ -513,33 +519,41 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
       ) : null}
 
       {!agreement && status === "Laddar avtal..." ? (
-        <div className="flex flex-col gap-4" aria-live="polite">
+        <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200" aria-live="polite">
           <div className="h-8 w-48 animate-pulse rounded bg-slate-200" />
-          <div className="h-4 w-full animate-pulse rounded bg-slate-100" />
-          <div className="h-4 w-full max-w-sm animate-pulse rounded bg-slate-100" />
-          <div className="h-32 w-full animate-pulse rounded bg-slate-100" />
-          <p className="text-sm text-slate-500">Laddar avtal...</p>
+          <div className="mt-4 h-4 w-full animate-pulse rounded bg-slate-100" />
+          <div className="mt-2 h-4 w-full max-w-sm animate-pulse rounded bg-slate-100" />
+          <div className="mt-5 h-32 w-full animate-pulse rounded bg-slate-100" />
+          <p className="mt-4 text-sm text-slate-500">Laddar avtal...</p>
         </div>
       ) : null}
 
-      {status && status !== "Laddar avtal..." ? <p className="text-sm">{status}</p> : null}
+      {status && status !== "Laddar avtal..." ? (
+        <p className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm">{status}</p>
+      ) : null}
 
       {agreement ? (
-        <article className="rounded-md border p-4">
-            <h2 className="text-xl font-semibold">{agreement.title}</h2>
-            <p className="mt-3 whitespace-pre-wrap">{agreement.content}</p>
+        <article className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200 sm:p-8">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h2 className="text-2xl font-semibold tracking-tight text-slate-900">{agreement.title}</h2>
+              <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
+                {agreementStatusLabel}
+              </span>
+            </div>
+
+            <p className="mt-5 whitespace-pre-wrap text-[15px] leading-7 text-slate-700">{agreement.content}</p>
 
             {agreement.links?.length ? (
-              <section className="mt-4 rounded-md border p-3">
-                <h3 className="text-sm font-medium">Bilagor / länkat innehåll</h3>
-                <ul className="mt-2 space-y-1 text-sm">
+              <section className="mt-8 rounded-xl bg-slate-50 p-4 ring-1 ring-slate-200">
+                <h3 className="text-sm font-semibold tracking-wide text-slate-700">Bilagor / länkat innehåll</h3>
+                <ul className="mt-3 space-y-2 text-sm">
                   {agreement.links.map((link, index) => (
                     <li key={`${link.url}-${index}`}>
                       <a
                         href={link.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="underline"
+                        className="font-medium text-slate-800 underline decoration-slate-300 underline-offset-2 hover:decoration-slate-700"
                       >
                         {link.title}
                       </a>
@@ -550,20 +564,20 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
             ) : null}
 
             {agreement.attachments?.length ? (
-              <section className="mt-4 rounded-md border p-3">
-                <h3 className="text-sm font-medium">Bilagor</h3>
+              <section className="mt-8 rounded-xl bg-slate-50 p-4 ring-1 ring-slate-200">
+                <h3 className="text-sm font-semibold tracking-wide text-slate-700">Bilagor</h3>
                 <ul className="mt-2 space-y-4 text-sm">
                   {agreement.attachments.map((attachment) => (
-                    <li key={attachment.id} className="rounded-md border p-3">
+                    <li key={attachment.id} className="rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
                       <div className="flex flex-wrap items-center justify-between gap-2">
-                        <p className="font-medium">{attachment.filename}</p>
+                        <p className="font-medium text-slate-900">{attachment.filename}</p>
                         <p className="text-xs text-muted-foreground">
                           {attachment.contentType} - {formatAttachmentSize(attachment.size)}
                         </p>
                       </div>
 
                       {isImageAttachment(attachment) ? (
-                        <div className="mt-3 rounded border bg-slate-50 p-2">
+                        <div className="mt-3 overflow-hidden rounded-lg bg-slate-100 p-2">
                           <Image
                             src={attachmentDownloadHref(token, attachment.id, "preview")}
                             alt={attachment.filename}
@@ -576,7 +590,7 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
                       ) : null}
 
                       {isPdfAttachment(attachment) ? (
-                        <div className="mt-3 rounded border bg-slate-50 p-2">
+                        <div className="mt-3 overflow-hidden rounded-lg bg-slate-100 p-2">
                           <iframe
                             src={attachmentDownloadHref(token, attachment.id, "preview")}
                             title={attachment.filename}
@@ -589,7 +603,7 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
                       <div className="mt-3 flex items-center gap-2">
                         <button
                           type="button"
-                          className="rounded-md border px-3 py-1 text-xs disabled:opacity-50"
+                          className="rounded-full border border-slate-300 bg-white px-4 py-1.5 text-xs font-medium text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 disabled:opacity-50"
                           disabled={downloadingAttachmentId === attachment.id}
                           onClick={() => downloadAttachment(attachment)}
                         >
@@ -602,14 +616,6 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
               </section>
             ) : null}
 
-            <p className="mt-4 text-sm">
-              Status:{" "}
-              {agreement.status === "signed"
-                ? "Signerad"
-                : agreement.status === "signing"
-                  ? "Signering pågår"
-                  : "Ej signerad"}
-            </p>
             {sharedSigningControls}
           </article>
       ) : null}
