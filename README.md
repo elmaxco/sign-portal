@@ -40,6 +40,15 @@ The app uses server-side email sending (Resend) and scheduled reminders.
 - `RESEND_API_KEY`: API key from Resend.
 - `MAIL_FROM`: Sender address, must belong to a verified domain in Resend.
 
+### AI summary for agreement PDF (admin)
+
+- `OPENAI_API_KEY`: API key used to summarize PDF draft agreements into a short content text.
+
+Optional:
+
+- `OPENAI_SUMMARY_MODEL`: OpenAI model name used for summary generation. Default: `gpt-4o-mini`.
+- `OPENAI_SUMMARY_MAX_INPUT_CHARS`: Max extracted PDF characters sent to AI. Default: `18000`.
+
 ### Optional email config
 
 - `MAIL_VERIFIED_DOMAIN`: Domain validation for `MAIL_FROM`. Default: `signportal.starring.se`.
