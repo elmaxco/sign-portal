@@ -40,7 +40,7 @@ export default function Home() {
     "Offertformulär för nya kunder",
     "Automatiska mejl och SMS-påminnelser",
     "Bilagor med privat lagring och signerad nedladdning",
-    "Rate limits, admin-skydd och cron-kontroll",
+    "Trygg identifiering med BankID för varje signatur",
   ];
 
   return (
