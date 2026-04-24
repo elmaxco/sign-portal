@@ -76,7 +76,14 @@ function attachmentPreviewSrc(token: string, attachmentId: string) {
 
 function attachmentPdfPageSrc(token: string, attachmentId: string, page: number) {
   const safePage = Number.isFinite(page) ? Math.max(1, Math.floor(page)) : 1;
-  return `${attachmentDownloadHref(token, attachmentId, "preview")}#page=${safePage}&toolbar=0&navpanes=0&scrollbar=0&view=FitH`;
+  const query = new URLSearchParams({
+    token,
+    attachmentId,
+    intent: "preview",
+    page: String(safePage),
+  });
+
+  return `/api/agreements/attachments/download?${query.toString()}`;
 }
 
 export default function SignAgreementClient({ token, entryMode = "sign" }: SignAgreementClientProps) {
@@ -624,14 +631,14 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
                                 onClick={() => setPdfPage(attachment.id, (pdfPageByAttachmentId[attachment.id] ?? 1) - 1)}
                                 disabled={(pdfPageByAttachmentId[attachment.id] ?? 1) <= 1}
                               >
-                                Foregaende
+                                Föregående
                               </button>
                               <button
                                 type="button"
                                 className="rounded-full border border-slate-300 bg-white px-3 py-1 text-xs font-medium text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
                                 onClick={() => setPdfPage(attachment.id, (pdfPageByAttachmentId[attachment.id] ?? 1) + 1)}
                               >
-                                Naesta
+                                Nästa
                               </button>
                             </div>
                             <p className="text-xs font-medium text-slate-600">
@@ -639,9 +646,10 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
                             </p>
                           </div>
                           <iframe
+                            key={`${attachment.id}-${pdfPageByAttachmentId[attachment.id] ?? 1}`}
                             src={attachmentPdfPageSrc(token, attachment.id, pdfPageByAttachmentId[attachment.id] ?? 1)}
                             title={attachment.filename}
-                            className="h-[85vh] w-full rounded bg-white"
+                            className="pointer-events-none h-[85vh] w-full rounded bg-white"
                             frameBorder={0}
                           />
                         </div>
