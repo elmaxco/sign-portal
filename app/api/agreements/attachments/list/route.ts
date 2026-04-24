@@ -22,14 +22,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Agreement not found." }, { status: 404, headers: NO_STORE_HEADERS });
   }
 
-  // Recipients must not be able to list/inspect attachments before the agreement is signed.
-  if (agreement.status !== "signed") {
-    return NextResponse.json(
-      { error: "Agreement is not signed yet." },
-      { status: 403, headers: NO_STORE_HEADERS },
-    );
-  }
-
   return NextResponse.json({
     ok: true,
     attachments: agreement.attachments,

@@ -43,11 +43,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Agreement not found." }, { status: 404 });
   }
 
-  // Prevent recipients from downloading/previewing attachments before signing is completed.
-  if (agreement.status !== "signed") {
-    return NextResponse.json({ error: "Agreement is not signed yet." }, { status: 403 });
-  }
-
   const attachment = agreement.attachments?.find((item) => item.id === attachmentId);
 
   if (!attachment) {
