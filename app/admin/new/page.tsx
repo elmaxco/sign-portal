@@ -91,6 +91,8 @@ export default function AdminNewAgreementPage() {
   const [uploadingAttachment, setUploadingAttachment] = useState(false);
   const [deletingAttachmentId, setDeletingAttachmentId] = useState<string | null>(null);
   const [attachmentFeedback, setAttachmentFeedback] = useState<AttachmentFeedback | null>(null);
+  const [summaryFeedback, setSummaryFeedback] = useState<AttachmentFeedback | null>(null);
+  const [summarizingPdfKey, setSummarizingPdfKey] = useState<string | null>(null);
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [pendingPickKey, setPendingPickKey] = useState(0);
   const [previewAttachment, setPreviewAttachment] = useState<AgreementAttachmentItem | null>(null);
@@ -384,6 +386,7 @@ export default function AdminNewAgreementPage() {
     setPendingFiles([]);
     setPendingPickKey((key) => key + 1);
     setAttachmentFeedback(null);
+    setSummaryFeedback(null);
     setToken("");
     setStatus("");
   }
@@ -477,6 +480,7 @@ export default function AdminNewAgreementPage() {
 
     if (next.length) {
       setPendingFiles((previous) => [...previous, ...next]);
+      setSummaryFeedback(null);
     }
 
     if (message) {
@@ -486,6 +490,59 @@ export default function AdminNewAgreementPage() {
 
   function removePendingFileAt(index: number) {
     setPendingFiles((previous) => previous.filter((_, i) => i !== index));
+  }
+
+  async function handleGenerateSummaryFromPdf(file: File) {
+    if (!isPendingPdfFile(file) || loading || uploadingAttachment || isCreated) {
+      return;
+    }
+
+    if (
+      content.trim() &&
+      !window.confirm(
+        "Innehållsfältet innehåller redan text. Vill du ersätta den med AI-sammanfattningen?",
+      )
+    ) {
+      return;
+    }
+
+    const fileKey = `${file.name}-${file.size}`;
+    setSummarizingPdfKey(fileKey);
+    setSummaryFeedback(null);
+
+    try {
+      const formData = new FormData();
+      formData.set("file", file);
+
+      const response = await fetch("/api/admin/agreements/attachments/summarize", {
+        method: "POST",
+        body: formData,
+      });
+
+      const payload = (await response.json()) as {
+        ok?: boolean;
+        summary?: string;
+        error?: string;
+      };
+
+      if (!response.ok || !payload.ok || !payload.summary?.trim()) {
+        throw new Error(payload.error ?? "Kunde inte skapa sammanfattning.");
+      }
+
+      setContent(payload.summary.trim());
+      setSummaryFeedback({
+        variant: "success",
+        message: "AI-sammanfattning skapad och införd i Innehåll.",
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      setSummaryFeedback({
+        variant: "error",
+        message: `Kunde inte skapa AI-sammanfattning: ${message}`,
+      });
+    } finally {
+      setSummarizingPdfKey(null);
+    }
   }
 
   // Sort attachments: newest first, then by type
@@ -547,6 +604,9 @@ export default function AdminNewAgreementPage() {
           <span className="text-xs text-muted-foreground">
             Kort text som visas på signeringssidan. Om hela avtalet finns som PDF kan du skriva t.ex. &quot;Det fullständiga avtalet finns som bifogad PDF nedan.&quot;
           </span>
+          <span className="text-xs text-muted-foreground">
+            Tips: välj en PDF under Bilagor och klicka <strong>AI-sammanfatta</strong> för att få ett utkast här.
+          </span>
           <textarea
             value={content}
             onChange={(event) => setContent(event.target.value)}
@@ -555,6 +615,16 @@ export default function AdminNewAgreementPage() {
             placeholder="T.ex. sammanfattning eller hänvisning till bifogade PDF-avtal…"
             required
           />
+          {summaryFeedback ? (
+            <span
+              role="status"
+              className={`text-sm font-medium ${
+                summaryFeedback.variant === "error" ? "text-red-600" : "text-green-700"
+              }`}
+            >
+              {summaryFeedback.message}
+            </span>
+          ) : null}
         </label>
 
         <label className="flex flex-col gap-2">
@@ -692,6 +762,18 @@ export default function AdminNewAgreementPage() {
                         onClick={() => showPendingFilePreview(file)}
                       >
                         Förhandsvisa
+                      </button>
+                    ) : null}
+                    {isPendingPdfFile(file) ? (
+                      <button
+                        type="button"
+                        className="rounded border px-2 py-1 text-xs"
+                        disabled={loading || uploadingAttachment || summarizingPdfKey !== null}
+                        onClick={() => handleGenerateSummaryFromPdf(file)}
+                      >
+                        {summarizingPdfKey === `${file.name}-${file.size}`
+                          ? "Sammanfattar..."
+                          : "AI-sammanfatta"}
                       </button>
                     ) : null}
                     <button
