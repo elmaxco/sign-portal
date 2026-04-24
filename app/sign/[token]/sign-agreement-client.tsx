@@ -478,8 +478,8 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
           className="inline-flex items-center rounded-full bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {entryMode === "signup"
-            ? "Identifiera dig och signera med BankID"
-            : "Signera med BankID"}
+            ? "Signera avtalet med BankID"
+            : "Signera avtalet med BankID"}
         </button>
 
         {isPollingActive ? (
