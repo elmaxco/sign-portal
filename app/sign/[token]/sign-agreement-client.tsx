@@ -74,6 +74,11 @@ function attachmentPreviewSrc(token: string, attachmentId: string) {
   return `${attachmentDownloadHref(token, attachmentId, "preview")}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`;
 }
 
+function attachmentPdfPageSrc(token: string, attachmentId: string, page: number) {
+  const safePage = Number.isFinite(page) ? Math.max(1, Math.floor(page)) : 1;
+  return `${attachmentDownloadHref(token, attachmentId, "preview")}#page=${safePage}&toolbar=0&navpanes=0&scrollbar=0&view=FitH`;
+}
+
 export default function SignAgreementClient({ token, entryMode = "sign" }: SignAgreementClientProps) {
   const [agreement, setAgreement] = useState<Agreement | null>(null);
   const [status, setStatus] = useState("Laddar avtal...");
@@ -85,6 +90,7 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
   const [pendingFromCallback, setPendingFromCallback] = useState(false);
   const [isPollingActive, setIsPollingActive] = useState(false);
   const [downloadingAttachmentId, setDownloadingAttachmentId] = useState<string | null>(null);
+  const [pdfPageByAttachmentId, setPdfPageByAttachmentId] = useState<Record<string, number>>({});
   const isAgreementSigned = agreement?.status === "signed";
   const agreementStatusLabel =
     agreement?.status === "signed"
@@ -468,6 +474,14 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
     }
   }
 
+  function setPdfPage(attachmentId: string, page: number) {
+    const safePage = Number.isFinite(page) ? Math.max(1, Math.floor(page)) : 1;
+    setPdfPageByAttachmentId((previous) => ({
+      ...previous,
+      [attachmentId]: safePage,
+    }));
+  }
+
   const sharedSigningControls =
     agreement && agreement.status !== "signed" ? (
       <div className="mt-8 rounded-xl bg-slate-50 p-4 ring-1 ring-slate-200">
@@ -602,8 +616,30 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
 
                       {isPdfAttachment(attachment) ? (
                         <div className="mt-3 overflow-hidden rounded-lg bg-slate-100 p-1">
+                          <div className="mb-2 flex items-center justify-between gap-2 px-1">
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                className="rounded-full border border-slate-300 bg-white px-3 py-1 text-xs font-medium text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 disabled:opacity-50"
+                                onClick={() => setPdfPage(attachment.id, (pdfPageByAttachmentId[attachment.id] ?? 1) - 1)}
+                                disabled={(pdfPageByAttachmentId[attachment.id] ?? 1) <= 1}
+                              >
+                                Foregaende
+                              </button>
+                              <button
+                                type="button"
+                                className="rounded-full border border-slate-300 bg-white px-3 py-1 text-xs font-medium text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
+                                onClick={() => setPdfPage(attachment.id, (pdfPageByAttachmentId[attachment.id] ?? 1) + 1)}
+                              >
+                                Naesta
+                              </button>
+                            </div>
+                            <p className="text-xs font-medium text-slate-600">
+                              Sida {pdfPageByAttachmentId[attachment.id] ?? 1}
+                            </p>
+                          </div>
                           <iframe
-                            src={attachmentPreviewSrc(token, attachment.id)}
+                            src={attachmentPdfPageSrc(token, attachment.id, pdfPageByAttachmentId[attachment.id] ?? 1)}
                             title={attachment.filename}
                             className="h-[85vh] w-full rounded bg-white"
                             frameBorder={0}
