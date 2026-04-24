@@ -92,6 +92,12 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
       : agreement?.status === "signing"
         ? "Signering pågår"
         : "Ej signerad";
+  const agreementStatusBadgeClass =
+    agreement?.status === "signed"
+      ? "bg-emerald-100 text-emerald-800 ring-emerald-200"
+      : agreement?.status === "signing"
+        ? "bg-amber-100 text-amber-800 ring-amber-200"
+        : "bg-rose-100 text-rose-800 ring-rose-200";
 
   useEffect(() => {
     let active = true;
@@ -541,7 +547,7 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
         <article className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200 sm:p-8">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <h2 className="text-2xl font-semibold tracking-tight text-slate-900">{agreement.title}</h2>
-              <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
+              <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ring-1 ${agreementStatusBadgeClass}`}>
                 {agreementStatusLabel}
               </span>
             </div>
