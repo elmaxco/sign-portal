@@ -69,6 +69,11 @@ function attachmentDownloadHref(token: string, attachmentId: string, intent?: "d
   return `/api/agreements/attachments/download?${query.toString()}`;
 }
 
+function attachmentPreviewSrc(token: string, attachmentId: string) {
+  // Hide PDF viewer chrome and fit the page better in the inline frame.
+  return `${attachmentDownloadHref(token, attachmentId, "preview")}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`;
+}
+
 export default function SignAgreementClient({ token, entryMode = "sign" }: SignAgreementClientProps) {
   const [agreement, setAgreement] = useState<Agreement | null>(null);
   const [status, setStatus] = useState("Laddar avtal...");
@@ -579,7 +584,7 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
                       {isImageAttachment(attachment) ? (
                         <div className="mt-3 overflow-hidden rounded-lg bg-slate-100 p-2">
                           <Image
-                            src={attachmentDownloadHref(token, attachment.id, "preview")}
+                            src={attachmentPreviewSrc(token, attachment.id)}
                             alt={attachment.filename}
                             className="max-h-128 w-full rounded object-contain"
                             width={1600}
@@ -590,11 +595,11 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
                       ) : null}
 
                       {isPdfAttachment(attachment) ? (
-                        <div className="mt-3 overflow-hidden rounded-lg bg-slate-100 p-2">
+                        <div className="mt-3 overflow-hidden rounded-lg bg-slate-100 p-1">
                           <iframe
-                            src={attachmentDownloadHref(token, attachment.id, "preview")}
+                            src={attachmentPreviewSrc(token, attachment.id)}
                             title={attachment.filename}
-                            className="w-full min-h-96 rounded bg-white"
+                            className="h-[85vh] w-full rounded bg-white"
                             frameBorder={0}
                           />
                         </div>
