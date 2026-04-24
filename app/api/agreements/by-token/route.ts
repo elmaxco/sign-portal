@@ -17,10 +17,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Missing token." }, { status: 400, headers: NO_STORE_HEADERS });
   }
 
-  const signerViewParam = request.nextUrl.searchParams.get("signerView")?.trim().toLowerCase();
-  const signerView = signerViewParam === "full" ? "full" : "gate";
-
-  const result = await getAgreementByTokenForSignViewServer(token, { signerView });
+  const result = await getAgreementByTokenForSignViewServer(token, { signerView: "full" });
 
   if (!result) {
     return NextResponse.json(

@@ -93,7 +93,7 @@ export default function SignAgreementClient({ token, entryMode = "sign" }: SignA
 
     async function loadAgreement() {
       try {
-        const params = new URLSearchParams({ token });
+        const params = new URLSearchParams({ token, signerView: "full" });
 
         const response = await fetch(`/api/agreements/by-token?${params.toString()}`, {
           method: "GET",
